@@ -7,9 +7,9 @@
     "spec": {
         "outputDirectory": "swagger",
         "specVersion": 3,
-        "title": "POMELO API Documentation",
+        "title": "QUIZZZ API Documentation",
         "version": "1.0.0",
-        "description": "A description of POMELO API",
+        "description": "A description of QUIZZZ API",
         "basePath": "/api"
     },
     "routes": {
