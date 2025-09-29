@@ -1,0 +1,11 @@
+{
+    "watch": [
+        "src"
+    ],
+    "ignore": [
+        "swagger/swagger.json",
+        "src/routes/routes.ts"
+    ],
+    "ext": "ts,tsx,json",
+    "exec": "npm run dev:restart"
+}

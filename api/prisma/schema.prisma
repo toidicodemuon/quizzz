@@ -1,0 +1,108 @@
+// This is your Prisma schema file.
+// It defines the database models, enums, and relations used
+// throughout the application.
+// See https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// The User model represents authenticated users of the system.
+// Each user has a username, a hashed password, a role (teacher or
+// student), and relations to quizzes and submissions.
+model User {
+  id           Int          @id @default(autoincrement())
+  username     String       @unique
+  passwordHash String
+  role         UserRole     @default(STUDENT)
+  quizzes      Quiz[]
+  submissions  Submission[]
+}
+
+// Enum to distinguish between teacher and student roles.
+enum UserRole {
+  TEACHER
+  STUDENT
+}
+
+// A quiz is created by a teacher. It contains multiple questions
+// and can be in one of several statuses. A quiz has a time limit
+// in minutes for students to complete it.
+model Quiz {
+  id               Int          @id @default(autoincrement())
+  title            String
+  description      String?
+  timeLimitMinutes Int
+  status           QuizStatus   @default(DRAFT)
+  teacher          User         @relation(fields: [teacherId], references: [id])
+  teacherId        Int
+  questions        Question[]
+  submissions      Submission[]
+}
+
+// Enum describing the status of a quiz.
+enum QuizStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// Each question belongs to a quiz and has multiple answers. When a
+// quiz is deleted, its questions cascade delete. A question can
+// participate in many submissions via SubmissionAnswer.
+model Question {
+  id                Int                @id @default(autoincrement())
+  questionText      String             @db.Text
+  explanation       String?            @db.Text // <-- Trường giải thích đã được thêm vào đây
+  quiz              Quiz               @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId            Int
+  answers           Answer[]
+  submissionAnswers SubmissionAnswer[]
+}
+
+// An answer belongs to a question. It has text and a boolean to
+// indicate whether it is correct. When a question is deleted, its
+// answers cascade delete. Answers may appear in many submissions via
+// SubmissionAnswer.
+model Answer {
+  id                Int                @id @default(autoincrement())
+  answerText        String             @db.Text
+  isCorrect         Boolean            @default(false)
+  question          Question           @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId        Int
+  submissionAnswers SubmissionAnswer[]
+}
+
+// A submission records a student's answers to a quiz. It stores the
+// computed score and the start/end times. Submissions belong to
+// students and quizzes. A submission may have many SubmissionAnswer
+// records linking questions to selected answers.
+model Submission {
+  id                Int                @id @default(autoincrement())
+  score             Float
+  startTime         DateTime           @default(now())
+  endTime           DateTime?
+  student           User               @relation(fields: [studentId], references: [id])
+  studentId         Int
+  quiz              Quiz               @relation(fields: [quizId], references: [id])
+  quizId            Int
+  submissionAnswers SubmissionAnswer[]
+}
+
+// A SubmissionAnswer ties together a submission, a question and the
+// selected answer. Deleting a submission will cascade delete its
+// associated answers.
+model SubmissionAnswer {
+  id               Int        @id @default(autoincrement())
+  submission       Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId     Int
+  question         Question   @relation(fields: [questionId], references: [id])
+  questionId       Int
+  selectedAnswer   Answer     @relation(fields: [selectedAnswerId], references: [id])
+  selectedAnswerId Int
+}
