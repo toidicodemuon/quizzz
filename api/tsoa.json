@@ -1,0 +1,19 @@
+{
+    "entryFile": "src/index.ts",
+    "noImplicitAdditionalProperties": "throw-on-extras",
+    "controllerPathGlobs": [
+        "src/controllers/*Controller.ts"
+    ],
+    "spec": {
+        "outputDirectory": "swagger",
+        "specVersion": 3,
+        "title": "POMELO API Documentation",
+        "version": "1.0.0",
+        "description": "A description of POMELO API",
+        "basePath": "/api"
+    },
+    "routes": {
+        "basePath": "/api",
+        "routesDir": "src/routes"
+    }
+}
