@@ -1,5 +1,14 @@
-import { PrismaClient } from "@prisma/client";
-import { Controller, Get, Route, Tags, Response, Security } from "tsoa";
+import { PrismaClient, QuizStatus } from "@prisma/client";
+import {
+  Controller,
+  Get,
+  Route,
+  Tags,
+  Response,
+  Security,
+  Post,
+  Body,
+} from "tsoa";
 
 const prisma = new PrismaClient();
 
@@ -39,5 +48,46 @@ export class QuizController extends Controller {
       orderBy: { createdAt: "desc" },
     });
     return quizzes;
+  }
+  /**
+   * Thêm một đề thi mới. Chỉ giáo viên mới có quyền sử dụng.
+   * Yêu cầu có JWT hợp lệ (middleware Express chặn theo path /api/quiz)
+   */
+
+  @Response<null>(400, "Bad Request")
+  @Response<null>(401, "Unauthorized")
+  @Security("bearerAuth")
+  @Post("/add")
+  public async addQuiz(
+    @Body()
+    body: {
+      title: string;
+      description: string | null;
+      status: QuizStatus;
+      teacherId: number;
+      timeLimitMinutes: number;
+    }
+  ): Promise<QuizSummary> {
+    // Ensure only teachers can access this endpoint
+    const isTeacher = await prisma.user.findUnique({
+      where: { id: body.teacherId },
+      select: { role: true },
+    });
+
+    if (!isTeacher || isTeacher.role !== "TEACHER") {
+      this.setStatus(403); // Forbidden
+      throw new Error("Access denied. Only teachers can add quizzes.");
+    }
+
+    const newQuiz = await prisma.quiz.create({
+      data: {
+        title: body.title,
+        description: body.description,
+        status: body.status,
+        teacherId: body.teacherId,
+        timeLimitMinutes: body.timeLimitMinutes,
+      },
+    });
+    return newQuiz;
   }
 }

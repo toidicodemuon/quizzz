@@ -9,6 +9,7 @@ import {
   Controller,
   Response,
   SuccessResponse,
+  Security,
 } from "tsoa";
 
 const prisma = new PrismaClient();
@@ -17,12 +18,16 @@ const prisma = new PrismaClient();
 @Tags("User")
 export class UserController extends Controller {
   @Get("/")
+  @Response<null>(401, "Unauthorized")
+  @Security("bearerAuth")
   public async getUsers(): Promise<PrismaUser[]> {
     return await prisma.user.findMany();
   }
 
   @Get("{id}")
   @Response<null>(404, "User not found")
+  @Response<null>(401, "Unauthorized")
+  @Security("bearerAuth")
   public async getUserById(@Path() id: number): Promise<PrismaUser | null> {
     const user = await prisma.user.findUnique({
       where: { id },

@@ -113,6 +113,17 @@
 				],
 				"type": "object"
 			},
+			"_36_Enums.QuizStatus": {
+				"type": "string",
+				"enum": [
+					"DRAFT",
+					"PUBLISHED",
+					"ARCHIVED"
+				]
+			},
+			"QuizStatus": {
+				"$ref": "#/components/schemas/_36_Enums.QuizStatus"
+			},
 			"LoginSuccessResponse": {
 				"properties": {
 					"user": {
@@ -175,18 +186,21 @@
 			},
 			"LoginRequest": {
 				"properties": {
-					"password": {
-						"type": "string"
-					},
 					"username": {
-						"type": "string"
+						"type": "string",
+						"example": "teacher1"
+					},
+					"password": {
+						"type": "string",
+						"example": "123456"
 					}
 				},
 				"required": [
-					"password",
-					"username"
+					"username",
+					"password"
 				],
-				"type": "object"
+				"type": "object",
+				"additionalProperties": false
 			}
 		},
 		"securitySchemes": {
@@ -224,12 +238,30 @@
 								}
 							}
 						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
 					}
 				},
 				"tags": [
 					"User"
 				],
-				"security": [],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
 				"parameters": []
 			},
 			"post": {
@@ -314,6 +346,20 @@
 							}
 						}
 					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
 					"404": {
 						"description": "User not found",
 						"content": {
@@ -332,7 +378,11 @@
 				"tags": [
 					"User"
 				],
-				"security": [],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
 				"parameters": [
 					{
 						"in": "path",
@@ -407,6 +457,98 @@
 					}
 				],
 				"parameters": []
+			}
+		},
+		"/quiz/add": {
+			"post": {
+				"operationId": "AddQuiz",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuizSummary"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"description": "Thêm một đề thi mới. Chỉ giáo viên mới có quyền sử dụng.\nYêu cầu có JWT hợp lệ (middleware Express chặn theo path /api/quiz)",
+				"tags": [
+					"Quiz"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"timeLimitMinutes": {
+										"type": "number",
+										"format": "double"
+									},
+									"teacherId": {
+										"type": "number",
+										"format": "double"
+									},
+									"status": {
+										"$ref": "#/components/schemas/QuizStatus"
+									},
+									"description": {
+										"type": "string",
+										"nullable": true
+									},
+									"title": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"timeLimitMinutes",
+									"teacherId",
+									"status",
+									"description",
+									"title"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/auth/login": {

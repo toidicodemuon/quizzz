@@ -6,6 +6,7 @@ import {
   Response,
   Controller,
   SuccessResponse,
+  Example,
 } from "tsoa";
 import {
   authenticateUser,
@@ -13,10 +14,13 @@ import {
   type LoginSuccessResponse,
 } from "../services/authService";
 
-export type LoginRequest = {
-  username: string;
-  password: string;
-};
+export class LoginRequest {
+  @Example<string>("teacher1")
+  public username!: string;
+
+  @Example<string>("123456")
+  public password!: string;
+}
 
 export type LoginErrorResponse = {
   message: string;
@@ -35,6 +39,7 @@ export class AuthController extends Controller {
   ): Promise<LoginSuccessResponse | LoginErrorResponse> {
     try {
       const result = await authenticateUser(body?.username, body?.password);
+      console.log(result);
       return result;
     } catch (error) {
       if (error instanceof AuthError) {
@@ -43,7 +48,7 @@ export class AuthController extends Controller {
       }
 
       this.setStatus(500);
-      return { message: "Login failed" };
+      return { message: "Login failed: " + JSON.stringify(error) };
     }
   }
 }
