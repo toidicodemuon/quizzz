@@ -42,19 +42,17 @@ export class UserController extends Controller {
     @Body()
     body: {
       username: string;
-      fullname: string;
-      hashPwd: string;
+      fullName: string;
+      passwordHash: string;
       email: string;
-      phone: string;
     }
   ): Promise<{ message: string; user: PrismaUser }> {
     const newUser = await prisma.user.create({
       data: {
         username: body.username,
-        fullname: body.fullname,
-        hashPwd: body.hashPwd,
+        fullName: body.fullName,
+        passwordHash: body.passwordHash,
         email: body.email,
-        phone: body.phone,
       },
     });
     this.setStatus(201);

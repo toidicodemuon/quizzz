@@ -4,6 +4,6 @@ import { Get, Route, Controller } from "tsoa";
 export class RootController extends Controller {
   @Get("/")
   public async welcomeMessage(): Promise<string> {
-    return "Welcome to the API!";
+    return "Welcome to the Quizzz API!";
   }
 }

@@ -1,0 +1,487 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"_36_Enums.UserRole": {
+				"type": "string",
+				"enum": [
+					"TEACHER",
+					"STUDENT"
+				]
+			},
+			"DefaultSelection_Prisma._36_UserPayload_": {
+				"properties": {
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"lastLogin": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"isActive": {
+						"type": "boolean"
+					},
+					"role": {
+						"$ref": "#/components/schemas/_36_Enums.UserRole"
+					},
+					"avatarUrl": {
+						"type": "string"
+					},
+					"fullName": {
+						"type": "string"
+					},
+					"passwordHash": {
+						"type": "string"
+					},
+					"email": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					},
+					"id": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"updatedAt",
+					"createdAt",
+					"lastLogin",
+					"isActive",
+					"role",
+					"avatarUrl",
+					"fullName",
+					"passwordHash",
+					"email",
+					"username",
+					"id"
+				],
+				"type": "object"
+			},
+			"PrismaUser": {
+				"$ref": "#/components/schemas/DefaultSelection_Prisma._36_UserPayload_",
+				"description": "Model User"
+			},
+			"QuizSummary": {
+				"properties": {
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"teacherId": {
+						"type": "number",
+						"format": "double"
+					},
+					"status": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string",
+						"nullable": true
+					},
+					"title": {
+						"type": "string"
+					},
+					"id": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"updatedAt",
+					"createdAt",
+					"teacherId",
+					"status",
+					"description",
+					"title",
+					"id"
+				],
+				"type": "object"
+			},
+			"LoginSuccessResponse": {
+				"properties": {
+					"user": {
+						"properties": {
+							"avatarUrl": {
+								"type": "string",
+								"nullable": true
+							},
+							"role": {
+								"type": "string"
+							},
+							"email": {
+								"type": "string"
+							},
+							"fullName": {
+								"type": "string"
+							},
+							"username": {
+								"type": "string"
+							},
+							"id": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"avatarUrl",
+							"role",
+							"email",
+							"fullName",
+							"username",
+							"id"
+						],
+						"type": "object"
+					},
+					"refreshToken": {
+						"type": "string"
+					},
+					"accessToken": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"user",
+					"refreshToken",
+					"accessToken"
+				],
+				"type": "object"
+			},
+			"LoginErrorResponse": {
+				"properties": {
+					"message": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"message"
+				],
+				"type": "object"
+			},
+			"LoginRequest": {
+				"properties": {
+					"password": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"password",
+					"username"
+				],
+				"type": "object"
+			}
+		},
+		"securitySchemes": {
+			"bearerAuth": {
+				"type": "http",
+				"scheme": "bearer",
+				"bearerFormat": "JWT",
+				"description": "Paste the JWT access token obtained from /auth/login"
+			}
+		}
+	},
+	"info": {
+		"title": "api",
+		"version": "1.0.0",
+		"description": "A description of QUIZZZ API",
+		"license": {
+			"name": "ISC"
+		},
+		"contact": {}
+	},
+	"paths": {
+		"/users": {
+			"get": {
+				"operationId": "GetUsers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/PrismaUser"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": []
+			},
+			"post": {
+				"operationId": "CreateUser",
+				"responses": {
+					"201": {
+						"description": "User created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"user": {
+											"$ref": "#/components/schemas/PrismaUser"
+										},
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"user",
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"email": {
+										"type": "string"
+									},
+									"passwordHash": {
+										"type": "string"
+									},
+									"fullName": {
+										"type": "string"
+									},
+									"username": {
+										"type": "string"
+									}
+								},
+								"required": [
+									"email",
+									"passwordHash",
+									"fullName",
+									"username"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/users/{id}": {
+			"get": {
+				"operationId": "GetUserById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/PrismaUser"
+										}
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "User not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"User"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/": {
+			"get": {
+				"operationId": "WelcomeMessage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/quiz": {
+			"get": {
+				"operationId": "ListQuizzes",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/QuizSummary"
+									},
+									"type": "array"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"description": "Trả về danh sách quiz. Yêu cầu có JWT hợp lệ (middleware Express chặn theo path /api/quiz)",
+				"tags": [
+					"Quiz"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/auth/login": {
+			"post": {
+				"operationId": "Login",
+				"responses": {
+					"200": {
+						"description": "Login successful",
+						"content": {
+							"application/json": {
+								"schema": {
+									"anyOf": [
+										{
+											"$ref": "#/components/schemas/LoginSuccessResponse"
+										},
+										{
+											"$ref": "#/components/schemas/LoginErrorResponse"
+										}
+									]
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LoginErrorResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Invalid credentials",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LoginErrorResponse"
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LoginErrorResponse"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LoginRequest"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/api"
+		}
+	]
+}

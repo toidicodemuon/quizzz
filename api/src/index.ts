@@ -5,6 +5,8 @@ import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
+//import { authMiddleware } from "./middlewares/authMiddleware";
+//import { loginHandler } from "./handlers/auth";
 
 // Load environment variables
 const env = process.env.NODE_ENV || "development";
@@ -26,13 +28,22 @@ app.use(
       "http://192.168.1.21:5173",
       "http://192.168.1.23:5173",
       "http://192.168.1.24:5173",
+      "http://192.168.1.25:5173",
       "http://192.168.1.30:5173",
       "http://localhost:5173",
     ],
   })
 );
 
-// Register TSOA routes
+// Public auth route (không qua TSOA để có path /auth/login)
+// app.post("/auth/login", (req, res, next) => {
+//   loginHandler(req, res).catch(next);
+// });
+
+// Bảo vệ các route /api/quiz bằng JWT middleware
+//app.use("/api/quiz", authMiddleware);
+
+// Register TSOA routes (tạo ra /api/* theo cấu hình basePath)
 RegisterRoutes(app);
 
 // Swagger UI setup

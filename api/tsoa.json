@@ -10,7 +10,15 @@
         "title": "QUIZZZ API Documentation",
         "version": "1.0.0",
         "description": "A description of QUIZZZ API",
-        "basePath": "/api"
+        "basePath": "/api",
+        "securityDefinitions": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Paste the JWT access token obtained from /auth/login"
+            }
+        }
     },
     "routes": {
         "basePath": "/api",
