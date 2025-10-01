@@ -16,12 +16,20 @@ datasource db {
 // Each user has a username, a hashed password, a role (teacher or
 // student), and relations to quizzes and submissions.
 model User {
-  id           Int          @id @default(autoincrement())
-  username     String       @unique
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  email        String?   @unique
   passwordHash String
-  role         UserRole     @default(STUDENT)
-  quizzes      Quiz[]
-  submissions  Submission[]
+  fullName     String?
+  avatarUrl    String?
+  role         UserRole  @default(STUDENT)
+  isActive     Boolean   @default(true)
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  quizzes     Quiz[]
+  submissions Submission[]
 }
 
 // Enum to distinguish between teacher and student roles.
@@ -43,6 +51,9 @@ model Quiz {
   teacherId        Int
   questions        Question[]
   submissions      Submission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Enum describing the status of a quiz.
