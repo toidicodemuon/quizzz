@@ -49,17 +49,21 @@ RegisterRoutes(app);
 // Swagger UI setup
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
-// Error handling middleware
+// Error handling middleware (respect status set by handlers/middlewares)
 app.use(
   (
-    err: Error,
+    err: any,
     _req: express.Request,
     res: express.Response,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _next: express.NextFunction
   ) => {
     console.error(err);
-    res.status(500).send(err.message);
+    const status = typeof err?.status === "number" ? err.status : 500;
+    const body = err?.fields
+      ? { message: err.message ?? "Validation error", fields: err.fields }
+      : { message: err?.message ?? "Internal Server Error" };
+    res.status(status).json(body);
   }
 );
 

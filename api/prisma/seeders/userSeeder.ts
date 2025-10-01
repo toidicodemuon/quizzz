@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 export async function seedUsers(prisma: PrismaClient) {
   const teacherPassword = await bcrypt.hash("123456", 10);
   const studentPassword = await bcrypt.hash("123456", 10);
+  const adminPassword = await bcrypt.hash("123456", 10);
 
   const teacher = await prisma.user.create({
     data: {
@@ -36,5 +37,18 @@ export async function seedUsers(prisma: PrismaClient) {
     },
   });
 
-  return { teacher, student };
+  const admin = await prisma.user.create({
+    data: {
+      username: "admin",
+      email: "admin@example.com",
+      passwordHash: adminPassword,
+      fullName: "System Administrator",
+      avatarUrl: "https://example.com/avatar-admin.png",
+      role: UserRole.ADMIN,
+      isActive: true,
+      lastLogin: new Date(),
+    },
+  });
+
+  return { teacher, student, admin };
 }

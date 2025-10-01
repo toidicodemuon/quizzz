@@ -19,7 +19,8 @@ const prisma = new PrismaClient();
 export class UserController extends Controller {
   @Get("/")
   @Response<null>(401, "Unauthorized")
-  @Security("bearerAuth")
+  @Response<null>(403, "Forbidden")
+  @Security("bearerAuth", ["ADMIN"])
   public async getUsers(): Promise<PrismaUser[]> {
     return await prisma.user.findMany();
   }
@@ -27,7 +28,8 @@ export class UserController extends Controller {
   @Get("{id}")
   @Response<null>(404, "User not found")
   @Response<null>(401, "Unauthorized")
-  @Security("bearerAuth")
+  @Response<null>(403, "Forbidden")
+  @Security("bearerAuth", ["ADMIN"])
   public async getUserById(@Path() id: number): Promise<PrismaUser | null> {
     const user = await prisma.user.findUnique({
       where: { id },
@@ -43,6 +45,9 @@ export class UserController extends Controller {
 
   @Post("/")
   @SuccessResponse("201", "User created")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Security("bearerAuth", ["ADMIN"])
   public async createUser(
     @Body()
     body: {

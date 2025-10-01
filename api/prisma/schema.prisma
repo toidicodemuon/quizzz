@@ -36,6 +36,7 @@ model User {
 enum UserRole {
   TEACHER
   STUDENT
+  ADMIN
 }
 
 // A quiz is created by a teacher. It contains multiple questions

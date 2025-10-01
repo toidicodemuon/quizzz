@@ -14,7 +14,7 @@ export type AuthUser = {
 export async function expressAuthentication(
   request: Request,
   securityName: string,
-  _scopes?: string[],
+  scopes?: string[],
   _response?: Response
 ): Promise<AuthUser> {
   try {
@@ -24,7 +24,8 @@ export async function expressAuthentication(
       throw err;
     }
 
-    const header = (request.headers["authorization"] || request.headers["Authorization"]) as string | undefined;
+    const header = (request.headers["authorization"] ||
+      request.headers["Authorization"]) as string | undefined;
     if (!header || Array.isArray(header)) {
       const err: any = new Error("Missing Authorization header");
       err.status = 401;
@@ -46,7 +47,10 @@ export async function expressAuthentication(
     }
 
     const decoded = jwt.verify(token, secret) as JwtPayload | string;
-    const payload = typeof decoded === "string" ? (JSON.parse(decoded) as JwtPayload) : decoded;
+    const payload =
+      typeof decoded === "string"
+        ? (JSON.parse(decoded) as JwtPayload)
+        : decoded;
 
     const id = Number(payload.sub);
     const username = String((payload as any).username ?? "");
@@ -59,6 +63,24 @@ export async function expressAuthentication(
     }
 
     const user: AuthUser = { id, username, role };
+
+    // Role/scope check via TSOA @Security("bearerAuth", ["ROLE"])
+    const path = (request as any).originalUrl ?? request.url;
+    const method = request.method?.toUpperCase();
+    if (Array.isArray(scopes) && scopes.length > 0) {
+      const required = scopes.map((s) => String(s).toUpperCase());
+      const roleUpper = role.toUpperCase();
+      if (!required.includes(roleUpper)) {
+        const err: any = new Error(
+          method === "POST" && path.startsWith("/api/quiz/add")
+            ? "Access denied. Only teachers can add quizzes."
+            : "Forbidden"
+        );
+        err.status = 403;
+        throw err;
+      }
+    }
+
     return user;
   } catch (error: any) {
     // Ensure an HTTP status is set for TSOA's error handler
@@ -71,4 +93,3 @@ export async function expressAuthentication(
 }
 
 export default expressAuthentication;
-

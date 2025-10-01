@@ -8,7 +8,10 @@ import {
   Security,
   Post,
   Body,
+  Request,
+  Example,
 } from "tsoa";
+import { Request as ExRequest } from "express";
 
 const prisma = new PrismaClient();
 
@@ -21,6 +24,20 @@ export type QuizSummary = {
   createdAt: Date;
   updatedAt: Date;
 };
+
+export class AddQuizRequest {
+  @Example<string>("Midterm Quiz")
+  public title!: string;
+
+  @Example<string>("Covers chapters 1–3")
+  public description!: string | null;
+
+  @Example<string>("DRAFT")
+  public status!: QuizStatus;
+
+  @Example<number>(30)
+  public timeLimitMinutes!: number;
+}
 
 /**
  * Quiz endpoints (được bảo vệ bởi JWT ở layer Express)
@@ -56,38 +73,23 @@ export class QuizController extends Controller {
 
   @Response<null>(400, "Bad Request")
   @Response<null>(401, "Unauthorized")
-  @Security("bearerAuth")
+  @Response<null>(403, "Forbidden")
+  @Security("bearerAuth", ["TEACHER"])
   @Post("/add")
   public async addQuiz(
-    @Body()
-    body: {
-      title: string;
-      description: string | null;
-      status: QuizStatus;
-      teacherId: number;
-      timeLimitMinutes: number;
-    }
+    @Request() req: ExRequest,
+    @Body() body: AddQuizRequest
   ): Promise<QuizSummary> {
-    // Ensure only teachers can access this endpoint
-    const isTeacher = await prisma.user.findUnique({
-      where: { id: body.teacherId },
-      select: { role: true },
-    });
-
-    if (!isTeacher || isTeacher.role !== "TEACHER") {
-      this.setStatus(403); // Forbidden
-      throw new Error("Access denied. Only teachers can add quizzes.");
-    }
-
-    const newQuiz = await prisma.quiz.create({
+    // JWT payload đã được TSOA inject vào req.user sau khi qua middleware Security
+    const user = (req as any).user as { id: number; role: string };
+    return prisma.quiz.create({
       data: {
         title: body.title,
         description: body.description,
         status: body.status,
-        teacherId: body.teacherId,
         timeLimitMinutes: body.timeLimitMinutes,
+        teacherId: user.id,
       },
     });
-    return newQuiz;
   }
 }

@@ -23,7 +23,7 @@ const expressAuthenticationRecasted = expressAuthentication as (req: ExRequest, 
 const models: TsoaRoute.Models = {
     "_36_Enums.UserRole": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["TEACHER"]},{"dataType":"enum","enums":["STUDENT"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["TEACHER"]},{"dataType":"enum","enums":["STUDENT"]},{"dataType":"enum","enums":["ADMIN"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "DefaultSelection_Prisma._36_UserPayload_": {
@@ -49,6 +49,17 @@ const models: TsoaRoute.Models = {
     "QuizStatus": {
         "dataType": "refAlias",
         "type": {"ref":"_36_Enums.QuizStatus","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AddQuizRequest": {
+        "dataType": "refObject",
+        "properties": {
+            "title": {"dataType":"string","required":true},
+            "description": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "status": {"ref":"QuizStatus","required":true},
+            "timeLimitMinutes": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "LoginSuccessResponse": {
@@ -88,7 +99,7 @@ export function RegisterRoutes(app: Router) {
 
     
         app.get('/api/users',
-            authenticateMiddleware([{"bearerAuth":[]}]),
+            authenticateMiddleware([{"bearerAuth":["ADMIN"]}]),
             ...(fetchMiddlewares<RequestHandler>(UserController)),
             ...(fetchMiddlewares<RequestHandler>(UserController.prototype.getUsers)),
 
@@ -118,7 +129,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.get('/api/users/:id',
-            authenticateMiddleware([{"bearerAuth":[]}]),
+            authenticateMiddleware([{"bearerAuth":["ADMIN"]}]),
             ...(fetchMiddlewares<RequestHandler>(UserController)),
             ...(fetchMiddlewares<RequestHandler>(UserController.prototype.getUserById)),
 
@@ -149,6 +160,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.post('/api/users',
+            authenticateMiddleware([{"bearerAuth":["ADMIN"]}]),
             ...(fetchMiddlewares<RequestHandler>(UserController)),
             ...(fetchMiddlewares<RequestHandler>(UserController.prototype.createUser)),
 
@@ -238,13 +250,14 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.post('/api/quiz/add',
-            authenticateMiddleware([{"bearerAuth":[]}]),
+            authenticateMiddleware([{"bearerAuth":["TEACHER"]}]),
             ...(fetchMiddlewares<RequestHandler>(QuizController)),
             ...(fetchMiddlewares<RequestHandler>(QuizController.prototype.addQuiz)),
 
             async function QuizController_addQuiz(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
-                    body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"timeLimitMinutes":{"dataType":"double","required":true},"teacherId":{"dataType":"double","required":true},"status":{"ref":"QuizStatus","required":true},"description":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"title":{"dataType":"string","required":true}}},
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                    body: {"in":"body","name":"body","required":true,"ref":"AddQuizRequest"},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
