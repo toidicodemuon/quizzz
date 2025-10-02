@@ -1,0 +1,63 @@
+{
+  "app": { "title": "Quiz Platform" },
+  "nav": {
+    "users": "Users",
+    "quizzes": "Quizzes",
+    "dashboard": "Dashboard",
+    "submissions": "Submissions"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "forgotPassword": "Forgot Password",
+    "resetPassword": "Reset Password",
+    "backToLogin": "Back to login",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email"
+  },
+  "roles": { "admin": "Admin", "teacher": "Teacher", "student": "Student" },
+  "user": { "username": "Username", "role": "Role", "active": "Active" },
+  "common": {
+    "search": "Search",
+    "actions": "Actions",
+    "refresh": "Refresh",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit"
+  },
+  "quiz": {
+    "title": "Title",
+    "status": "Status",
+    "timeLimit": "Time Limit",
+    "minutes": "minutes",
+    "create": "Create Quiz",
+    "approvePublish": "Approve/Publish"
+  },
+  "admin": {
+    "users": { "title": "Manage Users" },
+    "quizzes": { "title": "Manage Quizzes" }
+  },
+  "teacher": {
+    "dashboard": { "title": "Teacher Dashboard" },
+    "stats": { "quizzes": "Quizzes", "submissions": "Submissions", "avgScore": "Avg. Score" },
+    "quizzes": { "title": "Your Quizzes" },
+    "submissions": { "title": "Student Submissions" }
+  },
+  "student": {
+    "dashboard": { "title": "Student Dashboard" },
+    "availableQuizzes": "Available Quizzes",
+    "completedQuizzes": "Completed Quizzes",
+    "takeQuiz": "Take Quiz",
+    "viewResults": "View Results",
+    "results": { "title": "Quiz Results", "score": "Score", "explanation": "Explanation" },
+    "name": "Student",
+    "score": "Score"
+  }
+}
+
