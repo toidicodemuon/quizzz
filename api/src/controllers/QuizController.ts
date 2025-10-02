@@ -10,6 +10,9 @@ import {
   Body,
   Request,
   Example,
+  Put,
+  Delete,
+  Path,
 } from "tsoa";
 import { Request as ExRequest } from "express";
 
@@ -91,5 +94,96 @@ export class QuizController extends Controller {
         teacherId: user.id,
       },
     });
+  }
+
+  @Put("/{id}")
+  @Response<null>(400, "Bad Request")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Response<null>(404, "Quiz not found")
+  @Security("bearerAuth", ["TEACHER", "ADMIN"])
+  public async updateQuiz(
+    @Request() req: ExRequest,
+    @Path() id: number,
+    @Body()
+    body: {
+      title?: string;
+      description?: string | null;
+      status?: QuizStatus;
+      timeLimitMinutes?: number;
+    }
+  ): Promise<QuizSummary | null> {
+    const user = (req as any).user as { id: number; role: string };
+
+    const existing = await prisma.quiz.findUnique({
+      where: { id },
+      select: { id: true, teacherId: true },
+    });
+    if (!existing) {
+      this.setStatus(404);
+      return null;
+    }
+
+    if (
+      user.role?.toUpperCase() === "TEACHER" &&
+      existing.teacherId !== user.id
+    ) {
+      this.setStatus(403);
+      return null;
+    }
+
+    const data: any = {};
+    if (typeof body.title !== "undefined") data.title = body.title;
+    if (typeof body.description !== "undefined")
+      data.description = body.description;
+    if (typeof body.status !== "undefined") data.status = body.status;
+    if (typeof body.timeLimitMinutes !== "undefined")
+      data.timeLimitMinutes = body.timeLimitMinutes;
+
+    return prisma.quiz.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        teacherId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  @Delete("/{id}")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Response<null>(404, "Quiz not found")
+  @Security("bearerAuth", ["TEACHER", "ADMIN"])
+  public async deleteQuiz(
+    @Request() req: ExRequest,
+    @Path() id: number
+  ): Promise<{ message: string; id: number } | null> {
+    const user = (req as any).user as { id: number; role: string };
+
+    const existing = await prisma.quiz.findUnique({
+      where: { id },
+      select: { id: true, teacherId: true },
+    });
+    if (!existing) {
+      this.setStatus(404);
+      return null;
+    }
+
+    if (
+      user.role?.toUpperCase() === "TEACHER" &&
+      existing.teacherId !== user.id
+    ) {
+      this.setStatus(403);
+      return null;
+    }
+
+    await prisma.quiz.delete({ where: { id } });
+    return { message: "Quiz deleted", id };
   }
 }
