@@ -14,21 +14,26 @@ export class QuestionController extends Controller {
     @Query() quizId?: number,
     @Query() page?: number,
     @Query() pageSize?: number
-  ): Promise<Array<{ id: number; questionText: string; explanation: string | null; quizId: number }>> {
+  ): Promise<{ items: Array<{ id: number; questionText: string; explanation: string | null; quizId: number }>; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
-    return prisma.question.findMany({
-      where: typeof quizId === "number" ? { quizId } : undefined,
-      select: {
-        id: true,
-        questionText: true,
-        explanation: true,
-        quizId: true,
-      },
-      orderBy: { id: "asc" },
-      skip,
-      take,
-    });
+    const where = typeof quizId === "number" ? { quizId } : undefined;
+    const [items, total] = await Promise.all([
+      prisma.question.findMany({
+        where,
+        select: {
+          id: true,
+          questionText: true,
+          explanation: true,
+          quizId: true,
+        },
+        orderBy: { id: "asc" },
+        skip,
+        take,
+      }),
+      prisma.question.count({ where }),
+    ]);
+    return { items, total };
   }
 
   @Get("{id}")

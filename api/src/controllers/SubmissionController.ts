@@ -24,35 +24,64 @@ export class SubmissionController extends Controller {
     @Query() quizId?: number,
     @Query() page?: number,
     @Query() pageSize?: number
-  ): Promise<SubmissionSummary[]> {
+  ): Promise<{ items: SubmissionSummary[]; total: number }> {
     const user = (req as any).user as { id: number; role: string };
     const role = user.role?.toUpperCase();
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
 
     if (role === "ADMIN") {
-      return prisma.submission.findMany({
-        where: typeof quizId === "number" ? { quizId } : undefined,
-        select: {
-          id: true,
-          score: true,
-          startTime: true,
-          endTime: true,
-          studentId: true,
-          quizId: true,
-        },
-        orderBy: { id: "asc" },
-        skip,
-        take,
-      });
+      const where = typeof quizId === "number" ? { quizId } : undefined;
+      const [items, total] = await Promise.all([
+        prisma.submission.findMany({
+          where,
+          select: {
+            id: true,
+            score: true,
+            startTime: true,
+            endTime: true,
+            studentId: true,
+            quizId: true,
+          },
+          orderBy: { id: "asc" },
+          skip,
+          take,
+        }),
+        prisma.submission.count({ where }),
+      ]);
+      return { items, total };
     }
 
     if (role === "TEACHER") {
-      return prisma.submission.findMany({
-        where: {
-          quiz: { teacherId: user.id },
-          ...(typeof quizId === "number" ? { quizId } : {}),
-        },
+      const where: any = {
+        quiz: { teacherId: user.id },
+        ...(typeof quizId === "number" ? { quizId } : {}),
+      };
+      const [items, total] = await Promise.all([
+        prisma.submission.findMany({
+          where,
+          select: {
+            id: true,
+            score: true,
+            startTime: true,
+            endTime: true,
+            studentId: true,
+            quizId: true,
+          },
+          orderBy: { id: "asc" },
+          skip,
+          take,
+        }),
+        prisma.submission.count({ where }),
+      ]);
+      return { items, total };
+    }
+
+    // STUDENT: only own submissions
+    const where: any = { studentId: user.id, ...(typeof quizId === "number" ? { quizId } : {}) };
+    const [items, total] = await Promise.all([
+      prisma.submission.findMany({
+        where,
         select: {
           id: true,
           score: true,
@@ -64,24 +93,10 @@ export class SubmissionController extends Controller {
         orderBy: { id: "asc" },
         skip,
         take,
-      });
-    }
-
-    // STUDENT: only own submissions
-    return prisma.submission.findMany({
-      where: { studentId: user.id, ...(typeof quizId === "number" ? { quizId } : {}) },
-      select: {
-        id: true,
-        score: true,
-        startTime: true,
-        endTime: true,
-        studentId: true,
-        quizId: true,
-      },
-      orderBy: { id: "asc" },
-      skip,
-      take,
-    });
+      }),
+      prisma.submission.count({ where }),
+    ]);
+    return { items, total };
   }
 
   @Get("{id}")

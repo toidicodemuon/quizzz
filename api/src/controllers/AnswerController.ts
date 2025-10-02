@@ -29,21 +29,26 @@ export class AnswerController extends Controller {
     @Query() questionId?: number,
     @Query() page?: number,
     @Query() pageSize?: number
-  ): Promise<Array<{ id: number; answerText: string; isCorrect?: boolean; questionId: number }>> {
+  ): Promise<{ items: Array<{ id: number; answerText: string; isCorrect?: boolean; questionId: number }>; total: number }> {
     const role = ((req as any).user?.role ?? "").toUpperCase();
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
-    const items = await prisma.answer.findMany({
-      where: typeof questionId === "number" ? { questionId } : undefined,
-      select: { id: true, answerText: true, isCorrect: true, questionId: true },
-      orderBy: { id: "asc" },
-      skip,
-      take,
-    });
-    if (role === "STUDENT") {
-      return items.map(({ isCorrect, ...rest }) => rest) as any;
-    }
-    return items as any;
+    const where = typeof questionId === "number" ? { questionId } : undefined;
+    const [rawItems, total] = await Promise.all([
+      prisma.answer.findMany({
+        where,
+        select: { id: true, answerText: true, isCorrect: true, questionId: true },
+        orderBy: { id: "asc" },
+        skip,
+        take,
+      }),
+      prisma.answer.count({ where }),
+    ]);
+    const items =
+      role === "STUDENT"
+        ? (rawItems.map(({ isCorrect, ...rest }) => rest) as any)
+        : (rawItems as any);
+    return { items, total } as any;
   }
 
   @Get("{id}")

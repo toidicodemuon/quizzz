@@ -326,10 +326,23 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/UserResponse"
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/UserResponse"
+											},
+											"type": "array"
+										}
 									},
-									"type": "array"
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -492,7 +505,7 @@
 									"email": {
 										"type": "string"
 									},
-									"passwordHash": {
+									"password": {
 										"type": "string"
 									},
 									"fullName": {
@@ -504,7 +517,7 @@
 								},
 								"required": [
 									"email",
-									"passwordHash",
+									"password",
 									"fullName",
 									"username"
 								],
@@ -705,7 +718,7 @@
 										"type": "string",
 										"nullable": true
 									},
-									"passwordHash": {
+									"password": {
 										"type": "string"
 									},
 									"email": {
@@ -828,10 +841,23 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/SubmissionSummary"
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/SubmissionSummary"
+											},
+											"type": "array"
+										}
 									},
-									"type": "array"
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -1352,10 +1378,23 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/QuizSummary"
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/QuizSummary"
+											},
+											"type": "array"
+										}
 									},
-									"type": "array"
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -1795,33 +1834,46 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"properties": {
-											"quizId": {
-												"type": "number",
-												"format": "double"
-											},
-											"explanation": {
-												"type": "string",
-												"nullable": true
-											},
-											"questionText": {
-												"type": "string"
-											},
-											"id": {
-												"type": "number",
-												"format": "double"
-											}
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
 										},
-										"required": [
-											"quizId",
-											"explanation",
-											"questionText",
-											"id"
-										],
-										"type": "object"
+										"items": {
+											"items": {
+												"properties": {
+													"quizId": {
+														"type": "number",
+														"format": "double"
+													},
+													"explanation": {
+														"type": "string",
+														"nullable": true
+													},
+													"questionText": {
+														"type": "string"
+													},
+													"id": {
+														"type": "number",
+														"format": "double"
+													}
+												},
+												"required": [
+													"quizId",
+													"explanation",
+													"questionText",
+													"id"
+												],
+												"type": "object"
+											},
+											"type": "array"
+										}
 									},
-									"type": "array"
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -2379,31 +2431,44 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"properties": {
-											"questionId": {
-												"type": "number",
-												"format": "double"
-											},
-											"isCorrect": {
-												"type": "boolean"
-											},
-											"answerText": {
-												"type": "string"
-											},
-											"id": {
-												"type": "number",
-												"format": "double"
-											}
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
 										},
-										"required": [
-											"questionId",
-											"answerText",
-											"id"
-										],
-										"type": "object"
+										"items": {
+											"items": {
+												"properties": {
+													"questionId": {
+														"type": "number",
+														"format": "double"
+													},
+													"isCorrect": {
+														"type": "boolean"
+													},
+													"answerText": {
+														"type": "string"
+													},
+													"id": {
+														"type": "number",
+														"format": "double"
+													}
+												},
+												"required": [
+													"questionId",
+													"answerText",
+													"id"
+												],
+												"type": "object"
+											},
+											"type": "array"
+										}
 									},
-									"type": "array"
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
 								}
 							}
 						}

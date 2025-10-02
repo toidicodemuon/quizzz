@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { prisma } from "../utils/prisma";
 import { Get, Route, Tags, Path, Post, Body, Controller, Response, SuccessResponse, Security, Put, Delete, Query } from "tsoa";
+import bcrypt from "bcryptjs";
 
 export type UserResponse = {
   id: number;
@@ -44,7 +45,7 @@ export class UserController extends Controller {
     @Query() role?: UserRole,
     @Query() isActive?: boolean,
     @Query() search?: string
-  ): Promise<UserResponse[]> {
+  ): Promise<{ items: UserResponse[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const where: any = {};
@@ -58,13 +59,17 @@ export class UserController extends Controller {
         { fullName: { contains: q } },
       ];
     }
-    return await prisma.user.findMany({
-      where,
-      select: UserController.userSelect,
-      orderBy: { createdAt: "desc" },
-      skip,
-      take,
-    });
+    const [items, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        select: UserController.userSelect,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.user.count({ where }),
+    ]);
+    return { items, total };
   }
 
   @Get("{id}")
@@ -99,15 +104,16 @@ export class UserController extends Controller {
     body: {
       username: string;
       fullName: string;
-      passwordHash: string;
+      password: string;
       email: string;
     }
   ): Promise<{ message: string; user: UserResponse }> {
+    const passwordHash = await bcrypt.hash(body.password, 10);
     const newUser = await prisma.user.create({
       data: {
         username: body.username,
         fullName: body.fullName,
-        passwordHash: body.passwordHash,
+        passwordHash,
         email: body.email,
       },
       select: UserController.userSelect,
@@ -128,7 +134,7 @@ export class UserController extends Controller {
       username?: string;
       fullName?: string | null;
       email?: string | null;
-      passwordHash?: string;
+      password?: string;
       avatarUrl?: string | null;
       role?: UserRole;
       isActive?: boolean;
@@ -145,8 +151,8 @@ export class UserController extends Controller {
     if (typeof body.username !== "undefined") data.username = body.username;
     if (typeof body.fullName !== "undefined") data.fullName = body.fullName;
     if (typeof body.email !== "undefined") data.email = body.email;
-    if (typeof body.passwordHash !== "undefined")
-      data.passwordHash = body.passwordHash;
+    if (typeof body.password !== "undefined")
+      data.passwordHash = await bcrypt.hash(body.password, 10);
     if (typeof body.avatarUrl !== "undefined") data.avatarUrl = body.avatarUrl;
     if (typeof body.role !== "undefined") data.role = body.role;
     if (typeof body.isActive !== "undefined") data.isActive = body.isActive;

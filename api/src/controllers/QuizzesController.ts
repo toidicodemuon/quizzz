@@ -42,27 +42,31 @@ export class QuizzesController extends Controller {
     @Query() pageSize?: number,
     @Query() status?: QuizStatus,
     @Query() teacherId?: number
-  ): Promise<QuizSummary[]> {
+  ): Promise<{ items: QuizSummary[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const where: any = {};
     if (typeof status !== "undefined") where.status = status;
     if (typeof teacherId === "number") where.teacherId = teacherId;
-    return prisma.quiz.findMany({
-      where,
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        status: true,
-        teacherId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take,
-    });
+    const [items, total] = await Promise.all([
+      prisma.quiz.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          teacherId: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take,
+      }),
+      prisma.quiz.count({ where }),
+    ]);
+    return { items, total };
   }
 
   @Get("/{id}")
