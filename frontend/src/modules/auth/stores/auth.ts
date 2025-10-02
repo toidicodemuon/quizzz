@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { User, LoginPayload, Role } from '@/types';
 import * as AuthService from '@/services/auth';
+import JwtService from '@/services/JwtService';
 
 interface AuthState {
   token: string | null;
@@ -11,8 +12,15 @@ interface AuthState {
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
-    token: localStorage.getItem('token'),
-    user: null,
+    token: JwtService.getToken(),
+    user: (() => {
+      try {
+        const raw = localStorage.getItem('user');
+        return raw ? (JSON.parse(raw) as User) : null;
+      } catch {
+        return null;
+      }
+    })(),
     language: (import.meta.env.VITE_DEFAULT_LOCALE as 'en' | 'vi') || 'en',
     theme: 'light',
   }),
@@ -25,21 +33,26 @@ export const useAuthStore = defineStore('auth', {
       const { token, user } = await AuthService.login(payload);
       this.token = token;
       this.user = user;
-      localStorage.setItem('token', token);
+      JwtService.saveToken(token);
+      localStorage.setItem('user', JSON.stringify(user));
     },
     async loadProfile() {
+      // If backend supports /auth/me, use it; otherwise rely on persisted user
       if (!this.token) return;
-      try {
-        this.user = await AuthService.fetchProfile();
-      } catch (e) {
-        // token may be invalid
-        this.logout();
+      const raw = localStorage.getItem('user');
+      if (raw) {
+        try {
+          this.user = JSON.parse(raw) as User;
+        } catch {
+          this.user = null;
+        }
       }
     },
     logout() {
       this.token = null;
       this.user = null;
-      localStorage.removeItem('token');
+      JwtService.destroyToken();
+      localStorage.removeItem('user');
     },
     setLanguage(lang: 'en' | 'vi') {
       this.language = lang;
@@ -51,4 +64,3 @@ export const useAuthStore = defineStore('auth', {
     },
   },
 });
-

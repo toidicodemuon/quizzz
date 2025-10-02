@@ -1,11 +1,11 @@
 import axios from 'axios';
+import JwtService from '@/services/JwtService';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-});
+// Use absolute '/API/*' endpoints with Vite proxy; no baseURL required here.
+const api = axios.create();
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = JwtService.getToken();
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
@@ -25,4 +25,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-
