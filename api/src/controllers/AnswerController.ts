@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../utils/prisma";
 import {
   Body,
   Controller,
@@ -16,7 +16,7 @@ import {
 } from "tsoa";
 import { Request as ExRequest } from "express";
 
-const prisma = new PrismaClient();
+// shared prisma instance
 
 @Route("answers")
 @Tags("Answer")
@@ -26,13 +26,19 @@ export class AnswerController extends Controller {
   @Security("bearerAuth")
   public async listAnswers(
     @Request() req: ExRequest,
-    @Query() questionId?: number
+    @Query() questionId?: number,
+    @Query() page?: number,
+    @Query() pageSize?: number
   ): Promise<Array<{ id: number; answerText: string; isCorrect?: boolean; questionId: number }>> {
     const role = ((req as any).user?.role ?? "").toUpperCase();
+    const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
+    const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const items = await prisma.answer.findMany({
       where: typeof questionId === "number" ? { questionId } : undefined,
       select: { id: true, answerText: true, isCorrect: true, questionId: true },
       orderBy: { id: "asc" },
+      skip,
+      take,
     });
     if (role === "STUDENT") {
       return items.map(({ isCorrect, ...rest }) => rest) as any;
@@ -54,8 +60,9 @@ export class AnswerController extends Controller {
       select: { id: true, answerText: true, isCorrect: true, questionId: true },
     });
     if (!a) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("Answer not found");
+      err.status = 404;
+      throw err;
     }
     if (role === "STUDENT") {
       const { isCorrect, ...rest } = a;
@@ -86,8 +93,9 @@ export class AnswerController extends Controller {
       user.role?.toUpperCase() === "TEACHER" &&
       question.quiz.teacherId !== user.id
     ) {
-      this.setStatus(403);
-      return null as any;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     return prisma.answer.create({
@@ -120,15 +128,17 @@ export class AnswerController extends Controller {
       },
     });
     if (!existing) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("Answer not found");
+      err.status = 404;
+      throw err;
     }
     if (
       user.role?.toUpperCase() === "TEACHER" &&
       existing.question.quiz.teacherId !== user.id
     ) {
-      this.setStatus(403);
-      return null;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     const data: any = {};
@@ -157,15 +167,17 @@ export class AnswerController extends Controller {
       select: { id: true, question: { select: { quiz: { select: { teacherId: true } } } } },
     });
     if (!existing) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("Answer not found");
+      err.status = 404;
+      throw err;
     }
     if (
       user.role?.toUpperCase() === "TEACHER" &&
       existing.question.quiz.teacherId !== user.id
     ) {
-      this.setStatus(403);
-      return null;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     await prisma.answer.delete({ where: { id } });

@@ -14,6 +14,8 @@ import { RootController } from './../controllers/RootController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { QuizController } from './../controllers/QuizController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { QuizzesController } from './../controllers/QuizzesController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { QuestionController } from './../controllers/QuestionController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { AuthController } from './../controllers/AuthController';
@@ -123,6 +125,11 @@ export function RegisterRoutes(app: Router) {
 
             async function UserController_getUsers(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    page: {"in":"query","name":"page","dataType":"double"},
+                    pageSize: {"in":"query","name":"pageSize","dataType":"double"},
+                    role: {"in":"query","name":"role","ref":"UserRole"},
+                    isActive: {"in":"query","name":"isActive","dataType":"boolean"},
+                    search: {"in":"query","name":"search","dataType":"string"},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
@@ -279,6 +286,9 @@ export function RegisterRoutes(app: Router) {
             async function SubmissionController_listSubmissions(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
                     req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                    quizId: {"in":"query","name":"quizId","dataType":"double"},
+                    page: {"in":"query","name":"page","dataType":"double"},
+                    pageSize: {"in":"query","name":"pageSize","dataType":"double"},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
@@ -498,6 +508,10 @@ export function RegisterRoutes(app: Router) {
 
             async function QuizController_listQuizzes(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    page: {"in":"query","name":"page","dataType":"double"},
+                    pageSize: {"in":"query","name":"pageSize","dataType":"double"},
+                    status: {"in":"query","name":"status","ref":"QuizStatus"},
+                    teacherId: {"in":"query","name":"teacherId","dataType":"double"},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
@@ -649,6 +663,168 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.get('/api/quizzes',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController)),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController.prototype.list)),
+
+            async function QuizzesController_list(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    page: {"in":"query","name":"page","dataType":"double"},
+                    pageSize: {"in":"query","name":"pageSize","dataType":"double"},
+                    status: {"in":"query","name":"status","ref":"QuizStatus"},
+                    teacherId: {"in":"query","name":"teacherId","dataType":"double"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new QuizzesController();
+
+              await templateService.apiHandler({
+                methodName: 'list',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.get('/api/quizzes/:id',
+            authenticateMiddleware([{"bearerAuth":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController)),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController.prototype.get)),
+
+            async function QuizzesController_get(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    id: {"in":"path","name":"id","required":true,"dataType":"double"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new QuizzesController();
+
+              await templateService.apiHandler({
+                methodName: 'get',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.post('/api/quizzes',
+            authenticateMiddleware([{"bearerAuth":["TEACHER"]}]),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController)),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController.prototype.create)),
+
+            async function QuizzesController_create(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                    body: {"in":"body","name":"body","required":true,"ref":"AddQuizRequest"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new QuizzesController();
+
+              await templateService.apiHandler({
+                methodName: 'create',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.put('/api/quizzes/:id',
+            authenticateMiddleware([{"bearerAuth":["TEACHER","ADMIN"]}]),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController)),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController.prototype.update)),
+
+            async function QuizzesController_update(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                    id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                    body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"timeLimitMinutes":{"dataType":"double"},"status":{"ref":"QuizStatus"},"description":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"title":{"dataType":"string"}}},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new QuizzesController();
+
+              await templateService.apiHandler({
+                methodName: 'update',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.delete('/api/quizzes/:id',
+            authenticateMiddleware([{"bearerAuth":["TEACHER","ADMIN"]}]),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController)),
+            ...(fetchMiddlewares<RequestHandler>(QuizzesController.prototype.remove)),
+
+            async function QuizzesController_remove(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
+                    id: {"in":"path","name":"id","required":true,"dataType":"double"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new QuizzesController();
+
+              await templateService.apiHandler({
+                methodName: 'remove',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.get('/api/questions',
             authenticateMiddleware([{"bearerAuth":[]}]),
             ...(fetchMiddlewares<RequestHandler>(QuestionController)),
@@ -656,6 +832,9 @@ export function RegisterRoutes(app: Router) {
 
             async function QuestionController_listQuestions(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    quizId: {"in":"query","name":"quizId","dataType":"double"},
+                    page: {"in":"query","name":"page","dataType":"double"},
+                    pageSize: {"in":"query","name":"pageSize","dataType":"double"},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
@@ -846,6 +1025,8 @@ export function RegisterRoutes(app: Router) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
                     req: {"in":"request","name":"req","required":true,"dataType":"object"},
                     questionId: {"in":"query","name":"questionId","dataType":"double"},
+                    page: {"in":"query","name":"page","dataType":"double"},
+                    pageSize: {"in":"query","name":"pageSize","dataType":"double"},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa

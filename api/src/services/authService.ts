@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../utils/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -21,7 +21,7 @@ export class AuthError extends Error {
   }
 }
 
-const prisma = new PrismaClient();
+// shared prisma instance
 
 /**
  * Thực hiện xác thực user và sinh JWT

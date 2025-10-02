@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../utils/prisma";
 import {
   Controller,
   Get,
@@ -12,7 +12,7 @@ import {
 } from "tsoa";
 import { Request as ExRequest } from "express";
 
-const prisma = new PrismaClient();
+// shared prisma instance
 
 type SubmissionAnswerSummary = {
   id: number;
@@ -51,12 +51,14 @@ export class SubmissionAnswerController extends Controller {
     }
 
     if (role === "STUDENT" && submission.studentId !== user.id) {
-      this.setStatus(403);
-      return [];
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
     if (role === "TEACHER" && submission.quiz.teacherId !== user.id) {
-      this.setStatus(403);
-      return [];
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     return prisma.submissionAnswer.findMany({
@@ -95,21 +97,23 @@ export class SubmissionAnswerController extends Controller {
     });
 
     if (!sa) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("Not found");
+      err.status = 404;
+      throw err;
     }
 
     if (role === "STUDENT" && sa.submission.studentId !== user.id) {
-      this.setStatus(403);
-      return null as any;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
     if (role === "TEACHER" && sa.submission.quiz.teacherId !== user.id) {
-      this.setStatus(403);
-      return null as any;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     const { submission: _omit, ...summary } = sa as any;
     return summary as SubmissionAnswerSummary;
   }
 }
-

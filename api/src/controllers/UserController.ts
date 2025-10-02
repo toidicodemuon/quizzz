@@ -1,18 +1,6 @@
-import { PrismaClient, UserRole } from "@prisma/client";
-import {
-  Get,
-  Route,
-  Tags,
-  Path,
-  Post,
-  Body,
-  Controller,
-  Response,
-  SuccessResponse,
-  Security,
-  Put,
-  Delete,
-} from "tsoa";
+import { UserRole } from "@prisma/client";
+import { prisma } from "../utils/prisma";
+import { Get, Route, Tags, Path, Post, Body, Controller, Response, SuccessResponse, Security, Put, Delete, Query } from "tsoa";
 
 export type UserResponse = {
   id: number;
@@ -27,7 +15,7 @@ export type UserResponse = {
   updatedAt: Date;
 };
 
-const prisma = new PrismaClient();
+// use shared prisma instance
 
 @Route("users")
 @Tags("User")
@@ -50,8 +38,33 @@ export class UserController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
   @Security("bearerAuth", ["ADMIN"])
-  public async getUsers(): Promise<UserResponse[]> {
-    return await prisma.user.findMany({ select: UserController.userSelect });
+  public async getUsers(
+    @Query() page?: number,
+    @Query() pageSize?: number,
+    @Query() role?: UserRole,
+    @Query() isActive?: boolean,
+    @Query() search?: string
+  ): Promise<UserResponse[]> {
+    const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
+    const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
+    const where: any = {};
+    if (typeof role !== "undefined") where.role = role;
+    if (typeof isActive === "boolean") where.isActive = isActive;
+    if (search && search.trim()) {
+      const q = search.trim();
+      where.OR = [
+        { username: { contains: q } },
+        { email: { contains: q } },
+        { fullName: { contains: q } },
+      ];
+    }
+    return await prisma.user.findMany({
+      where,
+      select: UserController.userSelect,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take,
+    });
   }
 
   @Get("{id}")
@@ -68,8 +81,9 @@ export class UserController extends Controller {
     });
 
     if (!user) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("User not found");
+      err.status = 404;
+      throw err;
     }
 
     return user;
@@ -122,8 +136,9 @@ export class UserController extends Controller {
   ): Promise<{ message: string; user: UserResponse } | null> {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("User not found");
+      err.status = 404;
+      throw err;
     }
 
     const data: any = {};
@@ -154,8 +169,9 @@ export class UserController extends Controller {
   ): Promise<{ message: string; id: number } | null> {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("User not found");
+      err.status = 404;
+      throw err;
     }
 
     await prisma.user.delete({ where: { id } });

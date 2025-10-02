@@ -1,20 +1,8 @@
-import { PrismaClient } from "@prisma/client";
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Path,
-  Post,
-  Request,
-  Response,
-  Route,
-  Security,
-  Tags,
-} from "tsoa";
+import { prisma } from "../utils/prisma";
+import { Body, Controller, Delete, Get, Path, Post, Request, Response, Route, Security, Tags, Query } from "tsoa";
 import { Request as ExRequest } from "express";
 
-const prisma = new PrismaClient();
+// shared prisma instance
 
 type SubmissionSummary = {
   id: number;
@@ -31,12 +19,20 @@ export class SubmissionController extends Controller {
   @Get("/")
   @Response<null>(401, "Unauthorized")
   @Security("bearerAuth")
-  public async listSubmissions(@Request() req: ExRequest): Promise<SubmissionSummary[]> {
+  public async listSubmissions(
+    @Request() req: ExRequest,
+    @Query() quizId?: number,
+    @Query() page?: number,
+    @Query() pageSize?: number
+  ): Promise<SubmissionSummary[]> {
     const user = (req as any).user as { id: number; role: string };
     const role = user.role?.toUpperCase();
+    const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
+    const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
 
     if (role === "ADMIN") {
       return prisma.submission.findMany({
+        where: typeof quizId === "number" ? { quizId } : undefined,
         select: {
           id: true,
           score: true,
@@ -46,12 +42,17 @@ export class SubmissionController extends Controller {
           quizId: true,
         },
         orderBy: { id: "asc" },
+        skip,
+        take,
       });
     }
 
     if (role === "TEACHER") {
       return prisma.submission.findMany({
-        where: { quiz: { teacherId: user.id } },
+        where: {
+          quiz: { teacherId: user.id },
+          ...(typeof quizId === "number" ? { quizId } : {}),
+        },
         select: {
           id: true,
           score: true,
@@ -61,12 +62,14 @@ export class SubmissionController extends Controller {
           quizId: true,
         },
         orderBy: { id: "asc" },
+        skip,
+        take,
       });
     }
 
     // STUDENT: only own submissions
     return prisma.submission.findMany({
-      where: { studentId: user.id },
+      where: { studentId: user.id, ...(typeof quizId === "number" ? { quizId } : {}) },
       select: {
         id: true,
         score: true,
@@ -76,6 +79,8 @@ export class SubmissionController extends Controller {
         quizId: true,
       },
       orderBy: { id: "asc" },
+      skip,
+      take,
     });
   }
 
@@ -103,20 +108,19 @@ export class SubmissionController extends Controller {
       },
     });
     if (!sub) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("Submission not found");
+      err.status = 404;
+      throw err;
     }
-    if (
-      role === "STUDENT" && sub.studentId !== user.id
-    ) {
-      this.setStatus(403);
-      return null as any;
+    if (role === "STUDENT" && sub.studentId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
-    if (
-      role === "TEACHER" && sub.quiz.teacherId !== user.id
-    ) {
-      this.setStatus(403);
-      return null as any;
+    if (role === "TEACHER" && sub.quiz.teacherId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     const { quiz: _omit, ...summary } = sub as any;
@@ -138,10 +142,14 @@ export class SubmissionController extends Controller {
   ): Promise<SubmissionSummary> {
     const user = (req as any).user as { id: number; role: string };
 
-    const quiz = await prisma.quiz.findUnique({ where: { id: body.quizId }, select: { id: true } });
+    const quiz = await prisma.quiz.findUnique({ where: { id: body.quizId }, select: { id: true, status: true } });
     if (!quiz) {
       this.setStatus(400);
       throw new Error("Invalid quizId");
+    }
+    if (quiz.status !== "PUBLISHED") {
+      this.setStatus(400);
+      throw new Error("Quiz is not open for submissions");
     }
 
     if (!Array.isArray(body.answers) || body.answers.length === 0) {
@@ -220,16 +228,17 @@ export class SubmissionController extends Controller {
       select: { id: true, quiz: { select: { teacherId: true } } },
     });
     if (!existing) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("Submission not found");
+      err.status = 404;
+      throw err;
     }
     if (role === "TEACHER" && existing.quiz.teacherId !== user.id) {
-      this.setStatus(403);
-      return null;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     await prisma.submission.delete({ where: { id } });
     return { message: "Submission deleted", id };
   }
 }
-

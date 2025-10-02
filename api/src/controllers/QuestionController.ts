@@ -1,21 +1,8 @@
-import { PrismaClient } from "@prisma/client";
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Path,
-  Post,
-  Put,
-  Request,
-  Response,
-  Route,
-  Security,
-  Tags,
-} from "tsoa";
+import { prisma } from "../utils/prisma";
+import { Body, Controller, Delete, Get, Path, Post, Put, Request, Response, Route, Security, Tags, Query } from "tsoa";
 import { Request as ExRequest } from "express";
 
-const prisma = new PrismaClient();
+// shared prisma instance
 
 @Route("questions")
 @Tags("Question")
@@ -23,10 +10,15 @@ export class QuestionController extends Controller {
   @Get("/")
   @Response<null>(401, "Unauthorized")
   @Security("bearerAuth")
-  public async listQuestions(): Promise<
-    Array<{ id: number; questionText: string; explanation: string | null; quizId: number }>
-  > {
+  public async listQuestions(
+    @Query() quizId?: number,
+    @Query() page?: number,
+    @Query() pageSize?: number
+  ): Promise<Array<{ id: number; questionText: string; explanation: string | null; quizId: number }>> {
+    const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
+    const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     return prisma.question.findMany({
+      where: typeof quizId === "number" ? { quizId } : undefined,
       select: {
         id: true,
         questionText: true,
@@ -34,6 +26,8 @@ export class QuestionController extends Controller {
         quizId: true,
       },
       orderBy: { id: "asc" },
+      skip,
+      take,
     });
   }
 
@@ -54,8 +48,9 @@ export class QuestionController extends Controller {
       select: { id: true, questionText: true, explanation: true, quizId: true },
     });
     if (!q) {
-      this.setStatus(404);
-      return null;
+      const err: any = new Error("Question not found");
+      err.status = 404;
+      throw err;
     }
     return q;
   }
@@ -80,8 +75,9 @@ export class QuestionController extends Controller {
       throw new Error("Invalid quizId");
     }
     if (user.role?.toUpperCase() === "TEACHER" && quiz.teacherId !== user.id) {
-      this.setStatus(403);
-      return null as any;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     return prisma.question.create({
@@ -117,8 +113,9 @@ export class QuestionController extends Controller {
       user.role?.toUpperCase() === "TEACHER" &&
       existing.quiz.teacherId !== user.id
     ) {
-      this.setStatus(403);
-      return null;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     const data: any = {};
@@ -154,12 +151,12 @@ export class QuestionController extends Controller {
       user.role?.toUpperCase() === "TEACHER" &&
       existing.quiz.teacherId !== user.id
     ) {
-      this.setStatus(403);
-      return null;
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
     }
 
     await prisma.question.delete({ where: { id } });
     return { message: "Question deleted", id };
   }
 }
-
