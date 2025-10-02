@@ -21,8 +21,9 @@ export const useAuthStore = defineStore('auth', {
         return null;
       }
     })(),
-    language: (import.meta.env.VITE_DEFAULT_LOCALE as 'en' | 'vi') || 'en',
-    theme: 'light',
+    language: (localStorage.getItem('language') as 'en' | 'vi') ||
+      ((import.meta.env.VITE_DEFAULT_LOCALE as 'en' | 'vi') || 'en'),
+    theme: (localStorage.getItem('theme') as 'light' | 'dark') || 'light',
   }),
   getters: {
     isAuthenticated: (state) => !!state.token,
@@ -56,9 +57,11 @@ export const useAuthStore = defineStore('auth', {
     },
     setLanguage(lang: 'en' | 'vi') {
       this.language = lang;
+      localStorage.setItem('language', lang);
     },
     setTheme(theme: 'light' | 'dark') {
       this.theme = theme;
+      localStorage.setItem('theme', theme);
       const html = document.querySelector('html');
       if (html) html.setAttribute('data-theme', theme);
     },

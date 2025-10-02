@@ -18,5 +18,9 @@ app.use(i18n);
 // Hydrate auth from storage on app boot
 const auth = useAuthStore();
 auth.loadProfile();
+// apply persisted language + theme
+i18n.global.locale.value = auth.language;
+const html = document.querySelector('html');
+if (html) html.setAttribute('data-theme', auth.theme);
 
 app.mount('#app');
