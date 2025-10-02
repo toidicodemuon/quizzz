@@ -69,6 +69,33 @@ export class QuizController extends Controller {
     });
     return quizzes;
   }
+
+  /**
+   * Lấy chi tiết một quiz theo id.
+   */
+  @Get("/{id}")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(404, "Quiz not found")
+  @Security("bearerAuth")
+  public async getQuizById(@Path() id: number): Promise<QuizSummary | null> {
+    const quiz = await prisma.quiz.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        teacherId: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    if (!quiz) {
+      this.setStatus(404);
+      return null;
+    }
+    return quiz;
+  }
   /**
    * Thêm một đề thi mới. Chỉ giáo viên mới có quyền sử dụng.
    * Yêu cầu có JWT hợp lệ (middleware Express chặn theo path /api/quiz)

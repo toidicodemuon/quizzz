@@ -25,13 +25,19 @@ export class AnswerController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Security("bearerAuth")
   public async listAnswers(
+    @Request() req: ExRequest,
     @Query() questionId?: number
-  ): Promise<Array<{ id: number; answerText: string; isCorrect: boolean; questionId: number }>> {
-    return prisma.answer.findMany({
+  ): Promise<Array<{ id: number; answerText: string; isCorrect?: boolean; questionId: number }>> {
+    const role = ((req as any).user?.role ?? "").toUpperCase();
+    const items = await prisma.answer.findMany({
       where: typeof questionId === "number" ? { questionId } : undefined,
       select: { id: true, answerText: true, isCorrect: true, questionId: true },
       orderBy: { id: "asc" },
     });
+    if (role === "STUDENT") {
+      return items.map(({ isCorrect, ...rest }) => rest) as any;
+    }
+    return items as any;
   }
 
   @Get("{id}")
@@ -39,8 +45,10 @@ export class AnswerController extends Controller {
   @Response<null>(404, "Answer not found")
   @Security("bearerAuth")
   public async getAnswerById(
+    @Request() req: ExRequest,
     @Path() id: number
-  ): Promise<{ id: number; answerText: string; isCorrect: boolean; questionId: number } | null> {
+  ): Promise<{ id: number; answerText: string; isCorrect?: boolean; questionId: number } | null> {
+    const role = ((req as any).user?.role ?? "").toUpperCase();
     const a = await prisma.answer.findUnique({
       where: { id },
       select: { id: true, answerText: true, isCorrect: true, questionId: true },
@@ -49,7 +57,11 @@ export class AnswerController extends Controller {
       this.setStatus(404);
       return null;
     }
-    return a;
+    if (role === "STUDENT") {
+      const { isCorrect, ...rest } = a;
+      return rest as any;
+    }
+    return a as any;
   }
 
   @Post("/")
@@ -160,4 +172,3 @@ export class AnswerController extends Controller {
     return { message: "Answer deleted", id };
   }
 }
-

@@ -15,7 +15,10 @@
 					"ADMIN"
 				]
 			},
-			"DefaultSelection_Prisma._36_UserPayload_": {
+			"UserRole": {
+				"$ref": "#/components/schemas/_36_Enums.UserRole"
+			},
+			"UserResponse": {
 				"properties": {
 					"updatedAt": {
 						"type": "string",
@@ -27,25 +30,26 @@
 					},
 					"lastLogin": {
 						"type": "string",
-						"format": "date-time"
+						"format": "date-time",
+						"nullable": true
 					},
 					"isActive": {
 						"type": "boolean"
 					},
 					"role": {
-						"$ref": "#/components/schemas/_36_Enums.UserRole"
+						"$ref": "#/components/schemas/UserRole"
 					},
 					"avatarUrl": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"fullName": {
-						"type": "string"
-					},
-					"passwordHash": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"email": {
-						"type": "string"
+						"type": "string",
+						"nullable": true
 					},
 					"username": {
 						"type": "string"
@@ -63,19 +67,11 @@
 					"role",
 					"avatarUrl",
 					"fullName",
-					"passwordHash",
 					"email",
 					"username",
 					"id"
 				],
 				"type": "object"
-			},
-			"PrismaUser": {
-				"$ref": "#/components/schemas/DefaultSelection_Prisma._36_UserPayload_",
-				"description": "Model User"
-			},
-			"UserRole": {
-				"$ref": "#/components/schemas/_36_Enums.UserRole"
 			},
 			"SubmissionSummary": {
 				"properties": {
@@ -331,7 +327,7 @@
 							"application/json": {
 								"schema": {
 									"items": {
-										"$ref": "#/components/schemas/PrismaUser"
+										"$ref": "#/components/schemas/UserResponse"
 									},
 									"type": "array"
 								}
@@ -389,7 +385,7 @@
 								"schema": {
 									"properties": {
 										"user": {
-											"$ref": "#/components/schemas/PrismaUser"
+											"$ref": "#/components/schemas/UserResponse"
 										},
 										"message": {
 											"type": "string"
@@ -487,7 +483,7 @@
 								"schema": {
 									"allOf": [
 										{
-											"$ref": "#/components/schemas/PrismaUser"
+											"$ref": "#/components/schemas/UserResponse"
 										}
 									],
 									"nullable": true
@@ -570,7 +566,7 @@
 								"schema": {
 									"properties": {
 										"user": {
-											"$ref": "#/components/schemas/PrismaUser"
+											"$ref": "#/components/schemas/UserResponse"
 										},
 										"message": {
 											"type": "string"
@@ -1320,28 +1316,19 @@
 				"parameters": []
 			}
 		},
-		"/quiz/add": {
-			"post": {
-				"operationId": "AddQuiz",
+		"/quiz/{id}": {
+			"get": {
+				"operationId": "GetQuizById",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/QuizSummary"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/QuizSummary"
+										}
 									],
 									"nullable": true
 								}
@@ -1362,8 +1349,8 @@
 							}
 						}
 					},
-					"403": {
-						"description": "Forbidden",
+					"404": {
+						"description": "Quiz not found",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -1377,31 +1364,27 @@
 						}
 					}
 				},
-				"description": "Thêm một đề thi mới. Chỉ giáo viên mới có quyền sử dụng.\nYêu cầu có JWT hợp lệ (middleware Express chặn theo path /api/quiz)",
+				"description": "Lấy chi tiết một quiz theo id.",
 				"tags": [
 					"Quiz"
 				],
 				"security": [
 					{
-						"bearerAuth": [
-							"TEACHER"
-						]
+						"bearerAuth": []
 					}
 				],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/AddQuizRequest"
-							}
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
 						}
 					}
-				}
-			}
-		},
-		"/quiz/{id}": {
+				]
+			},
 			"put": {
 				"operationId": "UpdateQuiz",
 				"responses": {
@@ -1618,6 +1601,87 @@
 						}
 					}
 				]
+			}
+		},
+		"/quiz/add": {
+			"post": {
+				"operationId": "AddQuiz",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/QuizSummary"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"description": "Thêm một đề thi mới. Chỉ giáo viên mới có quyền sử dụng.\nYêu cầu có JWT hợp lệ (middleware Express chặn theo path /api/quiz)",
+				"tags": [
+					"Quiz"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddQuizRequest"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/questions": {
@@ -2204,7 +2268,6 @@
 										},
 										"required": [
 											"questionId",
-											"isCorrect",
 											"answerText",
 											"id"
 										],
@@ -2395,7 +2458,6 @@
 									},
 									"required": [
 										"questionId",
-										"isCorrect",
 										"answerText",
 										"id"
 									],

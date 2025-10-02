@@ -1,4 +1,4 @@
-import { PrismaClient, User as PrismaUser, UserRole } from "@prisma/client";
+import { PrismaClient, UserRole } from "@prisma/client";
 import {
   Get,
   Route,
@@ -14,17 +14,44 @@ import {
   Delete,
 } from "tsoa";
 
+export type UserResponse = {
+  id: number;
+  username: string;
+  email: string | null;
+  fullName: string | null;
+  avatarUrl: string | null;
+  role: UserRole;
+  isActive: boolean;
+  lastLogin: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 const prisma = new PrismaClient();
 
 @Route("users")
 @Tags("User")
 export class UserController extends Controller {
+  /** Public response shape that hides passwordHash */
+  private static readonly userSelect = {
+    id: true,
+    username: true,
+    email: true,
+    fullName: true,
+    avatarUrl: true,
+    role: true,
+    isActive: true,
+    lastLogin: true,
+    createdAt: true,
+    updatedAt: true,
+  } as const;
+
   @Get("/")
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
   @Security("bearerAuth", ["ADMIN"])
-  public async getUsers(): Promise<PrismaUser[]> {
-    return await prisma.user.findMany();
+  public async getUsers(): Promise<UserResponse[]> {
+    return await prisma.user.findMany({ select: UserController.userSelect });
   }
 
   @Get("{id}")
@@ -32,9 +59,12 @@ export class UserController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
   @Security("bearerAuth", ["ADMIN"])
-  public async getUserById(@Path() id: number): Promise<PrismaUser | null> {
+  public async getUserById(
+    @Path() id: number
+  ): Promise<UserResponse | null> {
     const user = await prisma.user.findUnique({
       where: { id },
+      select: UserController.userSelect,
     });
 
     if (!user) {
@@ -58,7 +88,7 @@ export class UserController extends Controller {
       passwordHash: string;
       email: string;
     }
-  ): Promise<{ message: string; user: PrismaUser }> {
+  ): Promise<{ message: string; user: UserResponse }> {
     const newUser = await prisma.user.create({
       data: {
         username: body.username,
@@ -66,6 +96,7 @@ export class UserController extends Controller {
         passwordHash: body.passwordHash,
         email: body.email,
       },
+      select: UserController.userSelect,
     });
     this.setStatus(201);
     return { message: "User created", user: newUser };
@@ -88,7 +119,7 @@ export class UserController extends Controller {
       role?: UserRole;
       isActive?: boolean;
     }
-  ): Promise<{ message: string; user: PrismaUser } | null> {
+  ): Promise<{ message: string; user: UserResponse } | null> {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) {
       this.setStatus(404);
@@ -105,7 +136,11 @@ export class UserController extends Controller {
     if (typeof body.role !== "undefined") data.role = body.role;
     if (typeof body.isActive !== "undefined") data.isActive = body.isActive;
 
-    const updated = await prisma.user.update({ where: { id }, data });
+    const updated = await prisma.user.update({
+      where: { id },
+      data,
+      select: UserController.userSelect,
+    });
     return { message: "User updated", user: updated };
   }
 
