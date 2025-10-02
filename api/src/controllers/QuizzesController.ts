@@ -1,8 +1,31 @@
 import { QuizStatus } from "@prisma/client";
 import { prisma } from "../utils/prisma";
-import { Controller, Get, Route, Tags, Response, Security, Post, Body, Request, Put, Delete, Path, Query } from "tsoa";
+import { Controller, Get, Route, Tags, Response, Security, Post, Body, Request, Put, Delete, Path, Query, Example } from "tsoa";
 import { Request as ExRequest } from "express";
-import type { QuizSummary, AddQuizRequest } from "./QuizController";
+
+export type QuizSummary = {
+  id: number;
+  title: string;
+  description: string | null;
+  status: string;
+  teacherId: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export class AddQuizRequest {
+  @Example<string>("Midterm Quiz")
+  public title!: string;
+
+  @Example<string>("Covers chapters 1–3")
+  public description!: string | null;
+
+  @Example<string>("DRAFT")
+  public status!: QuizStatus;
+
+  @Example<number>(30)
+  public timeLimitMinutes!: number;
+}
 
 /**
  * RESTful alias of QuizController under "/quizzes" (pluralized).
@@ -142,4 +165,3 @@ export class QuizzesController extends Controller {
     return { message: "Quiz deleted", id };
   }
 }
-

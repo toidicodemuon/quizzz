@@ -72,7 +72,7 @@ export async function expressAuthentication(
       const roleUpper = role.toUpperCase();
       if (!required.includes(roleUpper)) {
         const err: any = new Error(
-          method === "POST" && path.startsWith("/api/quiz/add")
+          method === "POST" && (path.startsWith("/api/quizzes") || path.startsWith("/api/quiz/add"))
             ? "Access denied. Only teachers can add quizzes."
             : "Forbidden"
         );
