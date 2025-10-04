@@ -28,5 +28,3 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-
-public/ball_demo/number_textures/
