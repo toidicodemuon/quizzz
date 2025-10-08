@@ -12,32 +12,32 @@
       <!--begin::Heading-->
       <div class="text-center mb-10">
         <!--begin::Title-->
-        <h1 class="text-dark mb-3">Sign In</h1>
+        <h1 class="text-dark mb-3">Đăng nhập</h1>
         <!--end::Title-->
 
         <!--begin::Link-->
         <div class="text-gray-400 fw-semobold fs-4">
-          New Here?
+          Người mới?
 
           <router-link to="/sign-up" class="link-primary fw-bold">
-            Create an Account
+            Tạo tài khoản
           </router-link>
         </div>
         <!--end::Link-->
       </div>
       <!--begin::Heading-->
 
-      <div class="mb-10 bg-light-info p-8 rounded">
+      <!-- <div class="mb-10 bg-light-info p-8 rounded">
         <div class="text-info">
           Use account <strong>admin@demo.com</strong> and password
           <strong>demo</strong> to continue.
         </div>
-      </div>
+      </div> -->
 
       <!--begin::Input group-->
       <div class="fv-row mb-10">
         <!--begin::Label-->
-        <label class="form-label fs-6 fw-bold text-dark">Email</label>
+        <label class="form-label fs-6 fw-bold text-dark">Username</label>
         <!--end::Label-->
 
         <!--begin::Input-->
@@ -67,7 +67,7 @@
 
           <!--begin::Link-->
           <router-link to="/password-reset" class="link-primary fs-6 fw-bold">
-            Forgot Password ?
+            Quên password ?
           </router-link>
           <!--end::Link-->
         </div>
@@ -100,10 +100,10 @@
           id="kt_sign_in_submit"
           class="btn btn-lg btn-primary w-100 mb-5"
         >
-          <span class="indicator-label"> Continue </span>
+          <span class="indicator-label"> Đăng nhập </span>
 
           <span class="indicator-progress">
-            Please wait...
+            Vui lòng chờ...
             <span
               class="spinner-border spinner-border-sm align-middle ms-2"
             ></span>
@@ -112,11 +112,11 @@
         <!--end::Submit button-->
 
         <!--begin::Separator-->
-        <div class="text-center text-muted text-uppercase fw-bold mb-5">or</div>
+        <!-- <div class="text-center text-muted text-uppercase fw-bold mb-5">or</div> -->
         <!--end::Separator-->
 
         <!--begin::Google link-->
-        <a
+        <!-- <a
           href="#"
           class="btn btn-flex flex-center btn-light btn-lg w-100 mb-5"
         >
@@ -126,11 +126,11 @@
             class="h-20px me-3"
           />
           Continue with Google
-        </a>
+        </a> -->
         <!--end::Google link-->
 
         <!--begin::Google link-->
-        <a
+        <!-- <a
           href="#"
           class="btn btn-flex flex-center btn-light btn-lg w-100 mb-5"
         >
@@ -140,18 +140,18 @@
             class="h-20px me-3"
           />
           Continue with Facebook
-        </a>
+        </a> -->
         <!--end::Google link-->
 
         <!--begin::Google link-->
-        <a href="#" class="btn btn-flex flex-center btn-light btn-lg w-100">
+        <!-- <a href="#" class="btn btn-flex flex-center btn-light btn-lg w-100">
           <img
             alt="Logo"
             :src="getAssetPath('media/svg/brand-logos/apple-black.svg')"
             class="h-20px me-3"
           />
           Continue with Apple
-        </a>
+        </a> -->
         <!--end::Google link-->
       </div>
       <!--end::Actions-->
@@ -185,7 +185,7 @@ export default defineComponent({
 
     //Create form validation object
     const login = Yup.object().shape({
-      email: Yup.string().email().required().label("Email"),
+      email: Yup.string().email().required().label("Username"),
       password: Yup.string().min(4).required().label("Password"),
     });
 
@@ -208,7 +208,7 @@ export default defineComponent({
 
       if (error.length === 0) {
         Swal.fire({
-          text: "You have successfully logged in!",
+          text: "Đăng nhập thành công!",
           icon: "success",
           buttonsStyling: false,
           confirmButtonText: "Ok, got it!",
@@ -238,7 +238,7 @@ export default defineComponent({
       //Deactivate indicator
       submitButton.value?.removeAttribute("data-kt-indicator");
       // eslint-disable-next-line
-        submitButton.value!.disabled = false;
+      submitButton.value!.disabled = false;
     };
 
     return {
