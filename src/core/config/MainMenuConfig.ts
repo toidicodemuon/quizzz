@@ -6,24 +6,72 @@ export interface MenuItem {
   keenthemesIcon?: string;
   bootstrapIcon?: string;
   sub?: Array<MenuItem>;
+  roles?: Array<string>;
 }
 
 const MainMenuConfig: Array<MenuItem> = [
   {
+    heading: "Teacher",
+    route: "/teacher",
     pages: [
       {
-        heading: "dashboard",
-        route: "/dashboard",
+        heading: "Dashboard",
+        route: "/teacher/dashboard",
         keenthemesIcon: "element-11",
-        bootstrapIcon: "bi-app-indicator",
+        bootstrapIcon: "bi-speedometer2",
+        roles: ["TEACHER"],
       },
       {
-        heading: "layoutBuilder",
-        route: "/builder",
-        keenthemesIcon: "switch",
-        bootstrapIcon: "bi-layers",
+        heading: "Soạn đề thi",
+        route: "/teacher/quizcreate",
+        keenthemesIcon: "element-10",
+        bootstrapIcon: "bi-speedometer2",
+        roles: ["TEACHER"],
+      },
+      {
+        heading: "Danh sách đề thi",
+        route: "/teacher/quiz/list",
+        keenthemesIcon: "element-9",
+        bootstrapIcon: "bi-speedometer2",
+        roles: ["TEACHER"],
       },
     ],
+    roles: ["TEACHER"],
+  },
+  {
+    heading: "Học sinh",
+    route: "/teacher/student",
+    pages: [
+      {
+        heading: "Quản lý học sinh",
+        route: "/teacher/student/list",
+        keenthemesIcon: "element-8",
+        bootstrapIcon: "bi-speedometer2",
+        roles: ["TEACHER"],
+      },
+      {
+        heading: "Quản lý bài nộp",
+        route: "/teacher/quizcreate",
+        keenthemesIcon: "element-7",
+        bootstrapIcon: "bi-speedometer2",
+        roles: ["TEACHER"],
+      },
+    ],
+    roles: ["TEACHER"],
+  },
+  {
+    heading: "Student",
+    route: "/student",
+    pages: [
+      {
+        heading: "Dashboard",
+        route: "/student/dashboard",
+        keenthemesIcon: "element-11",
+        bootstrapIcon: "bi-speedometer2",
+        roles: ["STUDENT"],
+      },
+    ],
+    roles: ["STUDENT"],
   },
   {
     heading: "craft",

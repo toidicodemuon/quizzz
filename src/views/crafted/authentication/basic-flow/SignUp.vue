@@ -223,7 +223,7 @@ import { getAssetPath } from "@/core/helpers/assets";
 import { defineComponent, nextTick, onMounted, ref } from "vue";
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
 import * as Yup from "yup";
-import { useAuthStore, type User } from "@/stores/auth";
+import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { PasswordMeterComponent } from "@/assets/ts/components";
 import Swal from "sweetalert2/dist/sweetalert2.js";
@@ -259,7 +259,6 @@ export default defineComponent({
     });
 
     const onSubmitRegister = async (values: any) => {
-      values = values as User;
 
       // Clear existing errors
       store.logout();

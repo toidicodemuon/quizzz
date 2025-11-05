@@ -1,5 +1,5 @@
 <template>
-  <template v-for="(item, i) in MainMenuConfig" :key="i">
+  <template v-for="(item, i) in filteredMenu" :key="i">
     <template v-if="!item.heading">
       <template v-for="(menuItem, j) in item.pages" :key="j">
         <div v-if="menuItem.heading" class="menu-item me-lg-1">
@@ -302,11 +302,12 @@
 
 <script lang="ts">
 import { getAssetPath } from "@/core/helpers/assets";
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import MainMenuConfig from "@/core/config/MainMenuConfig";
 import { headerMenuIcons } from "@/core/helpers/config";
+import { useAuthStore } from "@/stores/auth";
 
 export default defineComponent({
   name: "KTMenu",
@@ -314,6 +315,7 @@ export default defineComponent({
   setup() {
     const { t, te } = useI18n();
     const route = useRoute();
+    const auth = useAuthStore();
 
     const hasActiveChildren = (match: string) => {
       return route.path.indexOf(match) !== -1;
@@ -327,10 +329,27 @@ export default defineComponent({
       }
     };
 
+    const filterByRole = (items: any[], role: string | undefined): any[] => {
+      const r = (role || "").toUpperCase();
+      const allow = (it: any) => !it?.roles || (Array.isArray(it.roles) && it.roles.includes(r));
+      const recur = (arr: any[]): any[] =>
+        arr
+          .filter((it) => allow(it))
+          .map((it) => {
+            const copy: any = { ...it };
+            if (Array.isArray(copy.pages)) copy.pages = recur(copy.pages);
+            if (Array.isArray(copy.sub)) copy.sub = recur(copy.sub);
+            return copy;
+          });
+      return recur(items);
+    };
+
+    const filteredMenu = computed(() => filterByRole(MainMenuConfig as any, auth.user?.role));
+
     return {
       hasActiveChildren,
       headerMenuIcons,
-      MainMenuConfig,
+      filteredMenu,
       translate,
       getAssetPath,
     };

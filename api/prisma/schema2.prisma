@@ -1,0 +1,361 @@
+// ===============================
+// ========== ENUMS ==============
+// ===============================
+enum OrgRole {
+  enum QuestionType { MCQ_SINGLE MCQ_MULTI TRUE_FALSE SHORT_TEXT LONG_TEXT FILE_UPLOAD CODE }
+  enum FormStatus { DRAFT PUBLISHED ARCHIVED }
+  enum AttemptStatus { IN_PROGRESS SUBMITTED GRADED CANCELLED }
+
+  // ===============================
+  // ======= CORE ACCOUNTS =========
+  // ===============================
+  model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  fullName  String?
+  profile   Json?         // phone, dob, avatar...
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  attempts    Attempt[]
+  items       Item[]       @relation("ItemAuthor")
+}
+
+model Organization {
+  id           Int          @id @default(autoincrement())
+  name         String
+  slug         String       @unique
+  settings     Json? // payment, branding, proctor config...
+  createdAt    DateTime     @default(now())
+  memberships  Membership[]
+  vocabularies Vocabulary[]
+  classrooms   Classroom[]
+  items        Item[]
+  forms        Form[]
+  assignments  Assignment[]
+  purchases    Purchase[]
+}
+
+model Membership {
+  id     Int          @id @default(autoincrement())
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId  Int
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+  role   OrgRole
+
+  @@unique([orgId, userId])
+  @@index([userId])
+}
+
+// ===============================
+// ===== FLEXIBLE TAXONOMY =======
+// ===============================
+// Mỗi org có nhiều "từ điển" (Subject / Grade / Track / ExamType / Curriculum / Skill ...)
+model Vocabulary {
+  id     Int          @id @default(autoincrement())
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId  Int
+  code   String // "SUBJECT","GRADE","TRACK","EXAM_TYPE","CURRICULUM","SKILL",...
+  name   String
+  config Json? // single/multi-select, required, UI order...
+  terms  Term[]
+
+  @@unique([orgId, code])
+  @@index([orgId])
+}
+
+model Term {
+  id        Int        @id @default(autoincrement())
+  vocab     Vocabulary @relation(fields: [vocabId], references: [id], onDelete: Cascade)
+  vocabId   Int
+  code      String? // "MATH","ENG","G12","A","IELTS"...
+  label     String
+  parentId  Int?
+  parent    Term?      @relation("TermParent", fields: [parentId], references: [id])
+  children  Term[]     @relation("TermParent")
+  sortOrder Int        @default(0)
+  meta      Json?
+
+  // backlinks via join tables (ItemTerm, FormTerm, ClassroomTerm)
+
+  @@index([vocabId])
+  @@index([parentId])
+}
+
+// ===============================
+// ===== CUSTOM FIELD (EAV) ======
+// ===============================
+model CustomFieldDef {
+  id       Int          @id @default(autoincrement())
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId    Int
+  entity   String // "USER","ITEM","FORM","CLASSROOM","ASSIGNMENT","ATTEMPT"...
+  key      String // "passScore","room","extraTime"...
+  label    String
+  type     String // "string","number","boolean","select","multiselect","json"
+  options  Json?
+  required Boolean      @default(false)
+
+  @@unique([orgId, entity, key])
+  @@index([orgId, entity])
+}
+
+model CustomFieldVal {
+  id       Int          @id @default(autoincrement())
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId    Int
+  entity   String
+  recordId Int // id của bản ghi thuộc entity
+  key      String
+  value    Json
+
+  @@index([orgId, entity, recordId])
+}
+
+// ===============================
+// ======== ITEM BANK ============
+// ===============================
+model Item {
+  id          Int          @id @default(autoincrement())
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId       Int
+  author      User?        @relation("ItemAuthor", fields: [authorId], references: [id])
+  authorId    Int?
+  type        QuestionType
+  stem        String // nội dung câu hỏi
+  explanation String?
+  scoring     Json? // quy tắc auto-score: regex/keywords/unit tests...
+  meta        Json? // images, attachments, difficulty, hints...
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  options   ItemOption[]
+  tags      ItemTerm[]
+  formItems FormItem[]
+
+  @@index([orgId])
+  @@index([authorId])
+}
+
+model ItemOption {
+  id        Int     @id @default(autoincrement())
+  item      Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId    Int
+  text      String
+  isCorrect Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  @@index([itemId])
+}
+
+model ItemTerm {
+  item   Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  itemId Int
+  term   Term @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId Int
+
+  @@id([itemId, termId])
+  @@index([termId])
+}
+
+// ===============================
+// ======= ASSESSMENT FORM =======
+// ===============================
+model Form {
+  id        Int          @id @default(autoincrement())
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     Int
+  owner     User?        @relation(fields: [ownerId], references: [id])
+  ownerId   Int?
+  title     String
+  status    FormStatus   @default(DRAFT) // DRAFT/PUBLISHED/ARCHIVED
+  blueprint Json? // rule sinh đề ngẫu nhiên
+  settings  Json? // timeLimit, attempts, shuffle, grading...
+  price     Int?
+  currency  String?
+  meta      Json?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  formItems   FormItem[]
+  terms       FormTerm[]
+  assignments Assignment[]
+  attempts    Attempt[]
+
+  @@index([orgId])
+  @@index([ownerId])
+}
+
+model FormItem {
+  id         Int     @id @default(autoincrement())
+  form       Form    @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId     Int
+  item       Item    @relation(fields: [itemId], references: [id])
+  itemId     Int
+  points     Decimal @default(1)
+  orderIndex Int     @default(0)
+
+  @@index([formId])
+  @@index([itemId])
+}
+
+model FormTerm {
+  form   Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId Int
+  term   Term @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId Int
+
+  @@id([formId, termId])
+  @@index([termId])
+}
+
+// ===============================
+// ======= CLASS / COHORT ========
+// ===============================
+model Classroom {
+  id          Int             @id @default(autoincrement())
+  org         Organization    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId       Int
+  name        String // "12A1", "IELTS Evening", "Tin K8"
+  meta        Json?
+  terms       ClassroomTerm[]
+  enrolls     Enrollment[]
+  assignments Assignment[]
+
+  @@index([orgId])
+}
+
+model ClassroomTerm {
+  classroom   Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  classroomId Int
+  term        Term      @relation(fields: [termId], references: [id], onDelete: Cascade)
+  termId      Int
+
+  @@id([classroomId, termId])
+  @@index([termId])
+}
+
+model Enrollment {
+  id          Int          @id @default(autoincrement())
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId       Int
+  classroom   Classroom    @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  classroomId Int
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  roleInClass String       @default("STUDENT") // STUDENT/TA/TEACHER
+
+  @@unique([classroomId, userId])
+  @@index([orgId])
+  @@index([userId])
+}
+
+// ===============================
+// ======== DELIVERY/EXAM ========
+// ===============================
+model Assignment {
+  id     Int          @id @default(autoincrement())
+  org    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId  Int
+  form   Form         @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId Int
+
+  assigneeScope String           @default("CLASSROOM") // CLASSROOM/USER
+  classroom     Classroom?       @relation(fields: [classroomId], references: [id])
+  classroomId   Int?
+  assignees     AssignmentUser[]
+
+  openAt      DateTime?
+  dueAt       DateTime?
+  hardCloseAt DateTime?
+  settings    Json? // override timeLimit/attempts/password/proctor...
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  createdById Int
+  createdAt   DateTime  @default(now())
+
+  attempts Attempt[]
+
+  @@index([orgId, formId])
+  @@index([classroomId])
+  @@index([createdById])
+}
+
+model AssignmentUser {
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignmentId Int
+  user         User       @relation(fields: [userId], references: [id])
+  userId       Int
+
+  @@id([assignmentId, userId])
+  @@index([userId])
+}
+
+model Attempt {
+  id           Int          @id @default(autoincrement())
+  org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId        Int
+  assignment   Assignment?  @relation(fields: [assignmentId], references: [id])
+  assignmentId Int?
+  form         Form         @relation(fields: [formId], references: [id]) // snapshot theo form tại thời điểm thi
+  formId       Int
+  user         User         @relation(fields: [userId], references: [id])
+  userId       Int
+
+  startedAt   DateTime        @default(now())
+  submittedAt DateTime?
+  durationSec Int?
+  score       Decimal?
+  autoScore   Decimal?
+  manualScore Decimal?
+  status      AttemptStatus   @default(IN_PROGRESS)
+  proctorLog  Json? // ip/ua/tabSwitches/webcam flags...
+  answers     AttemptAnswer[]
+
+  @@index([orgId, formId, userId])
+  @@index([assignmentId])
+  @@index([userId])
+}
+
+model AttemptAnswer {
+  id        Int     @id @default(autoincrement())
+  attempt   Attempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptId Int
+  item      Item    @relation(fields: [itemId], references: [id])
+  itemId    Int
+
+  selectedOptionIds Int[]? // MCQ/TF
+  textResponse      String? // SHORT/LONG/CODE
+  fileUrl           String?
+  codeLang          String?
+  codeText          String?
+  autoScore         Decimal?
+  manualScore       Decimal?
+  feedback          String?
+
+  @@index([attemptId])
+  @@index([itemId])
+}
+
+// ===============================
+// ========= MARKETPLACE =========
+// ===============================
+model Purchase {
+  id        Int          @id @default(autoincrement())
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     Int
+  buyer     User         @relation(fields: [buyerId], references: [id])
+  buyerId   Int
+  form      Form         @relation(fields: [formId], references: [id])
+  formId    Int
+  amount    Int
+  currency  String
+  meta      Json?
+  createdAt DateTime     @default(now())
+
+  @@unique([buyerId, formId]) // 1 user mua 1 Form 1 lần (tùy biz)
+  @@index([orgId])
+  @@index([buyerId])
+}

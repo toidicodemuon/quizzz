@@ -19,7 +19,7 @@
         class="menu menu-column menu-rounded menu-sub-indention px-3"
         data-kt-menu="true"
       >
-        <template v-for="(item, i) in MainMenuConfig" :key="i">
+        <template v-for="(item, i) in filteredMenu" :key="i">
           <div v-if="item.heading" class="menu-item pt-5">
             <div class="menu-content">
               <span class="menu-heading fw-bold text-uppercase fs-7">
@@ -149,83 +149,6 @@
             </div>
           </template>
         </template>
-
-        <div class="menu-item pt-5">
-          <!--begin:Menu content-->
-          <div class="menu-content">
-            <span class="menu-heading fw-bold text-uppercase fs-7">Help</span>
-          </div>
-          <!--end:Menu content-->
-        </div>
-        <!--begin:Menu item-->
-        <div class="menu-item">
-          <!--begin:Menu link-->
-          <a
-            class="menu-link"
-            href="https://preview.keenthemes.com/metronic8/vue/docs/#/utilities"
-          >
-            <span class="menu-icon">
-              <i
-                v-if="sidebarMenuIcons === 'bootstrap'"
-                class="bi bi-briefcase fs-3"
-              ></i>
-              <KTIcon
-                v-else-if="sidebarMenuIcons === 'keenthemes'"
-                icon-name="rocket"
-                icon-class="fs-2"
-              />
-            </span>
-            <span class="menu-title">Components</span>
-          </a>
-          <!--end:Menu link-->
-        </div>
-        <!--end:Menu item-->
-        <div class="menu-item">
-          <!--begin:Menu link-->
-          <a
-            class="menu-link"
-            href="https://preview.keenthemes.com/metronic8/vue/docs/#/doc-overview"
-          >
-            <span class="menu-icon">
-              <i
-                v-if="sidebarMenuIcons === 'bootstrap'"
-                class="bi bi-box fs-3"
-              ></i>
-              <KTIcon
-                v-else-if="sidebarMenuIcons === 'keenthemes'"
-                icon-name="abstract-26"
-                icon-class="fs-2"
-              />
-            </span>
-            <span class="menu-title">Documentation</span>
-          </a>
-          <!--end:Menu link-->
-        </div>
-        <!--begin:Menu item-->
-        <!--end:Menu item-->
-        <div class="menu-item">
-          <!--begin:Menu link-->
-          <a
-            class="menu-link"
-            href="https://preview.keenthemes.com/metronic8/vue/docs/#/changelog"
-          >
-            <span class="menu-icon">
-              <i
-                v-if="sidebarMenuIcons === 'bootstrap'"
-                class="bi bi-diagram-3 fs-3"
-              ></i>
-              <KTIcon
-                v-else-if="sidebarMenuIcons === 'keenthemes'"
-                icon-name="code"
-                icon-class="fs-2"
-              />
-            </span>
-            <span class="menu-title">Changelog</span>
-          </a>
-          <!--end:Menu link-->
-        </div>
-        <!--begin:Menu item-->
-        <!--end:Menu item-->
       </div>
       <!--end::Menu-->
     </div>
@@ -236,11 +159,12 @@
 
 <script lang="ts">
 import { getAssetPath } from "@/core/helpers/assets";
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, onMounted, ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import MainMenuConfig from "@/core/config/MainMenuConfig";
 import { sidebarMenuIcons } from "@/core/helpers/config";
 import { useI18n } from "vue-i18n";
+import { useAuthStore } from "@/stores/auth";
 
 export default defineComponent({
   name: "sidebar-menu",
@@ -248,6 +172,7 @@ export default defineComponent({
   setup() {
     const { t, te } = useI18n();
     const route = useRoute();
+    const auth = useAuthStore();
     const scrollElRef = ref<null | HTMLElement>(null);
 
     onMounted(() => {
@@ -268,9 +193,29 @@ export default defineComponent({
       return route.path.indexOf(match) !== -1;
     };
 
+    const filterByRole = (items: any[], role: string | undefined): any[] => {
+      const r = (role || "").toUpperCase();
+      const allow = (it: any) =>
+        !it?.roles || (Array.isArray(it.roles) && it.roles.includes(r));
+      const recur = (arr: any[]): any[] =>
+        arr
+          .filter((it) => allow(it))
+          .map((it) => {
+            const copy: any = { ...it };
+            if (Array.isArray(copy.pages)) copy.pages = recur(copy.pages);
+            if (Array.isArray(copy.sub)) copy.sub = recur(copy.sub);
+            return copy;
+          });
+      return recur(items);
+    };
+
+    const filteredMenu = computed(() =>
+      filterByRole(MainMenuConfig as any, auth.user?.role)
+    );
+
     return {
       hasActiveChildren,
-      MainMenuConfig,
+      filteredMenu,
       sidebarMenuIcons,
       translate,
       getAssetPath,

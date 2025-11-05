@@ -3,24 +3,33 @@ import { defineStore } from "pinia";
 import ApiService from "@/core/services/ApiService";
 import JwtService from "@/core/services/JwtService";
 
-export interface User {
-  name: string;
-  surname: string;
+export interface AuthUser {
+  id: number;
+  username: string;
+  fullName: string;
   email: string;
+  role: string;
+  avatarUrl: string | null;
+}
+
+export interface LoginPayload {
+  username: string;
   password: string;
-  api_token: string;
 }
 
 export const useAuthStore = defineStore("auth", () => {
   const errors = ref({});
-  const user = ref<User>({} as User);
+  const user = ref<AuthUser>({} as AuthUser);
   const isAuthenticated = ref(!!JwtService.getToken());
 
-  function setAuth(authUser: User) {
+  function setAuth(authUser: AuthUser, accessToken?: string) {
     isAuthenticated.value = true;
     user.value = authUser;
     errors.value = {};
-    JwtService.saveToken(user.value.api_token);
+    if (accessToken) {
+      JwtService.saveToken(accessToken);
+    }
+    ApiService.setHeader();
   }
 
   function setError(error: any) {
@@ -29,18 +38,20 @@ export const useAuthStore = defineStore("auth", () => {
 
   function purgeAuth() {
     isAuthenticated.value = false;
-    user.value = {} as User;
+    user.value = {} as AuthUser;
     errors.value = [];
     JwtService.destroyToken();
   }
 
-  function login(credentials: User) {
-    return ApiService.post("login", credentials)
+  function login(credentials: LoginPayload) {
+    // API expects /auth/login with { username, password }
+    return ApiService.post("auth/login", credentials)
       .then(({ data }) => {
-        setAuth(data);
+        // data: { accessToken, refreshToken, user }
+        setAuth(data.user as AuthUser, data.accessToken as string);
       })
       .catch(({ response }) => {
-        setError(response.data.errors);
+        setError(response?.data?.errors ?? { auth: response?.data?.message || "Login failed" });
       });
   }
 
@@ -48,39 +59,39 @@ export const useAuthStore = defineStore("auth", () => {
     purgeAuth();
   }
 
-  function register(credentials: User) {
-    return ApiService.post("register", credentials)
-      .then(({ data }) => {
-        setAuth(data);
-      })
-      .catch(({ response }) => {
-        setError(response.data.errors);
-      });
-  }
+  // Not implemented against /api backend
+  function register(_credentials: unknown) {}
 
-  function forgotPassword(email: string) {
-    return ApiService.post("forgot_password", email)
-      .then(() => {
-        setError({});
-      })
-      .catch(({ response }) => {
-        setError(response.data.errors);
-      });
-  }
+  function forgotPassword(_email: string) {}
 
   function verifyAuth() {
-    if (JwtService.getToken()) {
-      ApiService.setHeader();
-      ApiService.post("verify_token", { api_token: JwtService.getToken() })
-        .then(({ data }) => {
-          setAuth(data);
-        })
-        .catch(({ response }) => {
-          setError(response.data.errors);
-          purgeAuth();
-        });
-    } else {
+    const token = JwtService.getToken();
+    if (!token) {
       purgeAuth();
+      return;
+    }
+    // set header for subsequent requests
+    ApiService.setHeader();
+    // If user already has role/id, keep it. Otherwise decode from token payload.
+    if (!user.value?.id || !user.value?.role) {
+      try {
+        const [, payload] = token.split(".");
+        const decoded = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+        user.value = {
+          id: Number(decoded.sub),
+          username: String(decoded.username || ""),
+          fullName: user.value?.fullName || "",
+          email: user.value?.email || "",
+          role: String(decoded.role || "").toUpperCase(),
+          avatarUrl: user.value?.avatarUrl ?? null,
+        } as AuthUser;
+        isAuthenticated.value = true;
+      } catch (e) {
+        // invalid token -> purge
+        purgeAuth();
+      }
+    } else {
+      isAuthenticated.value = true;
     }
   }
 

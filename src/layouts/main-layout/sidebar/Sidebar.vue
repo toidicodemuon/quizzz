@@ -15,7 +15,7 @@
   >
     <KTSidebarLogo :sidebar-ref="sidebarRef"></KTSidebarLogo>
     <KTSidebarMenu></KTSidebarMenu>
-    <KTSidebarFooter></KTSidebarFooter>
+    <!-- <KTSidebarFooter></KTSidebarFooter> -->
   </div>
   <!--end::sidebar-->
 </template>
@@ -25,14 +25,14 @@ import { defineComponent, ref } from "vue";
 import { displaySidebar } from "@/core/helpers/config";
 import KTSidebarLogo from "@/layouts/main-layout/sidebar/SidebarLogo.vue";
 import KTSidebarMenu from "@/layouts/main-layout/sidebar/SidebarMenu.vue";
-import KTSidebarFooter from "@/layouts/main-layout/sidebar/SidebarFooter.vue";
+//import KTSidebarFooter from "@/layouts/main-layout/sidebar/SidebarFooter.vue";
 
 export default defineComponent({
   name: "theme-sidebar",
   components: {
     KTSidebarLogo,
     KTSidebarMenu,
-    KTSidebarFooter,
+    //KTSidebarFooter,
   },
   setup() {
     const sidebarRef = ref<HTMLFormElement | null>(null);

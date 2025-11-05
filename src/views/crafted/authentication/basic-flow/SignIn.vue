@@ -7,7 +7,7 @@
       id="kt_login_signin_form"
       @submit="onSubmitLogin"
       :validation-schema="login"
-      :initial-values="{ email: 'admin@demo.com', password: 'demo' }"
+      :initial-values="{ username: 'teacher1', password: '123456' }"
     >
       <!--begin::Heading-->
       <div class="text-center mb-10">
@@ -45,13 +45,13 @@
           tabindex="1"
           class="form-control form-control-lg form-control-solid"
           type="text"
-          name="email"
+          name="username"
           autocomplete="off"
         />
         <!--end::Input-->
         <div class="fv-plugins-message-container">
           <div class="fv-help-block">
-            <ErrorMessage name="email" />
+            <ErrorMessage name="username" />
           </div>
         </div>
       </div>
@@ -165,7 +165,7 @@
 import { getAssetPath } from "@/core/helpers/assets";
 import { defineComponent, ref } from "vue";
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
-import { useAuthStore, type User } from "@/stores/auth";
+import { useAuthStore, type LoginPayload } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import * as Yup from "yup";
@@ -185,13 +185,13 @@ export default defineComponent({
 
     //Create form validation object
     const login = Yup.object().shape({
-      email: Yup.string().email().required().label("Username"),
+      username: Yup.string().required().label("Username"),
       password: Yup.string().min(4).required().label("Password"),
     });
 
     //Form submit function
     const onSubmitLogin = async (values: any) => {
-      values = values as User;
+      values = values as LoginPayload;
       // Clear existing errors
       store.logout();
 
@@ -218,7 +218,14 @@ export default defineComponent({
           },
         }).then(() => {
           // Go to page after successfully login
-          router.push({ name: "dashboard" });
+          const role = String(store.user?.role || "").toUpperCase();
+          if (role === "TEACHER") {
+            router.push({ name: "teacher-dashboard" });
+          } else if (role === "STUDENT") {
+            router.push({ name: "student-dashboard" });
+          } else {
+            router.push({ name: "dashboard" });
+          }
         });
       } else {
         Swal.fire({

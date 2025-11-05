@@ -25,6 +25,24 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
       {
+        path: "/teacher/dashboard",
+        name: "teacher-dashboard",
+        component: () => import("@/views/teacher/Dashboard.vue"),
+        meta: {
+          pageTitle: "Teacher Dashboard",
+          breadcrumbs: ["Dashboards"],
+        },
+      },
+      {
+        path: "/student/dashboard",
+        name: "student-dashboard",
+        component: () => import("@/views/student/Dashboard.vue"),
+        meta: {
+          pageTitle: "Student Dashboard",
+          breadcrumbs: ["Dashboards"],
+        },
+      },
+      {
         path: "/builder",
         name: "builder",
         component: () => import("@/views/LayoutBuilder.vue"),
