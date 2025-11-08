@@ -231,7 +231,13 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
     ```sql
     SELECT Host, User FROM mysql.user WHERE User = 'root';
     ```
-  - Grant new domain to access : 
+  - Grant new domain to access MySQL 5.0 : 
     ```sql
     GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.1.3' IDENTIFIED BY 'admin';
     ```
+ - Grant new domain to access MySQL 8.0 : 
+    ```sql
+    CREATE USER 'root'@'192.168.1.20' IDENTIFIED BY 'admin';
+      GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.1.20' WITH GRANT OPTION;
+      FLUSH PRIVILEGES;
+   ```
