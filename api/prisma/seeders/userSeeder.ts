@@ -1,52 +1,42 @@
-// seeder/userSeeder.ts
-import { PrismaClient, UserRole } from "@prisma/client";
+import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 /**
- * Seed initial user accounts dựa trên schema User mới.
- * Luôn tạo mới teacher/student (nếu chạy nhiều lần sẽ báo lỗi do unique constraint).
+ * Tạo tài khoản mẫu phù hợp schema mới (User.email, User.password, Role enum).
+ * Mặc định lưu password dạng hash vào trường `password`.
  */
 export async function seedUsers(prisma: PrismaClient) {
-  const teacherPassword = await bcrypt.hash("123456", 10);
-  const studentPassword = await bcrypt.hash("123456", 10);
-  const adminPassword = await bcrypt.hash("123456", 10);
+  const hash = (pwd: string) => bcrypt.hash(pwd, 10);
+  const [teacherPassword, studentPassword, adminPassword] = await Promise.all([
+    hash("123456"),
+    hash("123456"),
+    hash("123456"),
+  ]);
 
   const teacher = await prisma.user.create({
     data: {
-      username: "teacher1",
       email: "teacher1@example.com",
-      passwordHash: teacherPassword,
+      password: teacherPassword,
       fullName: "Nguyễn Văn Giáo Viên",
-      avatarUrl: "https://example.com/avatar-teacher1.png",
-      role: UserRole.TEACHER,
-      isActive: true,
-      lastLogin: new Date(),
+      role: Role.TEACHER,
     },
   });
 
   const student = await prisma.user.create({
     data: {
-      username: "student1",
       email: "student1@example.com",
-      passwordHash: studentPassword,
+      password: studentPassword,
       fullName: "Trần Văn Học Sinh",
-      avatarUrl: "https://example.com/avatar-student1.png",
-      role: UserRole.STUDENT,
-      isActive: true,
-      lastLogin: new Date(),
+      role: Role.STUDENT,
     },
   });
 
   const admin = await prisma.user.create({
     data: {
-      username: "admin",
       email: "admin@example.com",
-      passwordHash: adminPassword,
+      password: adminPassword,
       fullName: "System Administrator",
-      avatarUrl: "https://example.com/avatar-admin.png",
-      role: UserRole.ADMIN,
-      isActive: true,
-      lastLogin: new Date(),
+      role: Role.ADMIN,
     },
   });
 

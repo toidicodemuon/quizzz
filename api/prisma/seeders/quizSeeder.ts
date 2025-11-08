@@ -1,23 +1,35 @@
-import { PrismaClient, QuizStatus } from "@prisma/client";
+import { PrismaClient, Subject } from "@prisma/client";
 
 /**
- * Create a sample quiz associated with a given teacher. This function
- * assumes that the teacher account already exists in the database.
- *
- * @param prisma Instance of PrismaClient for DB operations.
- * @param teacher The teacher user record returned from seedUsers.
- * @returns The created quiz record.
+ * Tạo một Exam mẫu gắn với teacher (author).
  */
-export async function seedQuiz(prisma: PrismaClient, teacher: { id: number }): Promise<any> {
-  const quiz = await prisma.quiz.create({
+export async function seedQuiz(
+  prisma: PrismaClient,
+  teacher: { id: number },
+  opts?: { title?: string; subject?: Subject; description?: string }
+): Promise<{
+  id: number;
+  title: string;
+  subject: Subject;
+  description: string | null;
+  authorId: number | null;
+}> {
+  const exam = await prisma.exam.create({
     data: {
-      title: "Đề thi Lập trình JavaScript cơ bản",
+      title: opts?.title ?? "Đề thi Lập trình JavaScript cơ bản",
+      subject: opts?.subject ?? Subject.IT,
       description:
+        opts?.description ??
         "Đề kiểm tra kiến thức JavaScript cơ bản: cú pháp, biến, hàm, mảng, vòng lặp, DOM, ES6...",
-      timeLimitMinutes: 30,
-      status: QuizStatus.PUBLISHED,
-      teacherId: teacher.id,
+      authorId: teacher.id,
+    },
+    select: {
+      id: true,
+      title: true,
+      subject: true,
+      description: true,
+      authorId: true,
     },
   });
-  return quiz;
+  return exam;
 }

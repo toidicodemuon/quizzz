@@ -1,36 +1,25 @@
-import { UserRole } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { prisma } from "../utils/prisma";
 import { Get, Route, Tags, Path, Post, Body, Controller, Response, SuccessResponse, Security, Put, Delete, Query } from "tsoa";
 import bcrypt from "bcryptjs";
 
 export type UserResponse = {
   id: number;
-  username: string;
-  email: string | null;
+  email: string;
   fullName: string | null;
-  avatarUrl: string | null;
-  role: UserRole;
-  isActive: boolean;
-  lastLogin: Date | null;
+  role: Role;
   createdAt: Date;
   updatedAt: Date;
 };
 
-// use shared prisma instance
-
 @Route("users")
 @Tags("User")
 export class UserController extends Controller {
-  /** Public response shape that hides passwordHash */
   private static readonly userSelect = {
     id: true,
-    username: true,
     email: true,
     fullName: true,
-    avatarUrl: true,
     role: true,
-    isActive: true,
-    lastLogin: true,
     createdAt: true,
     updatedAt: true,
   } as const;
@@ -42,19 +31,16 @@ export class UserController extends Controller {
   public async getUsers(
     @Query() page?: number,
     @Query() pageSize?: number,
-    @Query() role?: UserRole,
-    @Query() isActive?: boolean,
+    @Query() role?: Role,
     @Query() search?: string
   ): Promise<{ items: UserResponse[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const where: any = {};
     if (typeof role !== "undefined") where.role = role;
-    if (typeof isActive === "boolean") where.isActive = isActive;
     if (search && search.trim()) {
       const q = search.trim();
       where.OR = [
-        { username: { contains: q } },
         { email: { contains: q } },
         { fullName: { contains: q } },
       ];
@@ -102,19 +88,19 @@ export class UserController extends Controller {
   public async createUser(
     @Body()
     body: {
-      username: string;
       fullName: string;
       password: string;
       email: string;
+      role?: Role;
     }
   ): Promise<{ message: string; user: UserResponse }> {
     const passwordHash = await bcrypt.hash(body.password, 10);
     const newUser = await prisma.user.create({
       data: {
-        username: body.username,
         fullName: body.fullName,
-        passwordHash,
+        password: passwordHash,
         email: body.email,
+        role: body.role ?? Role.STUDENT,
       },
       select: UserController.userSelect,
     });
@@ -131,13 +117,10 @@ export class UserController extends Controller {
     @Path() id: number,
     @Body()
     body: {
-      username?: string;
       fullName?: string | null;
       email?: string | null;
       password?: string;
-      avatarUrl?: string | null;
-      role?: UserRole;
-      isActive?: boolean;
+      role?: Role;
     }
   ): Promise<{ message: string; user: UserResponse } | null> {
     const existing = await prisma.user.findUnique({ where: { id } });
@@ -148,14 +131,11 @@ export class UserController extends Controller {
     }
 
     const data: any = {};
-    if (typeof body.username !== "undefined") data.username = body.username;
     if (typeof body.fullName !== "undefined") data.fullName = body.fullName;
     if (typeof body.email !== "undefined") data.email = body.email;
     if (typeof body.password !== "undefined")
-      data.passwordHash = await bcrypt.hash(body.password, 10);
-    if (typeof body.avatarUrl !== "undefined") data.avatarUrl = body.avatarUrl;
+      data.password = await bcrypt.hash(body.password, 10);
     if (typeof body.role !== "undefined") data.role = body.role;
-    if (typeof body.isActive !== "undefined") data.isActive = body.isActive;
 
     const updated = await prisma.user.update({
       where: { id },
@@ -184,3 +164,4 @@ export class UserController extends Controller {
     return { message: "User deleted", id };
   }
 }
+

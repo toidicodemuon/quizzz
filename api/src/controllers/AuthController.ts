@@ -15,8 +15,8 @@ import {
 } from "../services/authService";
 
 export class LoginRequest {
-  @Example<string>("teacher1")
-  public username!: string;
+  @Example<string>("teacher1@example.com")
+  public email!: string;
 
   @Example<string>("123456")
   public password!: string;
@@ -38,7 +38,7 @@ export class AuthController extends Controller {
     @Body() body: LoginRequest
   ): Promise<LoginSuccessResponse | LoginErrorResponse> {
     try {
-      const result = await authenticateUser(body?.username, body?.password);
+      const result = await authenticateUser(body?.email, body?.password);
       console.log(result);
       return result;
     } catch (error) {

@@ -38,6 +38,11 @@ npx prisma db seed
 npx prisma generate
 ```
 
+# 3.4 Seed sample data (Exams/Questions/Rooms/Attempts)
+```
+npx prisma db seed
+```
+
 # 4. Generate API Documentation Automatically with TSOA, Prisma and Swagger-UI-Express
 ## 4.0 Config of tsconfig.json for this feature 
 ```json
@@ -101,9 +106,9 @@ npx prisma generate
     "spec": {
         "outputDirectory": "swagger",
         "specVersion": 3,
-        "title": "POMELO API Documentation",
+        "title": "QUIZZZ API Documentation",
         "version": "1.0.0",
-        "description": "A description of POMELO API",
+        "description": "A description of QUIZZZ API",
         "basePath": "/api"
     },
     "routes": {
@@ -200,6 +205,49 @@ const app = express();
 
 RegisterRoutes(app);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+```
+
+
+## 5. API Routes (schema v2)
+- Auth
+  - POST `/auth/login` body `{ email, password }`
+- Exams
+  - GET `/exams?subject&authorId&page&pageSize`
+  - GET `/exams/{id}`
+  - POST `/exams` (TEACHER) body `{ title, description, subject }`
+  - PUT `/exams/{id}` (TEACHER owner/ADMIN) body `{ title?, description?, subject? }`
+  - DELETE `/exams/{id}` (TEACHER owner/ADMIN)
+- Questions
+  - GET `/questions?examId&page&pageSize`
+  - GET `/questions/{id}` includes choices
+  - POST `/questions` (TEACHER/ADMIN) `{ examId, text, explanation?, type?, subject?, choices: [{content,isCorrect,order?}], points? }`
+  - PUT `/questions/{id}` (TEACHER owner/ADMIN) `{ text?, explanation?, type? }`
+  - DELETE `/questions/{id}` (TEACHER owner/ADMIN)
+- Choices
+  - GET `/choices?questionId&page&pageSize` (STUDENT will not see `isCorrect`)
+  - GET `/choices/{id}` (STUDENT hides `isCorrect`)
+  - POST `/choices` (TEACHER/ADMIN) `{ questionId, content, isCorrect?, order? }`
+  - PUT `/choices/{id}` (TEACHER owner/ADMIN)
+  - DELETE `/choices/{id}` (TEACHER owner/ADMIN)
+- Rooms
+  - GET `/rooms?examId&page&pageSize`
+  - GET `/rooms/{id}`
+  - POST `/rooms` (TEACHER/ADMIN) `{ examId, code?, openAt?, closeAt?, durationSec?, shuffleQuestions?, shuffleChoices?, maxAttempts? }`
+- Attempts
+  - GET `/attempts?examId&page&pageSize` (role-aware filtering)
+  - GET `/attempts/{id}`
+  - POST `/attempts` (STUDENT) `{ roomId, answers: [{ questionId, selectedChoiceId }] }`
+  - DELETE `/attempts/{id}` (TEACHER owner/ADMIN)
+- Attempt Answers
+  - GET `/attempt-answers?attemptId`
+  - GET `/attempt-answers/{id}`
+
+Controllers filenames follow route names:
+- `ExamsController.ts`, `QuestionsController.ts`, `ChoicesController.ts`, `RoomsController.ts`, `AttemptsController.ts`, `AttemptAnswersController.ts`, `UsersController.ts`, `AuthController.ts`.
+
+To regenerate routes and OpenAPI spec after changes:
+```
+npx tsoa spec-and-routes
 ```
 
 

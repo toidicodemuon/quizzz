@@ -7,16 +7,16 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"_36_Enums.UserRole": {
+			"_36_Enums.Role": {
 				"type": "string",
 				"enum": [
+					"ADMIN",
 					"TEACHER",
-					"STUDENT",
-					"ADMIN"
+					"STUDENT"
 				]
 			},
-			"UserRole": {
-				"$ref": "#/components/schemas/_36_Enums.UserRole"
+			"Role": {
+				"$ref": "#/components/schemas/_36_Enums.Role"
 			},
 			"UserResponse": {
 				"properties": {
@@ -28,30 +28,14 @@
 						"type": "string",
 						"format": "date-time"
 					},
-					"lastLogin": {
-						"type": "string",
-						"format": "date-time",
-						"nullable": true
-					},
-					"isActive": {
-						"type": "boolean"
-					},
 					"role": {
-						"$ref": "#/components/schemas/UserRole"
-					},
-					"avatarUrl": {
-						"type": "string",
-						"nullable": true
+						"$ref": "#/components/schemas/Role"
 					},
 					"fullName": {
 						"type": "string",
 						"nullable": true
 					},
 					"email": {
-						"type": "string",
-						"nullable": true
-					},
-					"username": {
 						"type": "string"
 					},
 					"id": {
@@ -62,66 +46,53 @@
 				"required": [
 					"updatedAt",
 					"createdAt",
-					"lastLogin",
-					"isActive",
 					"role",
-					"avatarUrl",
 					"fullName",
 					"email",
-					"username",
 					"id"
 				],
 				"type": "object"
 			},
-			"SubmissionSummary": {
+			"RoomSummary": {
 				"properties": {
-					"quizId": {
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"createdById": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"maxAttempts": {
 						"type": "number",
 						"format": "double"
 					},
-					"studentId": {
-						"type": "number",
-						"format": "double"
+					"shuffleChoices": {
+						"type": "boolean"
 					},
-					"endTime": {
+					"shuffleQuestions": {
+						"type": "boolean"
+					},
+					"durationSec": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"closeAt": {
 						"type": "string",
 						"format": "date-time",
 						"nullable": true
 					},
-					"startTime": {
+					"openAt": {
 						"type": "string",
-						"format": "date-time"
+						"format": "date-time",
+						"nullable": true
 					},
-					"score": {
-						"type": "number",
-						"format": "double"
+					"code": {
+						"type": "string"
 					},
-					"id": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"quizId",
-					"studentId",
-					"endTime",
-					"startTime",
-					"score",
-					"id"
-				],
-				"type": "object"
-			},
-			"SubmissionAnswerSummary": {
-				"properties": {
-					"selectedAnswerId": {
-						"type": "number",
-						"format": "double"
-					},
-					"questionId": {
-						"type": "number",
-						"format": "double"
-					},
-					"submissionId": {
+					"examId": {
 						"type": "number",
 						"format": "double"
 					},
@@ -131,14 +102,42 @@
 					}
 				},
 				"required": [
-					"selectedAnswerId",
-					"questionId",
-					"submissionId",
+					"createdAt",
+					"createdById",
+					"maxAttempts",
+					"shuffleChoices",
+					"shuffleQuestions",
+					"durationSec",
+					"closeAt",
+					"openAt",
+					"code",
+					"examId",
 					"id"
 				],
 				"type": "object"
 			},
-			"QuizSummary": {
+			"_36_Enums.QuestionType": {
+				"type": "string",
+				"enum": [
+					"SC",
+					"MC",
+					"TEXT"
+				]
+			},
+			"QuestionType": {
+				"$ref": "#/components/schemas/_36_Enums.QuestionType"
+			},
+			"_36_Enums.Subject": {
+				"type": "string",
+				"enum": [
+					"ENGLISH",
+					"IT"
+				]
+			},
+			"Subject": {
+				"$ref": "#/components/schemas/_36_Enums.Subject"
+			},
+			"ExamSummary": {
 				"properties": {
 					"updatedAt": {
 						"type": "string",
@@ -148,16 +147,17 @@
 						"type": "string",
 						"format": "date-time"
 					},
-					"teacherId": {
+					"authorId": {
 						"type": "number",
-						"format": "double"
-					},
-					"status": {
-						"type": "string"
+						"format": "double",
+						"nullable": true
 					},
 					"description": {
 						"type": "string",
 						"nullable": true
+					},
+					"subject": {
+						"$ref": "#/components/schemas/Subject"
 					},
 					"title": {
 						"type": "string"
@@ -170,51 +170,34 @@
 				"required": [
 					"updatedAt",
 					"createdAt",
-					"teacherId",
-					"status",
+					"authorId",
 					"description",
+					"subject",
 					"title",
 					"id"
 				],
 				"type": "object"
 			},
-			"_36_Enums.QuizStatus": {
-				"type": "string",
-				"enum": [
-					"DRAFT",
-					"PUBLISHED",
-					"ARCHIVED"
-				]
-			},
-			"QuizStatus": {
-				"$ref": "#/components/schemas/_36_Enums.QuizStatus"
-			},
-			"AddQuizRequest": {
+			"AddExamRequest": {
 				"properties": {
 					"title": {
 						"type": "string",
-						"example": "Midterm Quiz"
+						"example": "Bài thi CNTT Cơ bản"
 					},
 					"description": {
 						"type": "string",
 						"nullable": true,
-						"example": "Covers chapters 1–3"
+						"example": "Kiểm tra các kỹ năng tin học cơ bản"
 					},
-					"status": {
-						"$ref": "#/components/schemas/QuizStatus",
-						"example": "DRAFT"
-					},
-					"timeLimitMinutes": {
-						"type": "number",
-						"format": "double",
-						"example": 30
+					"subject": {
+						"$ref": "#/components/schemas/Subject",
+						"example": "IT"
 					}
 				},
 				"required": [
 					"title",
 					"description",
-					"status",
-					"timeLimitMinutes"
+					"subject"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -223,20 +206,13 @@
 				"properties": {
 					"user": {
 						"properties": {
-							"avatarUrl": {
-								"type": "string",
-								"nullable": true
-							},
 							"role": {
-								"type": "string"
-							},
-							"email": {
 								"type": "string"
 							},
 							"fullName": {
 								"type": "string"
 							},
-							"username": {
+							"email": {
 								"type": "string"
 							},
 							"id": {
@@ -245,11 +221,9 @@
 							}
 						},
 						"required": [
-							"avatarUrl",
 							"role",
-							"email",
 							"fullName",
-							"username",
+							"email",
 							"id"
 						],
 						"type": "object"
@@ -281,9 +255,9 @@
 			},
 			"LoginRequest": {
 				"properties": {
-					"username": {
+					"email": {
 						"type": "string",
-						"example": "teacher1"
+						"example": "teacher1@example.com"
 					},
 					"password": {
 						"type": "string",
@@ -291,11 +265,117 @@
 					}
 				},
 				"required": [
-					"username",
+					"email",
 					"password"
 				],
 				"type": "object",
 				"additionalProperties": false
+			},
+			"_36_Enums.AttemptStatus": {
+				"type": "string",
+				"enum": [
+					"IN_PROGRESS",
+					"SUBMITTED",
+					"GRADED"
+				]
+			},
+			"AttemptStatus": {
+				"$ref": "#/components/schemas/_36_Enums.AttemptStatus"
+			},
+			"AttemptSummary": {
+				"properties": {
+					"status": {
+						"$ref": "#/components/schemas/AttemptStatus"
+					},
+					"roomId": {
+						"type": "number",
+						"format": "double"
+					},
+					"examId": {
+						"type": "number",
+						"format": "double"
+					},
+					"studentId": {
+						"type": "number",
+						"format": "double"
+					},
+					"timeTakenSec": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"submittedAt": {
+						"type": "string",
+						"format": "date-time",
+						"nullable": true
+					},
+					"startedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"score": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"id": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"status",
+					"roomId",
+					"examId",
+					"studentId",
+					"timeTakenSec",
+					"submittedAt",
+					"startedAt",
+					"score",
+					"id"
+				],
+				"type": "object"
+			},
+			"AttemptAnswerSummary": {
+				"properties": {
+					"selectedChoiceIds": {
+						"items": {
+							"type": "number",
+							"format": "double"
+						},
+						"type": "array"
+					},
+					"earned": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"isCorrect": {
+						"type": "boolean",
+						"nullable": true
+					},
+					"questionId": {
+						"type": "number",
+						"format": "double"
+					},
+					"attemptId": {
+						"type": "number",
+						"format": "double"
+					},
+					"id": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"selectedChoiceIds",
+					"earned",
+					"isCorrect",
+					"questionId",
+					"attemptId",
+					"id"
+				],
+				"type": "object"
 			}
 		},
 		"securitySchemes": {
@@ -410,15 +490,7 @@
 						"name": "role",
 						"required": false,
 						"schema": {
-							"$ref": "#/components/schemas/UserRole"
-						}
-					},
-					{
-						"in": "query",
-						"name": "isActive",
-						"required": false,
-						"schema": {
-							"type": "boolean"
+							"$ref": "#/components/schemas/Role"
 						}
 					},
 					{
@@ -502,6 +574,9 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"role": {
+										"$ref": "#/components/schemas/Role"
+									},
 									"email": {
 										"type": "string"
 									},
@@ -510,16 +585,12 @@
 									},
 									"fullName": {
 										"type": "string"
-									},
-									"username": {
-										"type": "string"
 									}
 								},
 								"required": [
 									"email",
 									"password",
-									"fullName",
-									"username"
+									"fullName"
 								],
 								"type": "object"
 							}
@@ -708,15 +779,8 @@
 						"application/json": {
 							"schema": {
 								"properties": {
-									"isActive": {
-										"type": "boolean"
-									},
 									"role": {
-										"$ref": "#/components/schemas/UserRole"
-									},
-									"avatarUrl": {
-										"type": "string",
-										"nullable": true
+										"$ref": "#/components/schemas/Role"
 									},
 									"password": {
 										"type": "string"
@@ -728,9 +792,6 @@
 									"fullName": {
 										"type": "string",
 										"nullable": true
-									},
-									"username": {
-										"type": "string"
 									}
 								},
 								"type": "object"
@@ -832,524 +893,6 @@
 				]
 			}
 		},
-		"/submissions": {
-			"get": {
-				"operationId": "ListSubmissions",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"total": {
-											"type": "number",
-											"format": "double"
-										},
-										"items": {
-											"items": {
-												"$ref": "#/components/schemas/SubmissionSummary"
-											},
-											"type": "array"
-										}
-									},
-									"required": [
-										"total",
-										"items"
-									],
-									"type": "object"
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Submission"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "quizId",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					},
-					{
-						"in": "query",
-						"name": "page",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					},
-					{
-						"in": "query",
-						"name": "pageSize",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			},
-			"post": {
-				"operationId": "CreateSubmission",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/SubmissionSummary"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Submission"
-				],
-				"security": [
-					{
-						"bearerAuth": [
-							"STUDENT"
-						]
-					}
-				],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"properties": {
-									"answers": {
-										"items": {
-											"properties": {
-												"selectedAnswerId": {
-													"type": "number",
-													"format": "double"
-												},
-												"questionId": {
-													"type": "number",
-													"format": "double"
-												}
-											},
-											"required": [
-												"selectedAnswerId",
-												"questionId"
-											],
-											"type": "object"
-										},
-										"type": "array"
-									},
-									"quizId": {
-										"type": "number",
-										"format": "double"
-									}
-								},
-								"required": [
-									"answers",
-									"quizId"
-								],
-								"type": "object"
-							}
-						}
-					}
-				}
-			}
-		},
-		"/submissions/{id}": {
-			"get": {
-				"operationId": "GetSubmissionById",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/SubmissionSummary"
-										}
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Submission not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Submission"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			},
-			"delete": {
-				"operationId": "DeleteSubmission",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"id": {
-											"type": "number",
-											"format": "double"
-										},
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"id",
-										"message"
-									],
-									"type": "object",
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Submission not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Submission"
-				],
-				"security": [
-					{
-						"bearerAuth": [
-							"TEACHER",
-							"ADMIN"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/submission-answers": {
-			"get": {
-				"operationId": "ListBySubmission",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/SubmissionAnswerSummary"
-									},
-									"type": "array"
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"SubmissionAnswer"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "submissionId",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
-		"/submission-answers/{id}": {
-			"get": {
-				"operationId": "GetById",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/SubmissionAnswerSummary"
-										}
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"SubmissionAnswer"
-				],
-				"security": [
-					{
-						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			}
-		},
 		"/": {
 			"get": {
 				"operationId": "WelcomeMessage",
@@ -1369,7 +912,7 @@
 				"parameters": []
 			}
 		},
-		"/quizzes": {
+		"/rooms": {
 			"get": {
 				"operationId": "List",
 				"responses": {
@@ -1385,7 +928,7 @@
 										},
 										"items": {
 											"items": {
-												"$ref": "#/components/schemas/QuizSummary"
+												"$ref": "#/components/schemas/RoomSummary"
 											},
 											"type": "array"
 										}
@@ -1415,7 +958,7 @@
 					}
 				},
 				"tags": [
-					"Quizzes"
+					"Room"
 				],
 				"security": [
 					{
@@ -1423,6 +966,15 @@
 					}
 				],
 				"parameters": [
+					{
+						"in": "query",
+						"name": "examId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
 					{
 						"in": "query",
 						"name": "page",
@@ -1440,23 +992,6 @@
 							"format": "double",
 							"type": "number"
 						}
-					},
-					{
-						"in": "query",
-						"name": "status",
-						"required": false,
-						"schema": {
-							"$ref": "#/components/schemas/QuizStatus"
-						}
-					},
-					{
-						"in": "query",
-						"name": "teacherId",
-						"required": false,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
 					}
 				]
 			},
@@ -1468,7 +1003,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/QuizSummary"
+									"$ref": "#/components/schemas/RoomSummary"
 								}
 							}
 						}
@@ -1517,12 +1052,13 @@
 					}
 				},
 				"tags": [
-					"Quizzes"
+					"Room"
 				],
 				"security": [
 					{
 						"bearerAuth": [
-							"TEACHER"
+							"TEACHER",
+							"ADMIN"
 						]
 					}
 				],
@@ -1532,16 +1068,53 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/AddQuizRequest"
+								"properties": {
+									"maxAttempts": {
+										"type": "number",
+										"format": "double"
+									},
+									"shuffleChoices": {
+										"type": "boolean"
+									},
+									"shuffleQuestions": {
+										"type": "boolean"
+									},
+									"durationSec": {
+										"type": "number",
+										"format": "double",
+										"nullable": true
+									},
+									"closeAt": {
+										"type": "string",
+										"format": "date-time",
+										"nullable": true
+									},
+									"openAt": {
+										"type": "string",
+										"format": "date-time",
+										"nullable": true
+									},
+									"code": {
+										"type": "string"
+									},
+									"examId": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"examId"
+								],
+								"type": "object"
 							}
 						}
 					}
 				}
 			}
 		},
-		"/quizzes/{id}": {
+		"/rooms/{id}": {
 			"get": {
-				"operationId": "Get",
+				"operationId": "GetById",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -1550,7 +1123,7 @@
 								"schema": {
 									"allOf": [
 										{
-											"$ref": "#/components/schemas/QuizSummary"
+											"$ref": "#/components/schemas/RoomSummary"
 										}
 									],
 									"nullable": true
@@ -1573,7 +1146,7 @@
 						}
 					},
 					"404": {
-						"description": "Quiz not found",
+						"description": "Room not found",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -1588,228 +1161,11 @@
 					}
 				},
 				"tags": [
-					"Quizzes"
+					"Room"
 				],
 				"security": [
 					{
 						"bearerAuth": []
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
-			},
-			"put": {
-				"operationId": "Update",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"allOf": [
-										{
-											"$ref": "#/components/schemas/QuizSummary"
-										}
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"400": {
-						"description": "Bad Request",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Quiz not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Quizzes"
-				],
-				"security": [
-					{
-						"bearerAuth": [
-							"TEACHER",
-							"ADMIN"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"properties": {
-									"timeLimitMinutes": {
-										"type": "number",
-										"format": "double"
-									},
-									"status": {
-										"$ref": "#/components/schemas/QuizStatus"
-									},
-									"description": {
-										"type": "string",
-										"nullable": true
-									},
-									"title": {
-										"type": "string"
-									}
-								},
-								"type": "object"
-							}
-						}
-					}
-				}
-			},
-			"delete": {
-				"operationId": "Remove",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"id": {
-											"type": "number",
-											"format": "double"
-										},
-										"message": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"id",
-										"message"
-									],
-									"type": "object",
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Quiz not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Quizzes"
-				],
-				"security": [
-					{
-						"bearerAuth": [
-							"TEACHER",
-							"ADMIN"
-						]
 					}
 				],
 				"parameters": [
@@ -1842,15 +1198,11 @@
 										"items": {
 											"items": {
 												"properties": {
-													"quizId": {
-														"type": "number",
-														"format": "double"
-													},
 													"explanation": {
 														"type": "string",
 														"nullable": true
 													},
-													"questionText": {
+													"text": {
 														"type": "string"
 													},
 													"id": {
@@ -1859,9 +1211,8 @@
 													}
 												},
 												"required": [
-													"quizId",
 													"explanation",
-													"questionText",
+													"text",
 													"id"
 												],
 												"type": "object"
@@ -1904,7 +1255,7 @@
 				"parameters": [
 					{
 						"in": "query",
-						"name": "quizId",
+						"name": "examId",
 						"required": false,
 						"schema": {
 							"format": "double",
@@ -1940,15 +1291,11 @@
 							"application/json": {
 								"schema": {
 									"properties": {
-										"quizId": {
-											"type": "number",
-											"format": "double"
-										},
 										"explanation": {
 											"type": "string",
 											"nullable": true
 										},
-										"questionText": {
+										"text": {
 											"type": "string"
 										},
 										"id": {
@@ -1957,9 +1304,8 @@
 										}
 									},
 									"required": [
-										"quizId",
 										"explanation",
-										"questionText",
+										"text",
 										"id"
 									],
 									"type": "object"
@@ -2028,21 +1374,54 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"points": {
+										"type": "number",
+										"format": "double"
+									},
+									"choices": {
+										"items": {
+											"properties": {
+												"order": {
+													"type": "number",
+													"format": "double"
+												},
+												"isCorrect": {
+													"type": "boolean"
+												},
+												"content": {
+													"type": "string"
+												}
+											},
+											"required": [
+												"isCorrect",
+												"content"
+											],
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"subject": {
+										"$ref": "#/components/schemas/Subject"
+									},
+									"type": {
+										"$ref": "#/components/schemas/QuestionType"
+									},
 									"explanation": {
 										"type": "string",
 										"nullable": true
 									},
-									"questionText": {
+									"text": {
 										"type": "string"
 									},
-									"quizId": {
+									"examId": {
 										"type": "number",
 										"format": "double"
 									}
 								},
 								"required": [
-									"questionText",
-									"quizId"
+									"choices",
+									"text",
+									"examId"
 								],
 								"type": "object"
 							}
@@ -2061,14 +1440,39 @@
 							"application/json": {
 								"schema": {
 									"properties": {
-										"quizId": {
-											"type": "number",
-											"format": "double"
+										"choices": {
+											"items": {
+												"properties": {
+													"order": {
+														"type": "number",
+														"format": "double"
+													},
+													"isCorrect": {
+														"type": "boolean"
+													},
+													"content": {
+														"type": "string"
+													},
+													"id": {
+														"type": "number",
+														"format": "double"
+													}
+												},
+												"required": [
+													"order",
+													"isCorrect",
+													"content",
+													"id"
+												],
+												"type": "object"
+											},
+											"type": "array"
 										},
 										"explanation": {
-											"type": "string"
+											"type": "string",
+											"nullable": true
 										},
-										"questionText": {
+										"text": {
 											"type": "string"
 										},
 										"id": {
@@ -2077,9 +1481,9 @@
 										}
 									},
 									"required": [
-										"quizId",
+										"choices",
 										"explanation",
-										"questionText",
+										"text",
 										"id"
 									],
 									"type": "object",
@@ -2146,15 +1550,11 @@
 							"application/json": {
 								"schema": {
 									"properties": {
-										"quizId": {
-											"type": "number",
-											"format": "double"
-										},
 										"explanation": {
 											"type": "string",
 											"nullable": true
 										},
-										"questionText": {
+										"text": {
 											"type": "string"
 										},
 										"id": {
@@ -2163,9 +1563,8 @@
 										}
 									},
 									"required": [
-										"quizId",
 										"explanation",
-										"questionText",
+										"text",
 										"id"
 									],
 									"type": "object",
@@ -2245,11 +1644,14 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"type": {
+										"$ref": "#/components/schemas/QuestionType"
+									},
 									"explanation": {
 										"type": "string",
 										"nullable": true
 									},
-									"questionText": {
+									"text": {
 										"type": "string"
 									}
 								},
@@ -2353,6 +1755,1007 @@
 				]
 			}
 		},
+		"/exams": {
+			"get": {
+				"operationId": "List",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/ExamSummary"
+											},
+											"type": "array"
+										}
+									},
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Exams"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "pageSize",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "subject",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/Subject"
+						}
+					},
+					{
+						"in": "query",
+						"name": "authorId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "Create",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ExamSummary"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Exams"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AddExamRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/exams/{id}": {
+			"get": {
+				"operationId": "Get",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/ExamSummary"
+										}
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Exam not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Exams"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "Update",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/ExamSummary"
+										}
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Exam not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Exams"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"subject": {
+										"$ref": "#/components/schemas/Subject"
+									},
+									"description": {
+										"type": "string",
+										"nullable": true
+									},
+									"title": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "Remove",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"id": {
+											"type": "number",
+											"format": "double"
+										},
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"id",
+										"message"
+									],
+									"type": "object",
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Exam not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Exams"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/choices": {
+			"get": {
+				"operationId": "ListAnswers",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"properties": {
+													"questionId": {
+														"type": "number",
+														"format": "double"
+													},
+													"order": {
+														"type": "number",
+														"format": "double"
+													},
+													"isCorrect": {
+														"type": "boolean"
+													},
+													"content": {
+														"type": "string"
+													},
+													"id": {
+														"type": "number",
+														"format": "double"
+													}
+												},
+												"required": [
+													"questionId",
+													"order",
+													"content",
+													"id"
+												],
+												"type": "object"
+											},
+											"type": "array"
+										}
+									},
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Choice"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "questionId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "pageSize",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateAnswer",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"questionId": {
+											"type": "number",
+											"format": "double"
+										},
+										"order": {
+											"type": "number",
+											"format": "double"
+										},
+										"isCorrect": {
+											"type": "boolean"
+										},
+										"content": {
+											"type": "string"
+										},
+										"id": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"questionId",
+										"order",
+										"isCorrect",
+										"content",
+										"id"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Choice"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"order": {
+										"type": "number",
+										"format": "double"
+									},
+									"isCorrect": {
+										"type": "boolean"
+									},
+									"content": {
+										"type": "string"
+									},
+									"questionId": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"content",
+									"questionId"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/choices/{id}": {
+			"get": {
+				"operationId": "GetAnswerById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"questionId": {
+											"type": "number",
+											"format": "double"
+										},
+										"order": {
+											"type": "number",
+											"format": "double"
+										},
+										"isCorrect": {
+											"type": "boolean"
+										},
+										"content": {
+											"type": "string"
+										},
+										"id": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"questionId",
+										"order",
+										"content",
+										"id"
+									],
+									"type": "object",
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Choice not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Choice"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateAnswer",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"questionId": {
+											"type": "number",
+											"format": "double"
+										},
+										"order": {
+											"type": "number",
+											"format": "double"
+										},
+										"isCorrect": {
+											"type": "boolean"
+										},
+										"content": {
+											"type": "string"
+										},
+										"id": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"questionId",
+										"order",
+										"isCorrect",
+										"content",
+										"id"
+									],
+									"type": "object",
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Choice not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Choice"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"order": {
+										"type": "number",
+										"format": "double"
+									},
+									"isCorrect": {
+										"type": "boolean"
+									},
+									"content": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteAnswer",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"id": {
+											"type": "number",
+											"format": "double"
+										},
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"id",
+										"message"
+									],
+									"type": "object",
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Choice not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Choice"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
 		"/auth/login": {
 			"post": {
 				"operationId": "Login",
@@ -2422,9 +2825,9 @@
 				}
 			}
 		},
-		"/answers": {
+		"/attempts": {
 			"get": {
-				"operationId": "ListAnswers",
+				"operationId": "ListSubmissions",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -2438,28 +2841,7 @@
 										},
 										"items": {
 											"items": {
-												"properties": {
-													"questionId": {
-														"type": "number",
-														"format": "double"
-													},
-													"isCorrect": {
-														"type": "boolean"
-													},
-													"answerText": {
-														"type": "string"
-													},
-													"id": {
-														"type": "number",
-														"format": "double"
-													}
-												},
-												"required": [
-													"questionId",
-													"answerText",
-													"id"
-												],
-												"type": "object"
+												"$ref": "#/components/schemas/AttemptSummary"
 											},
 											"type": "array"
 										}
@@ -2489,7 +2871,7 @@
 					}
 				},
 				"tags": [
-					"Answer"
+					"Attempt"
 				],
 				"security": [
 					{
@@ -2499,7 +2881,7 @@
 				"parameters": [
 					{
 						"in": "query",
-						"name": "questionId",
+						"name": "examId",
 						"required": false,
 						"schema": {
 							"format": "double",
@@ -2527,36 +2909,14 @@
 				]
 			},
 			"post": {
-				"operationId": "CreateAnswer",
+				"operationId": "CreateSubmission",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"questionId": {
-											"type": "number",
-											"format": "double"
-										},
-										"isCorrect": {
-											"type": "boolean"
-										},
-										"answerText": {
-											"type": "string"
-										},
-										"id": {
-											"type": "number",
-											"format": "double"
-										}
-									},
-									"required": [
-										"questionId",
-										"isCorrect",
-										"answerText",
-										"id"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/AttemptSummary"
 								}
 							}
 						}
@@ -2605,13 +2965,12 @@
 					}
 				},
 				"tags": [
-					"Answer"
+					"Attempt"
 				],
 				"security": [
 					{
 						"bearerAuth": [
-							"TEACHER",
-							"ADMIN"
+							"STUDENT"
 						]
 					}
 				],
@@ -2622,20 +2981,34 @@
 						"application/json": {
 							"schema": {
 								"properties": {
-									"isCorrect": {
-										"type": "boolean"
+									"answers": {
+										"items": {
+											"properties": {
+												"selectedChoiceId": {
+													"type": "number",
+													"format": "double"
+												},
+												"questionId": {
+													"type": "number",
+													"format": "double"
+												}
+											},
+											"required": [
+												"selectedChoiceId",
+												"questionId"
+											],
+											"type": "object"
+										},
+										"type": "array"
 									},
-									"answerText": {
-										"type": "string"
-									},
-									"questionId": {
+									"roomId": {
 										"type": "number",
 										"format": "double"
 									}
 								},
 								"required": [
-									"answerText",
-									"questionId"
+									"answers",
+									"roomId"
 								],
 								"type": "object"
 							}
@@ -2644,37 +3017,20 @@
 				}
 			}
 		},
-		"/answers/{id}": {
+		"/attempts/{id}": {
 			"get": {
-				"operationId": "GetAnswerById",
+				"operationId": "GetSubmissionById",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"questionId": {
-											"type": "number",
-											"format": "double"
-										},
-										"isCorrect": {
-											"type": "boolean"
-										},
-										"answerText": {
-											"type": "string"
-										},
-										"id": {
-											"type": "number",
-											"format": "double"
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/AttemptSummary"
 										}
-									},
-									"required": [
-										"questionId",
-										"answerText",
-										"id"
 									],
-									"type": "object",
 									"nullable": true
 								}
 							}
@@ -2695,7 +3051,7 @@
 						}
 					},
 					"404": {
-						"description": "Answer not found",
+						"description": "Attempt not found",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -2710,7 +3066,7 @@
 					}
 				},
 				"tags": [
-					"Answer"
+					"Attempt"
 				],
 				"security": [
 					{
@@ -2729,128 +3085,8 @@
 					}
 				]
 			},
-			"put": {
-				"operationId": "UpdateAnswer",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"questionId": {
-											"type": "number",
-											"format": "double"
-										},
-										"isCorrect": {
-											"type": "boolean"
-										},
-										"answerText": {
-											"type": "string"
-										},
-										"id": {
-											"type": "number",
-											"format": "double"
-										}
-									},
-									"required": [
-										"questionId",
-										"isCorrect",
-										"answerText",
-										"id"
-									],
-									"type": "object",
-									"nullable": true
-								}
-							}
-						}
-					},
-					"401": {
-						"description": "Unauthorized",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"403": {
-						"description": "Forbidden",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					},
-					"404": {
-						"description": "Answer not found",
-						"content": {
-							"application/json": {
-								"schema": {
-									"type": "number",
-									"enum": [
-										null
-									],
-									"nullable": true
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Answer"
-				],
-				"security": [
-					{
-						"bearerAuth": [
-							"TEACHER",
-							"ADMIN"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"properties": {
-									"isCorrect": {
-										"type": "boolean"
-									},
-									"answerText": {
-										"type": "string"
-									}
-								},
-								"type": "object"
-							}
-						}
-					}
-				}
-			},
 			"delete": {
-				"operationId": "DeleteAnswer",
+				"operationId": "DeleteSubmission",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -2905,7 +3141,7 @@
 						}
 					},
 					"404": {
-						"description": "Answer not found",
+						"description": "Attempt not found",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -2920,7 +3156,7 @@
 					}
 				},
 				"tags": [
-					"Answer"
+					"Attempt"
 				],
 				"security": [
 					{
@@ -2928,6 +3164,170 @@
 							"TEACHER",
 							"ADMIN"
 						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/attempt-answers": {
+			"get": {
+				"operationId": "ListBySubmission",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AttemptAnswerSummary"
+									},
+									"type": "array"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"AttemptAnswer"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "attemptId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/attempt-answers/{id}": {
+			"get": {
+				"operationId": "GetById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/AttemptAnswerSummary"
+										}
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"AttemptAnswer"
+				],
+				"security": [
+					{
+						"bearerAuth": []
 					}
 				],
 				"parameters": [

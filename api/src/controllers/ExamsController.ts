@@ -1,62 +1,55 @@
-import { QuizStatus } from "@prisma/client";
+import { Subject } from "@prisma/client";
 import { prisma } from "../utils/prisma";
 import { Controller, Get, Route, Tags, Response, Security, Post, Body, Request, Put, Delete, Path, Query, Example } from "tsoa";
 import { Request as ExRequest } from "express";
 
-export type QuizSummary = {
+export type ExamSummary = {
   id: number;
   title: string;
+  subject: Subject;
   description: string | null;
-  status: string;
-  teacherId: number;
+  authorId: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
 
-export class AddQuizRequest {
-  @Example<string>("Midterm Quiz")
+export class AddExamRequest {
+  @Example<string>("Bài thi CNTT Cơ bản")
   public title!: string;
 
-  @Example<string>("Covers chapters 1–3")
+  @Example<string>("Kiểm tra các kỹ năng tin học cơ bản")
   public description!: string | null;
 
-  @Example<string>("DRAFT")
-  public status!: QuizStatus;
-
-  @Example<number>(30)
-  public timeLimitMinutes!: number;
+  @Example<string>("IT")
+  public subject!: Subject;
 }
 
-/**
- * RESTful alias of QuizController under "/quizzes" (pluralized).
- * Keeps behavior and security identical to QuizController.
- */
-@Route("quizzes")
-@Tags("Quizzes")
-export class QuizzesController extends Controller {
+@Route("exams")
+@Tags("Exams")
+export class ExamsController extends Controller {
   @Get("/")
   @Response<null>(401, "Unauthorized")
   @Security("bearerAuth")
   public async list(
     @Query() page?: number,
     @Query() pageSize?: number,
-    @Query() status?: QuizStatus,
-    @Query() teacherId?: number
-  ): Promise<{ items: QuizSummary[]; total: number }> {
+    @Query() subject?: Subject,
+    @Query() authorId?: number
+  ): Promise<{ items: ExamSummary[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const where: any = {};
-    if (typeof status !== "undefined") where.status = status;
-    if (typeof teacherId === "number") where.teacherId = teacherId;
+    if (typeof subject !== "undefined") where.subject = subject;
+    if (typeof authorId === "number") where.authorId = authorId;
     const [items, total] = await Promise.all([
-      prisma.quiz.findMany({
+      prisma.exam.findMany({
         where,
         select: {
           id: true,
           title: true,
+          subject: true,
           description: true,
-          status: true,
-          teacherId: true,
+          authorId: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -64,50 +57,49 @@ export class QuizzesController extends Controller {
         skip,
         take,
       }),
-      prisma.quiz.count({ where }),
+      prisma.exam.count({ where }),
     ]);
     return { items, total };
   }
 
   @Get("/{id}")
   @Response<null>(401, "Unauthorized")
-  @Response<null>(404, "Quiz not found")
+  @Response<null>(404, "Exam not found")
   @Security("bearerAuth")
-  public async get(@Path() id: number): Promise<QuizSummary | null> {
-    const quiz = await prisma.quiz.findUnique({
+  public async get(@Path() id: number): Promise<ExamSummary | null> {
+    const exam = await prisma.exam.findUnique({
       where: { id },
       select: {
         id: true,
         title: true,
+        subject: true,
         description: true,
-        status: true,
-        teacherId: true,
+        authorId: true,
         createdAt: true,
         updatedAt: true,
       },
     });
-    if (!quiz) {
-      const err: any = new Error("Quiz not found");
+    if (!exam) {
+      const err: any = new Error("Exam not found");
       err.status = 404;
       throw err;
     }
-    return quiz;
+    return exam;
   }
 
   @Post("/")
   @Response<null>(400, "Bad Request")
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
-  @Security("bearerAuth", ["TEACHER"])
-  public async create(@Request() req: ExRequest, @Body() body: AddQuizRequest): Promise<QuizSummary> {
+  @Security("bearerAuth", ["TEACHER"]) 
+  public async create(@Request() req: ExRequest, @Body() body: AddExamRequest): Promise<ExamSummary> {
     const user = (req as any).user as { id: number; role: string };
-    return prisma.quiz.create({
+    return prisma.exam.create({
       data: {
         title: body.title,
         description: body.description,
-        status: body.status,
-        timeLimitMinutes: body.timeLimitMinutes,
-        teacherId: user.id,
+        subject: body.subject,
+        authorId: user.id,
       },
     });
   }
@@ -116,21 +108,21 @@ export class QuizzesController extends Controller {
   @Response<null>(400, "Bad Request")
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
-  @Response<null>(404, "Quiz not found")
+  @Response<null>(404, "Exam not found")
   @Security("bearerAuth", ["TEACHER", "ADMIN"])
   public async update(
     @Request() req: ExRequest,
     @Path() id: number,
-    @Body() body: { title?: string; description?: string | null; status?: QuizStatus; timeLimitMinutes?: number }
-  ): Promise<QuizSummary | null> {
+    @Body() body: { title?: string; description?: string | null; subject?: Subject }
+  ): Promise<ExamSummary | null> {
     const user = (req as any).user as { id: number; role: string };
-    const existing = await prisma.quiz.findUnique({ where: { id }, select: { id: true, teacherId: true } });
+    const existing = await prisma.exam.findUnique({ where: { id }, select: { id: true, authorId: true } });
     if (!existing) {
-      const err: any = new Error("Quiz not found");
+      const err: any = new Error("Exam not found");
       err.status = 404;
       throw err;
     }
-    if (user.role?.toUpperCase() === "TEACHER" && existing.teacherId !== user.id) {
+    if (user.role?.toUpperCase() === "TEACHER" && existing.authorId !== user.id) {
       const err: any = new Error("Forbidden");
       err.status = 403;
       throw err;
@@ -138,34 +130,34 @@ export class QuizzesController extends Controller {
     const data: any = {};
     if (typeof body.title !== "undefined") data.title = body.title;
     if (typeof body.description !== "undefined") data.description = body.description;
-    if (typeof body.status !== "undefined") data.status = body.status;
-    if (typeof body.timeLimitMinutes !== "undefined") data.timeLimitMinutes = body.timeLimitMinutes;
-    return prisma.quiz.update({
+    if (typeof body.subject !== "undefined") data.subject = body.subject;
+    return prisma.exam.update({
       where: { id },
       data,
-      select: { id: true, title: true, description: true, status: true, teacherId: true, createdAt: true, updatedAt: true },
+      select: { id: true, title: true, subject: true, description: true, authorId: true, createdAt: true, updatedAt: true },
     });
   }
 
   @Delete("/{id}")
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
-  @Response<null>(404, "Quiz not found")
+  @Response<null>(404, "Exam not found")
   @Security("bearerAuth", ["TEACHER", "ADMIN"])
   public async remove(@Request() req: ExRequest, @Path() id: number): Promise<{ message: string; id: number } | null> {
     const user = (req as any).user as { id: number; role: string };
-    const existing = await prisma.quiz.findUnique({ where: { id }, select: { id: true, teacherId: true } });
+    const existing = await prisma.exam.findUnique({ where: { id }, select: { id: true, authorId: true } });
     if (!existing) {
-      const err: any = new Error("Quiz not found");
+      const err: any = new Error("Exam not found");
       err.status = 404;
       throw err;
     }
-    if (user.role?.toUpperCase() === "TEACHER" && existing.teacherId !== user.id) {
+    if (user.role?.toUpperCase() === "TEACHER" && existing.authorId !== user.id) {
       const err: any = new Error("Forbidden");
       err.status = 403;
       throw err;
     }
-    await prisma.quiz.delete({ where: { id } });
-    return { message: "Quiz deleted", id };
+    await prisma.exam.delete({ where: { id } });
+    return { message: "Exam deleted", id };
   }
 }
+
