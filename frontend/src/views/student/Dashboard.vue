@@ -9,10 +9,14 @@
       <div class="card h-100"><div class="card-body">Tổng bài nộp: -</div></div>
     </div>
     <div class="col-md-4">
-      <div class="card h-100"><div class="card-body">Điểm trung bình: -</div></div>
+      <div class="card h-100">
+        <div class="card-body">Điểm trung bình: -</div>
+      </div>
     </div>
     <div class="col-md-4">
-      <div class="card h-100"><div class="card-body">Đề thi đang mở: -</div></div>
+      <div class="card h-100">
+        <div class="card-body">Đề thi đang mở: -</div>
+      </div>
     </div>
   </div>
 </template>

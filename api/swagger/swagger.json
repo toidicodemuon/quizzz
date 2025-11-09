@@ -1420,8 +1420,7 @@
 								},
 								"required": [
 									"choices",
-									"text",
-									"examId"
+									"text"
 								],
 								"type": "object"
 							}

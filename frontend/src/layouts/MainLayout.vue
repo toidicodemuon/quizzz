@@ -1,11 +1,27 @@
 <template>
   <div class="app d-flex flex-column min-vh-100">
-    <AppHeader :sidebar-open="sidebarOpen" @toggle-sidebar="toggleSidebar" />
-
     <div class="app-body d-flex flex-grow-1">
-      <AppSidebar :open="sidebarOpen" class="flex-shrink-0" />
-      <main class="app-main flex-grow-1 p-3 p-md-4">
-        <router-view />
+      <AppSidebar
+        :open="sidebarOpen"
+        :collapsed="sidebarCollapsed"
+        class="flex-shrink-0"
+      />
+      <!-- mobile overlay when sidebar is open -->
+      <div
+        v-if="sidebarOpen"
+        class="app-overlay d-lg-none"
+        @click="toggleSidebar"
+      ></div>
+      <main class="app-main flex-grow-1">
+        <AppHeader
+          :sidebar-open="sidebarOpen"
+          :collapsed="sidebarCollapsed"
+          @toggle-sidebar="toggleSidebar"
+          @toggle-collapse="toggleCollapse"
+        />
+        <div class="p-0 p-lg-4">
+          <router-view />
+        </div>
       </main>
     </div>
   </div>
@@ -17,9 +33,13 @@ import AppHeader from "../components/Header.vue";
 import AppSidebar from "../components/Sidebar.vue";
 
 const sidebarOpen = ref(true);
+const sidebarCollapsed = ref(false);
 
 function toggleSidebar() {
   sidebarOpen.value = !sidebarOpen.value;
+}
+function toggleCollapse() {
+  sidebarCollapsed.value = !sidebarCollapsed.value;
 }
 
 onMounted(() => {
@@ -38,5 +58,11 @@ onMounted(() => {
 /* basic responsive sidebar */
 .app-main {
   min-width: 0;
+}
+.app-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1035; /* below sidebar(1040), above header */
 }
 </style>

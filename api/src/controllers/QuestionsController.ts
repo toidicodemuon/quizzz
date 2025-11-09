@@ -64,25 +64,28 @@ export class QuestionController extends Controller {
     @Request() req: ExRequest,
     @Body()
     body: {
-      examId: number;
+      examId?: number; // optional: allow creating standalone question
       text: string;
       explanation?: string | null;
       type?: QuestionType;
       subject?: Subject;
       choices: Array<{ content: string; isCorrect: boolean; order?: number }>;
-      points?: number;
+      points?: number; // used only when linking to exam
     }
   ): Promise<{ id: number; text: string; explanation: string | null }> {
     const user = (req as any).user as { id: number; role: string };
-    const exam = await prisma.exam.findUnique({ where: { id: body.examId }, select: { id: true, authorId: true } });
-    if (!exam) {
-      this.setStatus(400);
-      throw new Error("Invalid examId");
-    }
-    if (user.role?.toUpperCase() === "TEACHER" && exam.authorId !== user.id) {
-      const err: any = new Error("Forbidden");
-      err.status = 403;
-      throw err;
+    let exam: { id: number; authorId: number | null } | null = null;
+    if (typeof body.examId === "number") {
+      exam = await prisma.exam.findUnique({ where: { id: body.examId }, select: { id: true, authorId: true } });
+      if (!exam) {
+        this.setStatus(400);
+        throw new Error("Invalid examId");
+      }
+      if (user.role?.toUpperCase() === "TEACHER" && exam.authorId !== user.id) {
+        const err: any = new Error("Forbidden");
+        err.status = 403;
+        throw err;
+      }
     }
     if (!Array.isArray(body.choices) || body.choices.length === 0) {
       this.setStatus(400);
@@ -101,7 +104,16 @@ export class QuestionController extends Controller {
       select: { id: true, text: true, explanation: true },
     });
 
-    await prisma.examQuestion.create({ data: { examId: exam.id, questionId: created.id, points: typeof body.points === "number" ? body.points : 1.0, order: 0 } });
+    if (exam) {
+      await prisma.examQuestion.create({
+        data: {
+          examId: exam.id,
+          questionId: created.id,
+          points: typeof body.points === "number" ? body.points : 1.0,
+          order: 0,
+        },
+      });
+    }
     return created;
   }
 
@@ -158,4 +170,3 @@ export class QuestionController extends Controller {
     return { message: "Question deleted", id };
   }
 }
-
