@@ -117,7 +117,7 @@
 
       <div class="d-flex align-items-center justify-content-between">
         <div class="text-muted small">Trang {{ page }} / {{ totalPages }}</div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="d-flex align-items-center gap-2">
           <div class="input-group input-group-md">
             <span class="input-group-text">Số dòng/trang</span>
             <select
@@ -131,10 +131,7 @@
             </select>
           </div>
           <nav aria-label="Pagination">
-            <ul
-              class="pagination mb-0 flex-wrap"
-              :class="{ 'pagination-sm': isNarrow }"
-            >
+            <ul class="pagination mb-0" :class="{ 'pagination-sm': isNarrow }">
               <li
                 class="page-item"
                 :class="{ disabled: page === 1 || loading }"
@@ -146,7 +143,6 @@
                   :disabled="page === 1 || loading"
                 >
                   <i class="bi bi-chevron-double-left"></i>
-                  <span class="d-none d-sm-inline ms-1">First</span>
                 </button>
               </li>
               <li
@@ -160,7 +156,6 @@
                   :disabled="page === 1 || loading"
                 >
                   <i class="bi bi-chevron-left"></i>
-                  <span class="d-none d-sm-inline ms-1">Prev</span>
                 </button>
               </li>
               <li
@@ -192,7 +187,6 @@
                   @click="changePage(page + 1)"
                   :disabled="page === totalPages || loading"
                 >
-                  <span class="d-none d-sm-inline me-1">Next</span>
                   <i class="bi bi-chevron-right"></i>
                 </button>
               </li>
@@ -206,7 +200,6 @@
                   @click="changePage(totalPages)"
                   :disabled="page === totalPages || loading"
                 >
-                  <span class="d-none d-sm-inline me-1">Last</span>
                   <i class="bi bi-chevron-double-right"></i>
                 </button>
               </li>
@@ -756,7 +749,10 @@ onMounted(async () => {
     subjects.value = Array.isArray(data?.items)
       ? data.items.map((s: any) => ({ id: s.id, name: s.name }))
       : [];
-  } catch {}
+  } catch (error) {
+    // Ignore error loading subjects
+    console.debug("Failed to load subjects:", error);
+  }
   load();
 });
 </script>

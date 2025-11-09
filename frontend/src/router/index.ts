@@ -58,7 +58,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../views/teacher/QuestionBank.vue"),
         meta: { pageTitle: "NGÂN HÀNG CÂU HỎI" },
       },
-
+      {
+        path: "teacher/subjects",
+        name: "teacher-subjects",
+        component: () => import("../views/teacher/Subjects.vue"),
+        meta: { pageTitle: "CHỦ ĐỀ" },
+      },
       // student
       {
         path: "student/rooms",

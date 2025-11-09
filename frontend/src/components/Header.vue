@@ -66,7 +66,7 @@ const displayName = computed(() => {
   return (u?.fullName || u?.username || u?.email || "Người dùng") as string;
 });
 const announceText =
-  import.meta.env.VITE_APP_ANNOUNCE || "Chào mừng đến với THAT!";
+  import.meta.env.VITE_APP_ANNOUNCE || "Chào mừng đến với TIN HỌC ANH THƯ!";
 const collapsed = computed(() => !!props.collapsed);
 
 function onLogout() {

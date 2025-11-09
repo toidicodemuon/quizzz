@@ -17,9 +17,15 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Môn học</label>
-              <select v-model.number="form.subjectId" class="form-select" required>
+              <select
+                v-model.number="form.subjectId"
+                class="form-select"
+                required
+              >
                 <option :value="0" disabled>-- Chọn môn --</option>
-                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+                <option v-for="s in subjects" :key="s.id" :value="s.id">
+                  {{ s.name }}
+                </option>
               </select>
             </div>
             <div class="mb-3">
@@ -140,7 +146,11 @@ import api, { type Paginated } from "../../api";
 
 type BankItem = { id: number; text: string; explanation: string | null };
 
-const form = reactive<{ title: string; subjectId: number; description: string | null }>({ title: "", subjectId: 0, description: null });
+const form = reactive<{
+  title: string;
+  subjectId: number;
+  description: string | null;
+}>({ title: "", subjectId: 0, description: null });
 const creating = ref(false);
 const subjects = ref<Array<{ id: number; name: string }>>([]);
 
@@ -212,7 +222,10 @@ async function onCreate() {
   creating.value = true;
   try {
     // 1) Create exam
-    const { data: exam } = await api.post<{ id: number; title: string }>("/exams", { title: form.title, description: form.description });
+    const { data: exam } = await api.post<{ id: number; title: string }>(
+      "/exams",
+      { title: form.title, description: form.description }
+    );
 
     // 2) For each selected question, clone content into this exam
     const ids = Array.from(selectedIds);
@@ -256,8 +269,10 @@ async function onCreate() {
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/subjects');
-    subjects.value = Array.isArray(data?.items) ? data.items.map((s: any) => ({ id: s.id, name: s.name })) : [];
+    const { data } = await api.get("/subjects");
+    subjects.value = Array.isArray(data?.items)
+      ? data.items.map((s: any) => ({ id: s.id, name: s.name }))
+      : [];
   } catch {}
   loadBank();
 });

@@ -5,6 +5,7 @@ export const MENU: Record<string, Array<{ label: string; to: string }>> = {
     { label: "Quản lý phòng thi", to: "/teacher/room/create" },
     { label: "Quản lý câu hỏi", to: "/teacher/question-bank" },
     { label: "Quản lý học viên", to: "/teacher/student" },
+    { label: "Quản lý chủ đề", to: "/teacher/subjects" },
   ],
   STUDENT: [
     { label: "Dashboard", to: "/student/dashboard" },
