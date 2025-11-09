@@ -2,7 +2,7 @@
   <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Ngân hàng câu hỏi</h5>
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
         <button class="btn btn-success" @click="openAdd()">
           <i class="bi bi-plus-circle me-1"></i> Thêm câu hỏi
         </button>
@@ -11,14 +11,16 @@
           :disabled="selectedIds.size !== 1"
           @click="openEdit(selectedOneId)"
         >
-          <i class="bi bi-pencil-square me-1"></i> Sửa
+          <i class="bi bi-pencil-square me-1"></i>
+          <span class="d-none d-sm-inline">Sửa</span>
         </button>
         <button
           class="btn btn-outline-danger"
           :disabled="selectedIds.size === 0"
           @click="bulkDelete()"
         >
-          <i class="bi bi-trash me-1"></i> Xóa
+          <i class="bi bi-trash me-1"></i>
+          <span class="d-none d-sm-inline">Xóa</span>
         </button>
       </div>
     </div>
@@ -35,9 +37,15 @@
         <div class="col-md-3 col-6">
           <div class="input-group">
             <span class="input-group-text">Môn</span>
-            <select class="form-select" v-model.number="subjectId" @change="onSubjectChange">
+            <select
+              class="form-select"
+              v-model.number="subjectId"
+              @change="onSubjectChange"
+            >
               <option :value="0">Tất cả</option>
-              <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+              <option v-for="s in subjects" :key="s.id" :value="s.id">
+                {{ s.name }}
+              </option>
             </select>
           </div>
         </div>
@@ -65,9 +73,9 @@
                   @change="toggleSelectAll($event)"
                 />
               </th>
-              <th style="width: 80px">ID</th>
+              <th class="d-none d-sm-table-cell" style="width: 80px">ID</th>
               <th>Nội dung</th>
-              <th style="width: 180px">Thao tác</th>
+              <th class="text-nowrap" style="width: 180px">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -80,7 +88,7 @@
                   @change="onToggle(q.id, $event)"
                 />
               </td>
-              <td class="fw-semibold">#{{ q.id }}</td>
+              <td class="fw-semibold d-none d-sm-table-cell">#{{ q.id }}</td>
               <td>
                 <div class="fw-semibold">{{ q.text }}</div>
                 <div class="text-muted small" v-if="q.explanation">
@@ -93,10 +101,12 @@
                     class="btn btn-outline-primary"
                     @click="openEdit(q.id)"
                   >
-                    <i class="bi bi-pencil-square me-1"></i> Sửa
+                    <i class="bi bi-pencil-square me-1"></i>
+                    <span class="d-none d-sm-inline">Sửa</span>
                   </button>
                   <button class="btn btn-outline-danger" @click="delOne(q.id)">
-                    <i class="bi bi-trash me-1"></i> Xóa
+                    <i class="bi bi-trash me-1"></i>
+                    <span class="d-none d-sm-inline">Xóa</span>
                   </button>
                 </div>
               </td>
@@ -107,7 +117,7 @@
 
       <div class="d-flex align-items-center justify-content-between">
         <div class="text-muted small">Trang {{ page }} / {{ totalPages }}</div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
           <div class="input-group input-group-md">
             <span class="input-group-text">Số dòng/trang</span>
             <select
@@ -121,7 +131,10 @@
             </select>
           </div>
           <nav aria-label="Pagination">
-            <ul class="pagination mb-0">
+            <ul
+              class="pagination mb-0 flex-wrap"
+              :class="{ 'pagination-sm': isNarrow }"
+            >
               <li
                 class="page-item"
                 :class="{ disabled: page === 1 || loading }"
@@ -132,7 +145,8 @@
                   @click="changePage(1)"
                   :disabled="page === 1 || loading"
                 >
-                  First
+                  <i class="bi bi-chevron-double-left"></i>
+                  <span class="d-none d-sm-inline ms-1">First</span>
                 </button>
               </li>
               <li
@@ -145,17 +159,27 @@
                   @click="changePage(page - 1)"
                   :disabled="page === 1 || loading"
                 >
-                  Prev
+                  <i class="bi bi-chevron-left"></i>
+                  <span class="d-none d-sm-inline ms-1">Prev</span>
                 </button>
               </li>
               <li
-                v-for="n in pageNumbers"
-                :key="n"
+                v-for="(it, idx) in pageItems"
+                :key="`p-${idx}-${it}`"
                 class="page-item"
-                :class="{ active: n === page }"
+                :class="{
+                  active: typeof it === 'number' && it === page,
+                  disabled: typeof it === 'string',
+                }"
               >
-                <button class="page-link" type="button" @click="changePage(n)">
-                  {{ n }}
+                <span v-if="typeof it === 'string'" class="page-link">…</span>
+                <button
+                  v-else
+                  class="page-link"
+                  type="button"
+                  @click="changePage(it as number)"
+                >
+                  {{ it }}
                 </button>
               </li>
               <li
@@ -168,7 +192,8 @@
                   @click="changePage(page + 1)"
                   :disabled="page === totalPages || loading"
                 >
-                  Next
+                  <span class="d-none d-sm-inline me-1">Next</span>
+                  <i class="bi bi-chevron-right"></i>
                 </button>
               </li>
               <li
@@ -181,7 +206,8 @@
                   @click="changePage(totalPages)"
                   :disabled="page === totalPages || loading"
                 >
-                  Last
+                  <span class="d-none d-sm-inline me-1">Last</span>
+                  <i class="bi bi-chevron-double-right"></i>
                 </button>
               </li>
             </ul>
@@ -200,7 +226,9 @@
     v-if="showAdd"
     style="display: block"
   >
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div
+      class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down"
+    >
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Thêm câu hỏi</h5>
@@ -214,47 +242,51 @@
         <div class="modal-body">
           <form @submit.prevent>
             <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Gắn vào đề thi (tuỳ chọn)</label>
+              <div class="col-12 col-md-6">
+                <label class="form-label">Gắn vào đề thi (tùy chọn)</label>
                 <select v-model.number="addForm.examId" class="form-select">
                   <option :value="0">— Không gắn —</option>
-                  <option v-for="ex in exams" :key="ex.id" :value="ex.id">
-                    #{{ ex.id }} - {{ ex.title }}
+                  <option v-for="e in exams" :key="e.id" :value="e.id">
+                    #{{ e.id }} - {{ e.title }}
                   </option>
                 </select>
               </div>
-              <div class="col-md-6">
+              <div class="col-12 col-md-6">
                 <label class="form-label">Môn học</label>
                 <select v-model.number="addForm.subjectId" class="form-select">
                   <option :value="0" disabled>-- Chọn môn --</option>
-                  <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
+                  <option v-for="s in subjects" :key="s.id" :value="s.id">
+                    {{ s.name }}
+                  </option>
                 </select>
               </div>
               <div class="col-12">
                 <label class="form-label">Nội dung câu hỏi</label>
                 <textarea
                   v-model.trim="addForm.text"
-                  class="form-control"
                   rows="3"
-                  required
+                  class="form-control"
                 ></textarea>
               </div>
               <div class="col-12">
-                <label class="form-label">Giải thích (tuỳ chọn)</label>
+                <label class="form-label">Giải thích (tùy chọn)</label>
                 <textarea
                   v-model.trim="addForm.explanation"
-                  class="form-control"
                   rows="2"
+                  class="form-control"
                 ></textarea>
               </div>
-              <div class="col-md-4">
+            </div>
+
+            <div class="row g-3 mt-1">
+              <div class="col-12 col-md-6">
                 <label class="form-label">Loại câu hỏi</label>
-                <select v-model="addForm.type" class="form-select">
+                <select class="form-select" v-model="addForm.type">
                   <option value="SC">1 đáp án đúng</option>
                   <option value="MC">Nhiều đáp án đúng</option>
                 </select>
               </div>
-              <div class="col-md-4">
+              <div class="col-12 col-md-6">
                 <label class="form-label">Điểm</label>
                 <input
                   v-model.number="addForm.points"
@@ -286,7 +318,7 @@
                   class="list-group-item"
                 >
                   <div class="row g-2 align-items-center">
-                    <div class="col-md-8">
+                    <div class="col-12 col-md-8">
                       <input
                         v-model.trim="c.content"
                         type="text"
@@ -294,7 +326,7 @@
                         :placeholder="`Đáp án #${idx + 1}`"
                       />
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-8 col-md-3">
                       <div class="form-check">
                         <input
                           class="form-check-input"
@@ -308,7 +340,7 @@
                         >
                       </div>
                     </div>
-                    <div class="col-md-1 text-end">
+                    <div class="col-4 col-md-1 text-end">
                       <button
                         type="button"
                         class="btn btn-sm btn-outline-danger"
@@ -348,7 +380,7 @@
   </div>
   <div class="modal-backdrop fade show" v-if="showAdd"></div>
 
-  <!-- Edit Modal: sửa nội dung + đáp án -->
+  <!-- Edit Modal -->
   <div
     class="modal fade show"
     tabindex="-1"
@@ -357,7 +389,9 @@
     v-if="showEdit"
     style="display: block"
   >
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div
+      class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down"
+    >
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Sửa câu hỏi #{{ editForm.id }}</h5>
@@ -419,7 +453,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 
@@ -430,7 +464,6 @@ type QuestionListItem = {
 };
 type ExamSummary = { id: number; title: string };
 
-// table state
 const loading = ref(false);
 const items = ref<QuestionListItem[]>([]);
 const total = ref(0);
@@ -443,10 +476,52 @@ const subjectId = ref(0);
 const selectedIds = reactive(new Set<number>());
 const sort = ref<"asc" | "desc">("desc");
 
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
-const pageNumbers = computed(() =>
-  Array.from({ length: totalPages.value }, (_, i) => i + 1)
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(total.value / pageSize.value))
 );
+function range(from: number, to: number) {
+  const r: number[] = [];
+  for (let i = from; i <= to; i++) r.push(i);
+  return r;
+}
+
+const isNarrow = ref(false);
+function updateNarrow() {
+  isNarrow.value = window.matchMedia("(max-width: 575.98px)").matches;
+}
+updateNarrow();
+onMounted(() => window.addEventListener("resize", updateNarrow));
+onUnmounted(() => window.removeEventListener("resize", updateNarrow));
+
+const pageItems = computed<(number | string)[]>(() => {
+  const tp = totalPages.value;
+  const cur = page.value;
+  if (tp <= 12) return range(1, tp);
+  if (isNarrow.value) {
+    const around = range(Math.max(1, cur - 1), Math.min(tp, cur + 1));
+    const items: (number | string)[] = [1];
+    if (around[0] > 2) items.push("...l");
+    items.push(...around);
+    if (around[around.length - 1] < tp - 1) items.push("...r");
+    if (tp > 1) items.push(tp);
+    return items;
+  }
+  const edge = 5;
+  const startEdge = range(1, edge);
+  const endEdge = range(tp - edge + 1, tp);
+  if (tp <= edge * 2 + 5) return range(1, tp);
+  const around = range(
+    Math.max(edge + 1, cur - 2),
+    Math.min(tp - edge, cur + 2)
+  );
+  const items: (number | string)[] = [...startEdge];
+  if (around[0] > startEdge[startEdge.length - 1] + 1) items.push("...l");
+  items.push(...around);
+  if (around[around.length - 1] < endEdge[0] - 1) items.push("...r");
+  items.push(...endEdge);
+  return items;
+});
+
 const filteredItems = computed(() => {
   const q = search.value.trim().toLowerCase();
   if (!q) return items.value;
@@ -454,6 +529,7 @@ const filteredItems = computed(() => {
     (it) => it.text.toLowerCase().includes(q) || String(it.id).includes(q)
   );
 });
+
 const allPageSelected = computed(
   () =>
     filteredItems.value.length > 0 &&
@@ -466,9 +542,15 @@ const selectedOneId = computed(() =>
 async function load() {
   loading.value = true;
   try {
-    const params: any = { page: page.value, pageSize: pageSize.value, sort: sort.value };
+    const params: any = {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value,
+    };
     if (subjectId.value > 0) params.subjectId = subjectId.value;
-    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", { params });
+    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
+      params,
+    });
     items.value = data.items;
     total.value = data.total;
   } finally {
@@ -514,9 +596,8 @@ async function bulkDelete() {
   for (const id of Array.from(selectedIds)) {
     try {
       await api.delete(`/questions/${id}`);
-    } catch (err) {
-      // Ignore deletion errors in bulk delete
-      console.warn("Failed to delete question:", id);
+    } catch {
+      // ignore error
     }
   }
   selectedIds.clear();
@@ -586,7 +667,6 @@ async function ensureExams() {
     params: { authorId, pageSize: 100 },
   });
   exams.value = data.items;
-  // don't auto-select; keep 0 = not linked
 }
 
 async function submitAdd() {
@@ -612,7 +692,6 @@ async function submitAdd() {
     }
     await api.post("/questions", payload);
     closeAdd();
-    // reset and reload
     addForm.text = "";
     addForm.explanation = null;
     addForm.choices = [
@@ -673,9 +752,28 @@ async function submitEdit() {
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/subjects');
-    subjects.value = Array.isArray(data?.items) ? data.items.map((s: any) => ({ id: s.id, name: s.name })) : [];
+    const { data } = await api.get("/subjects");
+    subjects.value = Array.isArray(data?.items)
+      ? data.items.map((s: any) => ({ id: s.id, name: s.name }))
+      : [];
   } catch {}
   load();
 });
 </script>
+
+<style scoped>
+@media (max-width: 575.98px) {
+  .table td,
+  .table th {
+    padding: 0.5rem 0.5rem;
+  }
+}
+.pagination {
+  gap: 0.25rem;
+}
+@media (max-width: 575.98px) {
+  .modal-body .list-group-item {
+    padding: 0.5rem;
+  }
+}
+</style>
