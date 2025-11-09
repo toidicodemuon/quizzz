@@ -1,9 +1,10 @@
 export const MENU: Record<string, Array<{ label: string; to: string }>> = {
   TEACHER: [
     { label: "Dashboard", to: "/teacher/dashboard" },
-    { label: "Tạo đề thi", to: "/teacher/quiz/create" },
-    { label: "Tạo phòng thi", to: "/teacher/room/create" },
-    { label: "Ngân hàng câu hỏi", to: "/teacher/question-bank" },
+    { label: "Quản lý đề thi", to: "/teacher/quiz/create" },
+    { label: "Quản lý phòng thi", to: "/teacher/room/create" },
+    { label: "Quản lý câu hỏi", to: "/teacher/question-bank" },
+    { label: "Quản lý học viên", to: "/teacher/student" },
   ],
   STUDENT: [
     { label: "Dashboard", to: "/student/dashboard" },

@@ -13,16 +13,18 @@ export class QuestionController extends Controller {
     @Query() examId?: number,
     @Query() page?: number,
     @Query() pageSize?: number,
-    @Query() subject?: Subject
+    @Query() subject?: Subject,
+    @Query() sort?: 'asc' | 'desc'
   ): Promise<{ items: Array<{ id: number; text: string; explanation: string | null }>; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
+    const order = (sort === 'asc' || sort === 'ASC') ? 'asc' : 'desc';
     if (typeof examId === "number") {
       const [items, total] = await Promise.all([
         prisma.question.findMany({
           where: { examLinks: { some: { examId } }, ...(typeof subject !== "undefined" ? { subject } : {}) },
           select: { id: true, text: true, explanation: true },
-          orderBy: { id: "asc" },
+          orderBy: { id: order as any },
           skip,
           take,
         }),
@@ -31,7 +33,7 @@ export class QuestionController extends Controller {
       return { items, total };
     }
     const [items, total] = await Promise.all([
-      prisma.question.findMany({ select: { id: true, text: true, explanation: true }, where: (typeof subject !== "undefined" ? { subject } : undefined), orderBy: { id: "asc" }, skip, take }),
+      prisma.question.findMany({ select: { id: true, text: true, explanation: true }, where: (typeof subject !== "undefined" ? { subject } : undefined), orderBy: { id: order as any }, skip, take }),
       prisma.question.count({ where: (typeof subject !== "undefined" ? { subject } : undefined) }),
     ]);
     return { items, total };

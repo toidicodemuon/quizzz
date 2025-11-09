@@ -1287,6 +1287,18 @@
 						"schema": {
 							"$ref": "#/components/schemas/Subject"
 						}
+					},
+					{
+						"in": "query",
+						"name": "sort",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
 					}
 				]
 			},

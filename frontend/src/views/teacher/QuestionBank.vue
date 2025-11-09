@@ -46,6 +46,15 @@
             </select>
           </div>
         </div>
+        <div class="col-md-3 col-6">
+          <div class="input-group">
+            <span class="input-group-text">Sắp xếp</span>
+            <select class="form-select" v-model="sort" @change="onSortChange">
+              <option value="desc">Mới nhất</option>
+              <option value="asc">Cũ nhất</option>
+            </select>
+          </div>
+        </div>
         <div class="col-md-3 col-6 text-muted small">Tổng: {{ total }}</div>
       </div>
 
@@ -344,7 +353,7 @@
   </div>
   <div class="modal-backdrop fade show" v-if="showAdd"></div>
 
-  <!-- Edit Modal (đơn giản: sửa nội dung/giải thích) -->
+  <!-- Edit Modal: sửa nội dung + đáp án -->
   <div
     class="modal fade show"
     tabindex="-1"
@@ -353,7 +362,7 @@
     v-if="showEdit"
     style="display: block"
   >
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Sửa câu hỏi #{{ editForm.id }}</h5>
@@ -375,6 +384,23 @@
               class="form-control"
               rows="2"
             ></textarea>
+          </div>
+          <div class="mt-4">
+            <div class="fw-semibold mb-2">Đáp án</div>
+            <ul class="list-group">
+              <li
+                v-for="c in editChoices"
+                :key="c.id"
+                class="list-group-item d-flex align-items-center"
+              >
+                <i
+                  v-if="c.isCorrect"
+                  class="bi bi-check-circle-fill text-success me-2"
+                ></i>
+                <i v-else class="bi bi-circle me-2 text-muted"></i>
+                <span>{{ c.content }}</span>
+              </li>
+            </ul>
           </div>
         </div>
         <div class="modal-footer">
@@ -419,6 +445,7 @@ const pageSizeOptions = [10, 20, 30, 40, 50];
 const search = ref("");
 const subject = ref<"" | "IT" | "ENGLISH">("");
 const selectedIds = reactive(new Set<number>());
+const sort = ref<"asc" | "desc">("desc");
 
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(total.value / pageSize.value))
@@ -445,7 +472,11 @@ const selectedOneId = computed(() =>
 async function load() {
   loading.value = true;
   try {
-    const params: any = { page: page.value, pageSize: pageSize.value };
+    const params: any = {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value,
+    };
     if (subject.value) params.subject = subject.value;
     const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
       params,
@@ -465,6 +496,10 @@ function onPageSizeChange() {
   load();
 }
 function onSubjectChange() {
+  page.value = 1;
+  load();
+}
+function onSortChange() {
   page.value = 1;
   load();
 }
@@ -491,7 +526,10 @@ async function bulkDelete() {
   for (const id of Array.from(selectedIds)) {
     try {
       await api.delete(`/questions/${id}`);
-    } catch {}
+    } catch (err) {
+      // Ignore deletion errors in bulk delete
+      console.warn("Failed to delete question:", id);
+    }
   }
   selectedIds.clear();
   load();
@@ -601,20 +639,29 @@ async function submitAdd() {
   }
 }
 
-// Edit modal (simple text/explanation)
+// Edit modal (chỉ sửa nội dung/giải thích)
 const showEdit = ref(false);
 const editForm = reactive<{
   id: number;
   text: string;
   explanation: string | null;
 }>({ id: 0, text: "", explanation: null });
+const editChoices = ref<
+  Array<{ id: number; content: string; isCorrect: boolean; order: number }>
+>([]);
 async function openEdit(id: number) {
-  const q = items.value.find((x) => x.id === id);
-  if (!q) return;
-  editForm.id = id;
-  editForm.text = q.text;
-  editForm.explanation = q.explanation;
-  showEdit.value = true;
+  try {
+    const { data } = await api.get(`/questions/${id}`);
+    editForm.id = data.id;
+    editForm.text = data.text;
+    editForm.explanation = data.explanation ?? null;
+    editChoices.value = (data.choices || [])
+      .slice()
+      .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    showEdit.value = true;
+  } catch (e: any) {
+    alert(e?.message || "Không thể mở form sửa");
+  }
 }
 function closeEdit() {
   showEdit.value = false;
