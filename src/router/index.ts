@@ -9,7 +9,15 @@ import { useConfigStore } from "@/stores/config";
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/dashboard",
+    // Redirect to role-specific dashboard when authenticated
+    redirect: () => {
+      const auth = useAuthStore();
+      const role = String(auth.user?.role || "").toUpperCase();
+      if (role === "TEACHER") return "/teacher/dashboard";
+      if (role === "STUDENT") return "/student/dashboard";
+      if (role === "ADMIN") return "/admin/dashboard";
+      return "/dashboard";
+    },
     component: () => import("@/layouts/main-layout/MainLayout.vue"),
     meta: {
       middleware: "auth",
@@ -40,6 +48,72 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           pageTitle: "Student Dashboard",
           breadcrumbs: ["Dashboards"],
+        },
+      },
+      {
+        path: "/admin/dashboard",
+        name: "admin-dashboard",
+        component: () => import("@/views/admin/Dashboard.vue"),
+        meta: {
+          pageTitle: "Admin Dashboard",
+          breadcrumbs: ["Dashboards"],
+        },
+      },
+      // Teacher basic pages
+      {
+        path: "/teacher/quiz/create",
+        name: "teacher-quiz-create",
+        component: () => import("@/views/teacher/QuizCreate.vue"),
+        meta: {
+          pageTitle: "Tạo đề thi",
+          breadcrumbs: ["Teacher"],
+        },
+      },
+      {
+        path: "/teacher/room/create",
+        name: "teacher-room-create",
+        component: () => import("@/views/teacher/RoomCreate.vue"),
+        meta: {
+          pageTitle: "Tạo phòng thi",
+          breadcrumbs: ["Teacher"],
+        },
+      },
+      {
+        path: "/teacher/question-bank",
+        name: "teacher-question-bank",
+        component: () => import("@/views/teacher/QuestionBank.vue"),
+        meta: {
+          pageTitle: "Ngân hàng câu hỏi",
+          breadcrumbs: ["Teacher"],
+        },
+      },
+      // Student basic pages
+      {
+        path: "/student/rooms",
+        name: "student-rooms",
+        component: () => import("@/views/student/Rooms.vue"),
+        meta: {
+          pageTitle: "Phòng thi",
+          breadcrumbs: ["Student"],
+        },
+      },
+      {
+        path: "/student/exams",
+        name: "student-exams",
+        component: () => import("@/views/student/Exams.vue"),
+        meta: {
+          pageTitle: "Bài thi",
+          breadcrumbs: ["Student"],
+        },
+      },
+      // Admin basic pages
+      {
+        path: "/admin/users",
+        name: "admin-users",
+        component: () => import("@/views/admin/Users.vue"),
+        meta: {
+          pageTitle: "Quản lý người dùng",
+          breadcrumbs: ["Admin"],
         },
       },
       {

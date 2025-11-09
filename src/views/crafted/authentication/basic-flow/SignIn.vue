@@ -223,6 +223,8 @@ export default defineComponent({
             router.push({ name: "teacher-dashboard" });
           } else if (role === "STUDENT") {
             router.push({ name: "student-dashboard" });
+          } else if (role === "ADMIN") {
+            router.push({ name: "admin-dashboard" });
           } else {
             router.push({ name: "dashboard" });
           }
