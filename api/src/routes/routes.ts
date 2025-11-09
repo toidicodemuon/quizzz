@@ -51,16 +51,6 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"createdAt":{"dataType":"datetime","required":true},"createdById":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"maxAttempts":{"dataType":"double","required":true},"shuffleChoices":{"dataType":"boolean","required":true},"shuffleQuestions":{"dataType":"boolean","required":true},"durationSec":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"closeAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"openAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"code":{"dataType":"string","required":true},"examId":{"dataType":"double","required":true},"id":{"dataType":"double","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "_36_Enums.QuestionType": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["SC"]},{"dataType":"enum","enums":["MC"]},{"dataType":"enum","enums":["TEXT"]}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "QuestionType": {
-        "dataType": "refAlias",
-        "type": {"ref":"_36_Enums.QuestionType","validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "_36_Enums.Subject": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ENGLISH"]},{"dataType":"enum","enums":["IT"]}],"validators":{}},
@@ -69,6 +59,16 @@ const models: TsoaRoute.Models = {
     "Subject": {
         "dataType": "refAlias",
         "type": {"ref":"_36_Enums.Subject","validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "_36_Enums.QuestionType": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["SC"]},{"dataType":"enum","enums":["MC"]},{"dataType":"enum","enums":["TEXT"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "QuestionType": {
+        "dataType": "refAlias",
+        "type": {"ref":"_36_Enums.QuestionType","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ExamSummary": {
@@ -436,6 +436,7 @@ export function RegisterRoutes(app: Router) {
                     examId: {"in":"query","name":"examId","dataType":"double"},
                     page: {"in":"query","name":"page","dataType":"double"},
                     pageSize: {"in":"query","name":"pageSize","dataType":"double"},
+                    subject: {"in":"query","name":"subject","ref":"Subject"},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa

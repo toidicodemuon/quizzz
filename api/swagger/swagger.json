@@ -116,6 +116,16 @@
 				],
 				"type": "object"
 			},
+			"_36_Enums.Subject": {
+				"type": "string",
+				"enum": [
+					"ENGLISH",
+					"IT"
+				]
+			},
+			"Subject": {
+				"$ref": "#/components/schemas/_36_Enums.Subject"
+			},
 			"_36_Enums.QuestionType": {
 				"type": "string",
 				"enum": [
@@ -126,16 +136,6 @@
 			},
 			"QuestionType": {
 				"$ref": "#/components/schemas/_36_Enums.QuestionType"
-			},
-			"_36_Enums.Subject": {
-				"type": "string",
-				"enum": [
-					"ENGLISH",
-					"IT"
-				]
-			},
-			"Subject": {
-				"$ref": "#/components/schemas/_36_Enums.Subject"
 			},
 			"ExamSummary": {
 				"properties": {
@@ -1278,6 +1278,14 @@
 						"schema": {
 							"format": "double",
 							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "subject",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/Subject"
 						}
 					}
 				]
