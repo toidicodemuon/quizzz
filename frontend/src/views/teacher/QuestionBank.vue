@@ -24,15 +24,18 @@
     </div>
     <div class="card-body">
       <div class="row g-3 align-items-center mb-3">
-        <div class="col-auto">
-          <input
-            v-model.trim="search"
-            type="search"
-            class="form-control"
-            placeholder="Tìm câu hỏi..."
-          />
+        <div class="col-md-4 col-12">
+          <input v-model.trim="search" type="search" class="form-control" placeholder="Tìm câu hỏi..." />
         </div>
-        <div class="col-auto text-muted small">Tổng: {{ total }}</div>
+        <div class="col-md-3 col-6">
+          <div class="input-group">
+            <span class="input-group-text">Số dòng/trang</span>
+            <select class="form-select" v-model.number="pageSize" @change="onPageSizeChange">
+              <option v-for="opt in pageSizeOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3 col-6 text-muted small">Tổng: {{ total }}</div>
       </div>
 
       <div class="table-responsive">
@@ -89,22 +92,25 @@
 
       <div class="d-flex align-items-center justify-content-between">
         <div class="text-muted small">Trang {{ page }} / {{ totalPages }}</div>
-        <div class="btn-group">
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            :disabled="page <= 1 || loading"
-            @click="changePage(page - 1)"
-          >
-            Trước
-          </button>
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            :disabled="page >= totalPages || loading"
-            @click="changePage(page + 1)"
-          >
-            Sau
-          </button>
-        </div>
+        <nav aria-label="Pagination">
+          <ul class="pagination mb-0">
+            <li class="page-item" :class="{ disabled: page===1 || loading }">
+              <button class="page-link" type="button" @click="changePage(1)" :disabled="page===1 || loading">First</button>
+            </li>
+            <li class="page-item" :class="{ disabled: page===1 || loading }">
+              <button class="page-link" type="button" @click="changePage(page-1)" :disabled="page===1 || loading">Prev</button>
+            </li>
+            <li v-for="n in pageNumbers" :key="n" class="page-item" :class="{ active: n===page }">
+              <button class="page-link" type="button" @click="changePage(n)">{{ n }}</button>
+            </li>
+            <li class="page-item" :class="{ disabled: page===totalPages || loading }">
+              <button class="page-link" type="button" @click="changePage(page+1)" :disabled="page===totalPages || loading">Next</button>
+            </li>
+            <li class="page-item" :class="{ disabled: page===totalPages || loading }">
+              <button class="page-link" type="button" @click="changePage(totalPages)" :disabled="page===totalPages || loading">Last</button>
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
   </div>
@@ -337,12 +343,12 @@ const items = ref<QuestionListItem[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
+const pageSizeOptions = [10, 20, 30, 40, 50];
 const search = ref("");
 const selectedIds = reactive(new Set<number>());
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(total.value / pageSize.value))
-);
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
+const pageNumbers = computed(() => Array.from({ length: totalPages.value }, (_, i) => i + 1))
 const filteredItems = computed(() => {
   const q = search.value.trim().toLowerCase();
   if (!q) return items.value;
@@ -373,6 +379,10 @@ async function load() {
 }
 function changePage(p: number) {
   page.value = Math.min(Math.max(1, p), totalPages.value);
+  load();
+}
+function onPageSizeChange() {
+  page.value = 1;
   load();
 }
 function onToggle(id: number, ev: Event) {
