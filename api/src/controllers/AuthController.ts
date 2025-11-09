@@ -1,17 +1,9 @@
-import {
-  Body,
-  Post,
-  Route,
-  Tags,
-  Response,
-  Controller,
-  SuccessResponse,
-  Example,
-} from "tsoa";
+import { Body, Post, Route, Tags, Response, Controller, SuccessResponse, Example } from "tsoa";
 import {
   authenticateUser,
   AuthError,
   type LoginSuccessResponse,
+  refreshTokens,
 } from "../services/authService";
 
 export class LoginRequest {
@@ -49,6 +41,23 @@ export class AuthController extends Controller {
 
       this.setStatus(500);
       return { message: "Login failed: " + JSON.stringify(error) };
+    }
+  }
+
+  @Post("refresh")
+  @SuccessResponse("200", "Refreshed")
+  @Response<LoginErrorResponse>(401, "Invalid refresh token")
+  public async refresh(@Body() body: { refreshToken: string }): Promise<LoginSuccessResponse | LoginErrorResponse> {
+    try {
+      const result = await refreshTokens(body?.refreshToken)
+      return result
+    } catch (error) {
+      if (error instanceof AuthError) {
+        this.setStatus(error.status)
+        return { message: error.message }
+      }
+      this.setStatus(500)
+      return { message: "Refresh failed" }
     }
   }
 }

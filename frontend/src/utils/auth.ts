@@ -2,6 +2,10 @@ export function getToken(): string {
   return localStorage.getItem("accessToken") || "";
 }
 
+export function getRefreshToken(): string {
+  return localStorage.getItem("refreshToken") || "";
+}
+
 export type AuthUser = {
   id?: number;
   username?: string;

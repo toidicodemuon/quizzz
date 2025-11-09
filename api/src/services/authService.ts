@@ -19,6 +19,28 @@ export class AuthError extends Error {
   }
 }
 
+export async function refreshTokens(refreshToken: string): Promise<LoginSuccessResponse> {
+  if (!refreshToken) throw new AuthError(401, 'Missing refresh token')
+  const secret = process.env.JWT_SECRET
+  if (!secret) throw new AuthError(500, 'JWT secret not configured')
+  try {
+    const payload: any = jwt.verify(refreshToken, secret)
+    const user = await prisma.user.findUnique({ where: { id: Number(payload?.sub) } })
+    if (!user) throw new AuthError(401, 'Invalid refresh token')
+    const base = { sub: user.id, email: user.email, role: user.role } as const
+    const accessToken = jwt.sign(base, secret, { expiresIn: '1h' })
+    const newRefresh = jwt.sign(base, secret, { expiresIn: '7d' })
+    return {
+      accessToken,
+      refreshToken: newRefresh,
+      user: { id: user.id, email: user.email, fullName: user.fullName ?? '', role: user.role },
+    }
+  } catch (e: any) {
+    if (e?.name === 'TokenExpiredError') throw new AuthError(401, 'Refresh token expired')
+    throw new AuthError(401, 'Invalid refresh token')
+  }
+}
+
 // shared prisma instance
 
 /**

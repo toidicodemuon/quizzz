@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
+import { refreshTokens } from "./services/authService";
 //import { authMiddleware } from "./middlewares/authMiddleware";
 //import { loginHandler } from "./handlers/auth";
 
@@ -45,6 +46,17 @@ app.use(
 
 // Register TSOA routes (tạo ra /api/* theo cấu hình basePath)
 RegisterRoutes(app);
+
+// Lightweight refresh endpoint (bypass TSOA generation)
+app.post("/api/auth/refresh", async (req, res) => {
+  try {
+    const result = await refreshTokens(req?.body?.refreshToken);
+    res.json(result);
+  } catch (e: any) {
+    const status = typeof e?.status === "number" ? e.status : 401;
+    res.status(status).json({ message: e?.message || "Invalid refresh token" });
+  }
+});
 
 // Swagger UI setup
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
