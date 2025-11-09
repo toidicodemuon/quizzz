@@ -56,7 +56,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { saveAuth, getRole } from '../utils/auth'
@@ -103,7 +103,7 @@ async function onSubmit() {
       else if (role === 'ADMIN') router.push({ name: 'admin-dashboard' })
       else router.push('/')
     }, 300)
-  } catch (e) {
+  } catch (e: any) {
     error.value = e?.message || 'Có lỗi xảy ra.'
   } finally {
     loading.value = false

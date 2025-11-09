@@ -19,12 +19,14 @@
   </aside>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
 import { getRole } from "../utils/auth";
 import { getMenuByRole } from "../menu";
 
-defineProps({ open: { type: Boolean, default: true } });
+defineOptions({ name: "AppSidebar" });
+
+defineProps<{ open?: boolean }>();
 
 const items = computed(() => getMenuByRole(getRole()));
 </script>

@@ -19,12 +19,14 @@
   </header>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { getRole, logout } from "../utils/auth";
 
-defineProps({ sidebarOpen: { type: Boolean, default: true } });
+defineOptions({ name: "AppHeader" });
+
+defineProps<{ sidebarOpen?: boolean }>();
 
 const router = useRouter();
 const role = computed(() => getRole());
