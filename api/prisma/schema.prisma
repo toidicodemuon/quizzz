@@ -13,9 +13,13 @@ enum Role {
   STUDENT
 }
 
-enum Subject {
-  ENGLISH
-  IT
+// Replaced enum Subject with Subject table for easier management
+model Subject {
+  id    Int     @id @default(autoincrement())
+  name  String
+  code  String? @unique
+
+  questions Question[]
 }
 
 enum QuestionType {
@@ -47,7 +51,8 @@ model User {
 
 model Question {
   id          Int          @id @default(autoincrement())
-  subject     Subject
+  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  subjectId   Int
   type        QuestionType
   text        String // nội dung câu hỏi
   explanation String? // giải thích sau khi nộp
@@ -61,7 +66,7 @@ model Question {
   examLinks      ExamQuestion[]
   attemptAnswers AttemptAnswer[]
 
-  @@index([subject, type])
+  @@index([subjectId, type])
 }
 
 model Choice {
@@ -79,7 +84,6 @@ model Choice {
 model Exam {
   id          Int      @id @default(autoincrement())
   title       String
-  subject     Subject
   description String?
   author      User?    @relation("ExamAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   authorId    Int?
@@ -90,7 +94,6 @@ model Exam {
   rooms    Room[]
   attempts Attempt[]
 
-  @@index([subject])
 }
 
 model ExamQuestion {

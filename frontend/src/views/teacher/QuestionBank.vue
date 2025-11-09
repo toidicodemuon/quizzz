@@ -35,14 +35,9 @@
         <div class="col-md-3 col-6">
           <div class="input-group">
             <span class="input-group-text">Môn</span>
-            <select
-              class="form-select"
-              v-model="subject"
-              @change="onSubjectChange"
-            >
-              <option value="">Tất cả</option>
-              <option value="IT">CNTT</option>
-              <option value="ENGLISH">Tiếng Anh</option>
+            <select class="form-select" v-model.number="subjectId" @change="onSubjectChange">
+              <option :value="0">Tất cả</option>
+              <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>
           </div>
         </div>
@@ -230,9 +225,9 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">Môn học</label>
-                <select v-model="addForm.subject" class="form-select">
-                  <option value="IT">CNTT</option>
-                  <option value="ENGLISH">Tiếng Anh</option>
+                <select v-model.number="addForm.subjectId" class="form-select">
+                  <option :value="0" disabled>-- Chọn môn --</option>
+                  <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
               </div>
               <div class="col-12">
@@ -443,13 +438,12 @@ const page = ref(1);
 const pageSize = ref(10);
 const pageSizeOptions = [10, 20, 30, 40, 50];
 const search = ref("");
-const subject = ref<"" | "IT" | "ENGLISH">("");
+const subjects = ref<Array<{ id: number; name: string }>>([]);
+const subjectId = ref(0);
 const selectedIds = reactive(new Set<number>());
 const sort = ref<"asc" | "desc">("desc");
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(total.value / pageSize.value))
-);
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
 const pageNumbers = computed(() =>
   Array.from({ length: totalPages.value }, (_, i) => i + 1)
 );
@@ -472,15 +466,9 @@ const selectedOneId = computed(() =>
 async function load() {
   loading.value = true;
   try {
-    const params: any = {
-      page: page.value,
-      pageSize: pageSize.value,
-      sort: sort.value,
-    };
-    if (subject.value) params.subject = subject.value;
-    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
-      params,
-    });
+    const params: any = { page: page.value, pageSize: pageSize.value, sort: sort.value };
+    if (subjectId.value > 0) params.subjectId = subjectId.value;
+    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", { params });
     items.value = data.items;
     total.value = data.total;
   } finally {
@@ -543,7 +531,7 @@ const addForm = reactive<{
   examId: number;
   text: string;
   explanation: string | null;
-  subject: "IT" | "ENGLISH";
+  subjectId: number;
   type: "SC" | "MC";
   points: number;
   choices: Array<{ content: string; isCorrect: boolean }>;
@@ -551,7 +539,7 @@ const addForm = reactive<{
   examId: 0,
   text: "",
   explanation: null,
-  subject: "IT",
+  subjectId: 0,
   type: "SC",
   points: 1,
   choices: [
@@ -584,6 +572,7 @@ function onToggleCorrect(idx: number, e: Event) {
 const canSubmitAdd = computed(
   () =>
     addForm.text.trim().length > 0 &&
+    addForm.subjectId > 0 &&
     addForm.choices.length > 0 &&
     addForm.choices.some((c) => c.content.trim()) &&
     addForm.choices.some((c) => c.isCorrect)
@@ -607,7 +596,7 @@ async function submitAdd() {
     const payload: any = {
       text: addForm.text,
       explanation: addForm.explanation,
-      subject: addForm.subject,
+      subjectId: addForm.subjectId,
       type: addForm.type,
       choices: addForm.choices
         .filter((c) => c.content.trim())
@@ -682,5 +671,11 @@ async function submitEdit() {
   }
 }
 
-onMounted(load);
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/subjects');
+    subjects.value = Array.isArray(data?.items) ? data.items.map((s: any) => ({ id: s.id, name: s.name })) : [];
+  } catch {}
+  load();
+});
 </script>

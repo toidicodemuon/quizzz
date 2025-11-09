@@ -1,4 +1,4 @@
-import { Subject } from "@prisma/client";
+// Subject is now a table
 import { prisma } from "../utils/prisma";
 import { Controller, Get, Route, Tags, Response, Security, Post, Body, Request, Put, Delete, Path, Query, Example } from "tsoa";
 import { Request as ExRequest } from "express";
@@ -6,7 +6,6 @@ import { Request as ExRequest } from "express";
 export type ExamSummary = {
   id: number;
   title: string;
-  subject: Subject;
   description: string | null;
   authorId: number | null;
   createdAt: Date;
@@ -19,9 +18,6 @@ export class AddExamRequest {
 
   @Example<string>("Kiểm tra các kỹ năng tin học cơ bản")
   public description!: string | null;
-
-  @Example<string>("IT")
-  public subject!: Subject;
 }
 
 @Route("exams")
@@ -33,30 +29,16 @@ export class ExamsController extends Controller {
   public async list(
     @Query() page?: number,
     @Query() pageSize?: number,
-    @Query() subject?: Subject,
+    @Query() subjectId?: number,
     @Query() authorId?: number
   ): Promise<{ items: ExamSummary[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const where: any = {};
-    if (typeof subject !== "undefined") where.subject = subject;
+    // subjectId is ignored (Exam has no subject link)
     if (typeof authorId === "number") where.authorId = authorId;
     const [items, total] = await Promise.all([
-      prisma.exam.findMany({
-        where,
-        select: {
-          id: true,
-          title: true,
-          subject: true,
-          description: true,
-          authorId: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take,
-      }),
+      prisma.exam.findMany({ where, select: { id: true, title: true, description: true, authorId: true, createdAt: true, updatedAt: true }, orderBy: { createdAt: "desc" }, skip, take }),
       prisma.exam.count({ where }),
     ]);
     return { items, total };
@@ -67,18 +49,7 @@ export class ExamsController extends Controller {
   @Response<null>(404, "Exam not found")
   @Security("bearerAuth")
   public async get(@Path() id: number): Promise<ExamSummary | null> {
-    const exam = await prisma.exam.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        title: true,
-        subject: true,
-        description: true,
-        authorId: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const exam = await prisma.exam.findUnique({ where: { id }, select: { id: true, title: true, description: true, authorId: true, createdAt: true, updatedAt: true } });
     if (!exam) {
       const err: any = new Error("Exam not found");
       err.status = 404;
@@ -94,14 +65,7 @@ export class ExamsController extends Controller {
   @Security("bearerAuth", ["TEACHER"]) 
   public async create(@Request() req: ExRequest, @Body() body: AddExamRequest): Promise<ExamSummary> {
     const user = (req as any).user as { id: number; role: string };
-    return prisma.exam.create({
-      data: {
-        title: body.title,
-        description: body.description,
-        subject: body.subject,
-        authorId: user.id,
-      },
-    });
+    return prisma.exam.create({ data: { title: body.title, description: body.description, authorId: user.id }, select: { id: true, title: true, description: true, authorId: true, createdAt: true, updatedAt: true } });
   }
 
   @Put("/{id}")
@@ -113,7 +77,7 @@ export class ExamsController extends Controller {
   public async update(
     @Request() req: ExRequest,
     @Path() id: number,
-    @Body() body: { title?: string; description?: string | null; subject?: Subject }
+    @Body() body: { title?: string; description?: string | null }
   ): Promise<ExamSummary | null> {
     const user = (req as any).user as { id: number; role: string };
     const existing = await prisma.exam.findUnique({ where: { id }, select: { id: true, authorId: true } });
@@ -130,11 +94,10 @@ export class ExamsController extends Controller {
     const data: any = {};
     if (typeof body.title !== "undefined") data.title = body.title;
     if (typeof body.description !== "undefined") data.description = body.description;
-    if (typeof body.subject !== "undefined") data.subject = body.subject;
     return prisma.exam.update({
       where: { id },
       data,
-      select: { id: true, title: true, subject: true, description: true, authorId: true, createdAt: true, updatedAt: true },
+      select: { id: true, title: true, description: true, authorId: true, createdAt: true, updatedAt: true },
     });
   }
 
@@ -160,4 +123,3 @@ export class ExamsController extends Controller {
     return { message: "Exam deleted", id };
   }
 }
-

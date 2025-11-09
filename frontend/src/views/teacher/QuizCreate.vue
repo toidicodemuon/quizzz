@@ -17,9 +17,9 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Môn học</label>
-              <select v-model="form.subject" class="form-select">
-                <option value="IT">CNTT</option>
-                <option value="ENGLISH">Tiếng Anh</option>
+              <select v-model.number="form.subjectId" class="form-select" required>
+                <option :value="0" disabled>-- Chọn môn --</option>
+                <option v-for="s in subjects" :key="s.id" :value="s.id">{{ s.name }}</option>
               </select>
             </div>
             <div class="mb-3">
@@ -138,15 +138,11 @@
 import { reactive, ref, onMounted, computed } from "vue";
 import api, { type Paginated } from "../../api";
 
-type Subject = "IT" | "ENGLISH";
 type BankItem = { id: number; text: string; explanation: string | null };
 
-const form = reactive<{
-  title: string;
-  subject: Subject;
-  description: string | null;
-}>({ title: "", subject: "IT", description: null });
+const form = reactive<{ title: string; subjectId: number; description: string | null }>({ title: "", subjectId: 0, description: null });
 const creating = ref(false);
+const subjects = ref<Array<{ id: number; name: string }>>([]);
 
 // bank state
 const loading = ref(false);
@@ -216,14 +212,7 @@ async function onCreate() {
   creating.value = true;
   try {
     // 1) Create exam
-    const { data: exam } = await api.post<{ id: number; title: string }>(
-      "/exams",
-      {
-        title: form.title,
-        description: form.description,
-        subject: form.subject,
-      }
-    );
+    const { data: exam } = await api.post<{ id: number; title: string }>("/exams", { title: form.title, description: form.description });
 
     // 2) For each selected question, clone content into this exam
     const ids = Array.from(selectedIds);
@@ -243,7 +232,7 @@ async function onCreate() {
         examId: exam.id,
         text: qd.text,
         explanation: qd.explanation,
-        subject: form.subject,
+        subjectId: form.subjectId,
         choices: qd.choices.map((c) => ({
           content: c.content,
           isCorrect: c.isCorrect,
@@ -265,5 +254,11 @@ async function onCreate() {
   }
 }
 
-onMounted(loadBank);
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/subjects');
+    subjects.value = Array.isArray(data?.items) ? data.items.map((s: any) => ({ id: s.id, name: s.name })) : [];
+  } catch {}
+  loadBank();
+});
 </script>

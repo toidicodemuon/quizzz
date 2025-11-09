@@ -1,6 +1,6 @@
 import { prisma } from "../utils/prisma";
 import { Body, Controller, Delete, Get, Path, Post, Put, Request, Response, Route, Security, Tags, Query } from "tsoa";
-import { QuestionType, Subject } from "@prisma/client";
+import { QuestionType } from "@prisma/client";
 import { Request as ExRequest } from "express";
 
 @Route("questions")
@@ -13,7 +13,7 @@ export class QuestionController extends Controller {
     @Query() examId?: number,
     @Query() page?: number,
     @Query() pageSize?: number,
-    @Query() subject?: Subject,
+    @Query() subjectId?: number,
     @Query() sort?: 'asc' | 'desc'
   ): Promise<{ items: Array<{ id: number; text: string; explanation: string | null }>; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
@@ -22,7 +22,7 @@ export class QuestionController extends Controller {
     if (typeof examId === "number") {
       const [items, total] = await Promise.all([
         prisma.question.findMany({
-          where: { examLinks: { some: { examId } }, ...(typeof subject !== "undefined" ? { subject } : {}) },
+          where: { examLinks: { some: { examId } }, ...(typeof subjectId === 'number' ? { subjectId } : {}) },
           select: { id: true, text: true, explanation: true },
           orderBy: { id: order as any },
           skip,
@@ -33,8 +33,8 @@ export class QuestionController extends Controller {
       return { items, total };
     }
     const [items, total] = await Promise.all([
-      prisma.question.findMany({ select: { id: true, text: true, explanation: true }, where: (typeof subject !== "undefined" ? { subject } : undefined), orderBy: { id: order as any }, skip, take }),
-      prisma.question.count({ where: (typeof subject !== "undefined" ? { subject } : undefined) }),
+      prisma.question.findMany({ select: { id: true, text: true, explanation: true }, where: (typeof subjectId === 'number' ? { subjectId } : undefined), orderBy: { id: order as any }, skip, take }),
+      prisma.question.count({ where: (typeof subjectId === 'number' ? { subjectId } : undefined) }),
     ]);
     return { items, total };
   }
@@ -71,7 +71,7 @@ export class QuestionController extends Controller {
       text: string;
       explanation?: string | null;
       type?: QuestionType;
-      subject?: Subject;
+      subjectId: number;
       choices: Array<{ content: string; isCorrect: boolean; order?: number }>;
       points?: number; // used only when linking to exam
     }
@@ -97,7 +97,7 @@ export class QuestionController extends Controller {
 
     const created = await prisma.question.create({
       data: {
-        subject: body.subject ?? Subject.IT,
+        subjectId: body.subjectId,
         type: body.type ?? QuestionType.SC,
         text: body.text,
         explanation: typeof body.explanation === "undefined" ? null : body.explanation,

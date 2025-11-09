@@ -53,6 +53,27 @@
 				],
 				"type": "object"
 			},
+			"SubjectDto": {
+				"properties": {
+					"code": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"id": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"code",
+					"name",
+					"id"
+				],
+				"type": "object"
+			},
 			"RoomSummary": {
 				"properties": {
 					"createdAt": {
@@ -116,16 +137,6 @@
 				],
 				"type": "object"
 			},
-			"_36_Enums.Subject": {
-				"type": "string",
-				"enum": [
-					"ENGLISH",
-					"IT"
-				]
-			},
-			"Subject": {
-				"$ref": "#/components/schemas/_36_Enums.Subject"
-			},
 			"_36_Enums.QuestionType": {
 				"type": "string",
 				"enum": [
@@ -156,9 +167,6 @@
 						"type": "string",
 						"nullable": true
 					},
-					"subject": {
-						"$ref": "#/components/schemas/Subject"
-					},
 					"title": {
 						"type": "string"
 					},
@@ -172,7 +180,6 @@
 					"createdAt",
 					"authorId",
 					"description",
-					"subject",
 					"title",
 					"id"
 				],
@@ -188,16 +195,11 @@
 						"type": "string",
 						"nullable": true,
 						"example": "Kiểm tra các kỹ năng tin học cơ bản"
-					},
-					"subject": {
-						"$ref": "#/components/schemas/Subject",
-						"example": "IT"
 					}
 				},
 				"required": [
 					"title",
-					"description",
-					"subject"
+					"description"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -893,6 +895,62 @@
 				]
 			}
 		},
+		"/subjects": {
+			"get": {
+				"operationId": "List",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"total": {
+											"type": "number",
+											"format": "double"
+										},
+										"items": {
+											"items": {
+												"$ref": "#/components/schemas/SubjectDto"
+											},
+											"type": "array"
+										}
+									},
+									"required": [
+										"total",
+										"items"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Subject"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": []
+			}
+		},
 		"/": {
 			"get": {
 				"operationId": "WelcomeMessage",
@@ -1282,10 +1340,11 @@
 					},
 					{
 						"in": "query",
-						"name": "subject",
+						"name": "subjectId",
 						"required": false,
 						"schema": {
-							"$ref": "#/components/schemas/Subject"
+							"format": "double",
+							"type": "number"
 						}
 					},
 					{
@@ -1420,8 +1479,9 @@
 										},
 										"type": "array"
 									},
-									"subject": {
-										"$ref": "#/components/schemas/Subject"
+									"subjectId": {
+										"type": "number",
+										"format": "double"
 									},
 									"type": {
 										"$ref": "#/components/schemas/QuestionType"
@@ -1440,6 +1500,7 @@
 								},
 								"required": [
 									"choices",
+									"subjectId",
 									"text"
 								],
 								"type": "object"
@@ -1848,10 +1909,11 @@
 					},
 					{
 						"in": "query",
-						"name": "subject",
+						"name": "subjectId",
 						"required": false,
 						"schema": {
-							"$ref": "#/components/schemas/Subject"
+							"format": "double",
+							"type": "number"
 						}
 					},
 					{
@@ -2115,9 +2177,6 @@
 						"application/json": {
 							"schema": {
 								"properties": {
-									"subject": {
-										"$ref": "#/components/schemas/Subject"
-									},
 									"description": {
 										"type": "string",
 										"nullable": true
