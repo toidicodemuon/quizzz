@@ -8,7 +8,11 @@ export const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config) => {
   const token = getToken();
-  if (token) config.headers = { ...(config.headers || {}), Authorization: `Bearer ${token}` } as any;
+  if (token)
+    config.headers = {
+      ...(config.headers || {}),
+      Authorization: `Bearer ${token}`,
+    } as any;
   return config;
 });
 
@@ -20,7 +24,8 @@ api.interceptors.response.use(
     const { response, config } = error || {};
     const status = response?.status;
     const url: string = config?.url || "";
-    const isAuthRoute = url.includes("/auth/login") || url.includes("/auth/refresh");
+    const isAuthRoute =
+      url.includes("/auth/login") || url.includes("/auth/refresh");
     if (status === 401 && !isAuthRoute && !config.__isRetryRequest) {
       const rt = getRefreshToken();
       if (!rt) {
@@ -35,7 +40,11 @@ api.interceptors.response.use(
             .post(baseURL + "/auth/refresh", { refreshToken: rt })
             .then((res) => {
               const data = res.data || {};
-              saveAuth({ accessToken: data.accessToken, refreshToken: data.refreshToken, user: data.user });
+              saveAuth({
+                accessToken: data.accessToken,
+                refreshToken: data.refreshToken,
+                user: data.user,
+              });
               refreshPromise = null;
               return data;
             })
@@ -45,7 +54,10 @@ api.interceptors.response.use(
             });
         }
         const data = await refreshPromise;
-        config.headers = { ...(config.headers || {}), Authorization: `Bearer ${data.accessToken}` } as any;
+        config.headers = {
+          ...(config.headers || {}),
+          Authorization: `Bearer ${data.accessToken}`,
+        } as any;
         config.__isRetryRequest = true;
         return api.request(config);
       } catch (e) {

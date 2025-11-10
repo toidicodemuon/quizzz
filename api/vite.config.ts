@@ -30,6 +30,6 @@ export default defineConfig({
       usePolling: true, // Optional: ensure this if using Windows or a VM
     },
     port: +(env.PORT ?? 3000),
-    host: "0.0.0.0",
+    host: true,
   },
 });

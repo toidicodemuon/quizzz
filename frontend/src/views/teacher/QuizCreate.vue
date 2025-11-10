@@ -291,7 +291,9 @@ onMounted(async () => {
     subjects.value = Array.isArray(data?.items)
       ? data.items.map((s: any) => ({ id: s.id, name: s.name }))
       : [];
-  } catch {}
+  } catch (err: any) {
+    console.error("Failed to load subjects:", err);
+  }
   loadBank();
 });
 </script>
