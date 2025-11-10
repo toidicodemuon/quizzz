@@ -215,8 +215,8 @@
                 <span class="input-group-text">Môn</span>
                 <select
                   class="form-select"
-                  v-model.number="bankSubjectId"
-                  @change="loadBankQuestions()"
+                  v-model.number="qb.subjectId"
+                  @change="qb.setPage(1); qb.reload()"
                 >
                   <option :value="0">Tất cả</option>
                   <option v-for="s in subjects" :key="s.id" :value="s.id">
@@ -227,10 +227,9 @@
             </div>
             <div class="col-6 col-md-3">
               <input
-                v-model.trim="bankSearch"
+                v-model.trim="qb.search"
                 class="form-control form-control-sm"
                 placeholder="Tìm câu hỏi..."
-                @input="filterBank()"
               />
             </div>
           </div>
@@ -251,7 +250,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="q in filteredBankQuestions" :key="q.id">
+                <tr v-for="q in qb.filteredItems" :key="q.id">
                   <td>
                     <input
                       class="form-check-input"
@@ -270,7 +269,7 @@
                     </div>
                   </td>
                 </tr>
-                <tr v-if="filteredBankQuestions.length === 0">
+                <tr v-if="qb.filteredItems.length === 0">
                   <td colspan="3" class="text-center text-muted">
                     Không có câu hỏi
                   </td>
@@ -541,8 +540,8 @@
                       <span class="input-group-text">Môn</span>
                       <select
                         class="form-select"
-                        v-model.number="bankSubjectId"
-                        @change="loadBankQuestions()"
+                        v-model.number="qb.subjectId"
+                        @change="qb.setPage(1); qb.reload()"
                       >
                         <option :value="0">Tất cả</option>
                         <option v-for="s in subjects" :key="s.id" :value="s.id">
@@ -553,10 +552,9 @@
                   </div>
                   <div class="col-6 col-md-3">
                     <input
-                      v-model.trim="bankSearch"
+                      v-model.trim="qb.search"
                       class="form-control form-control-sm"
                       placeholder="Tìm câu hỏi..."
-                      @input="filterBank()"
                     />
                   </div>
                 </div>
@@ -577,7 +575,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="q in filteredBankQuestions" :key="q.id">
+                      <tr v-for="q in qb.filteredItems" :key="q.id">
                         <td>
                           <input
                             class="form-check-input"
@@ -596,7 +594,7 @@
                           </div>
                         </td>
                       </tr>
-                      <tr v-if="filteredBankQuestions.length === 0">
+                      <tr v-if="qb.filteredItems.length === 0">
                         <td colspan="3" class="text-center text-muted">
                           Không có câu hỏi
                         </td>
@@ -785,6 +783,7 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import Pagination from "../../components/common/Pagination.vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
+import { useQuestionBankStore } from "../../stores/questionBank";
 
 type Subject = { id: number; name: string };
 type ExamRow = {
@@ -1036,7 +1035,7 @@ async function gotoQuestionStep() {
       });
     }
     modalStep.value = "questions";
-    await Promise.all([loadExamQuestions(), loadBankQuestions()]);
+    await Promise.all([loadExamQuestions(), qb.reload()]);
     // refresh list outside
     load();
   } catch (e: any) {
@@ -1148,22 +1147,11 @@ async function removeSelectedFromExam() {
   await loadExamQuestions();
 }
 
-// bank list
-const bankSubjectId = ref(0);
-const bankAll = ref<QuestionLite[]>([]);
-const bankSearch = ref("");
+// bank list via shared store
+const qb = useQuestionBankStore();
 const selectedBankIds = reactive(new Set<number>());
-const filteredBankQuestions = computed(() => {
-  const q = bankSearch.value.trim().toLowerCase();
-  if (!q) return bankAll.value;
-  return bankAll.value.filter(
-    (it) => it.text.toLowerCase().includes(q) || String(it.id).includes(q)
-  );
-});
 const allBankSelected = computed(
-  () =>
-    filteredBankQuestions.value.length > 0 &&
-    filteredBankQuestions.value.every((q) => selectedBankIds.has(q.id))
+  () => qb.filteredItems.length > 0 && qb.filteredItems.every((q) => selectedBankIds.has(q.id))
 );
 function onToggleBank(id: number, ev: Event) {
   const c = (ev.target as HTMLInputElement).checked;
@@ -1172,31 +1160,14 @@ function onToggleBank(id: number, ev: Event) {
 }
 function toggleSelectAllBank(ev: Event) {
   const c = (ev.target as HTMLInputElement).checked;
-  filteredBankQuestions.value.forEach((q) =>
-    c ? selectedBankIds.add(q.id) : selectedBankIds.delete(q.id)
-  );
-}
-function filterBank() {
-  // computed handles filtering
-}
-async function loadBankQuestions() {
-  const params: any = { pageSize: 100 };
-  if (bankSubjectId.value > 0) params.subjectId = bankSubjectId.value;
-  const { data } = await api.get<Paginated<QuestionLite>>("/questions", {
-    params,
-  });
-  bankAll.value = data.items || [];
-  selectedBankIds.clear();
+  qb.filteredItems.forEach((q) => (c ? selectedBankIds.add(q.id) : selectedBankIds.delete(q.id)));
 }
 const defaultAddPoints = ref(1);
 async function addSelectedToExam() {
   const id = activeExamId.value;
   if (!id || selectedBankIds.size === 0) return;
   const questionIds = Array.from(selectedBankIds);
-  await api.post(`/exams/${id}/questions`, {
-    questionIds,
-    points: defaultAddPoints.value,
-  });
+  await qb.addToExam(id, questionIds, defaultAddPoints.value);
   selectedBankIds.clear();
   await loadExamQuestions();
 }
@@ -1214,10 +1185,10 @@ onMounted(async () => {
     () => selectedOneId.value,
     async (val) => {
       if (val && modalStep.value !== "questions") {
-        await Promise.all([loadExamQuestions(), loadBankQuestions()]);
+        await Promise.all([loadExamQuestions(), qb.reload()]);
       } else if (!val && modalStep.value !== "questions") {
         examQuestions.value = [];
-        bankAll.value = [];
+        // keep bank store data
       }
     }
   );

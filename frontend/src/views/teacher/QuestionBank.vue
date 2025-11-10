@@ -349,39 +349,27 @@ import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 import Pagination from "../../components/common/Pagination.vue";
 import DataTable from "../../components/common/DataTable.vue";
+import { useQuestionBankStore } from "../../stores/questionBank";
 
-type QuestionListItem = {
-  id: number;
-  text: string;
-  explanation: string | null;
-};
+type QuestionListItem = { id: number; text: string; explanation: string | null };
 type ExamSummary = { id: number; title: string };
 
-const loading = ref(false);
-const items = ref<QuestionListItem[]>([]);
-const total = ref(0);
-const page = ref(1);
-const pageSize = ref(10);
 const pageSizeOptions = [10, 20, 30, 40, 50];
-const search = ref("");
 const subjects = ref<Array<{ id: number; name: string }>>([]);
-const subjectId = ref(0);
 const selectedIds = reactive(new Set<number>());
-const sort = ref<"asc" | "desc">("desc");
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(total.value / pageSize.value))
-);
+// Shared store for question bank
+const qb = useQuestionBankStore();
+const loading = qb.loading;
+const total = qb.total;
+const page = qb.page;
+const pageSize = qb.pageSize;
+const subjectId = qb.subjectId;
+const sort = qb.sort;
+const search = qb.search;
+const filteredItems = qb.filteredItems as unknown as any;
 
-// Pagination UI moved to reusable component; narrow-mode/page items logic removed.
-
-const filteredItems = computed(() => {
-  const q = search.value.trim().toLowerCase();
-  if (!q) return items.value;
-  return items.value.filter(
-    (it) => it.text.toLowerCase().includes(q) || String(it.id).includes(q)
-  );
-});
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
 
 const selectedOneId = computed(() =>
   selectedIds.size === 1 ? Array.from(selectedIds)[0] : 0
@@ -393,38 +381,23 @@ const columns = [
 ];
 
 async function load() {
-  loading.value = true;
-  try {
-    const params: any = {
-      page: page.value,
-      pageSize: pageSize.value,
-      sort: sort.value,
-    };
-    if (subjectId.value > 0) params.subjectId = subjectId.value;
-    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
-      params,
-    });
-    items.value = data.items;
-    total.value = data.total;
-  } finally {
-    loading.value = false;
-  }
+  await qb.reload();
 }
 function changePage(p: number) {
-  page.value = Math.min(Math.max(1, p), totalPages.value);
-  load();
+  qb.setPage(Math.min(Math.max(1, p), totalPages.value));
+  qb.reload();
 }
 function onPageSizeChange() {
-  page.value = 1;
-  load();
+  qb.setPage(1);
+  qb.reload();
 }
 function onSubjectChange() {
-  page.value = 1;
-  load();
+  qb.setPage(1);
+  qb.reload();
 }
 function onSortChange() {
-  page.value = 1;
-  load();
+  qb.setPage(1);
+  qb.reload();
 }
 // Selection handling is managed inside DataTable via selectedIds set.
 
