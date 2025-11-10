@@ -158,6 +158,57 @@
 						"type": "string",
 						"format": "date-time"
 					},
+					"reviewWindowMin": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"showExplanation": {
+						"type": "boolean"
+					},
+					"showCorrectAnswers": {
+						"type": "boolean"
+					},
+					"showScoreImmediately": {
+						"type": "boolean"
+					},
+					"feedbackMode": {
+						"type": "string",
+						"enum": [
+							"NONE",
+							"AFTER_SUBMIT",
+							"DETAILED"
+						]
+					},
+					"scoringMode": {
+						"type": "string",
+						"enum": [
+							"STANDARD",
+							"PARTIAL_CREDIT",
+							"NEGATIVE_MARKING"
+						]
+					},
+					"passMarkPercent": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"totalPoints": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"examType": {
+						"type": "string",
+						"enum": [
+							"PRACTICE",
+							"MIDTERM",
+							"FINAL",
+							"MOCK",
+							"MOS_DRILL",
+							"PLACEMENT"
+						]
+					},
 					"authorId": {
 						"type": "number",
 						"format": "double",
@@ -229,6 +280,57 @@
 						]
 					},
 					"subjectId": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"examType": {
+						"type": "string",
+						"enum": [
+							"PRACTICE",
+							"MIDTERM",
+							"FINAL",
+							"MOCK",
+							"MOS_DRILL",
+							"PLACEMENT"
+						]
+					},
+					"totalPoints": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"passMarkPercent": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"scoringMode": {
+						"type": "string",
+						"enum": [
+							"STANDARD",
+							"PARTIAL_CREDIT",
+							"NEGATIVE_MARKING"
+						]
+					},
+					"feedbackMode": {
+						"type": "string",
+						"enum": [
+							"NONE",
+							"AFTER_SUBMIT",
+							"DETAILED"
+						]
+					},
+					"showScoreImmediately": {
+						"type": "boolean"
+					},
+					"showCorrectAnswers": {
+						"type": "boolean"
+					},
+					"showExplanation": {
+						"type": "boolean"
+					},
+					"reviewWindowMin": {
 						"type": "number",
 						"format": "double",
 						"nullable": true
@@ -2475,6 +2577,57 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"reviewWindowMin": {
+										"type": "number",
+										"format": "double",
+										"nullable": true
+									},
+									"showExplanation": {
+										"type": "boolean"
+									},
+									"showCorrectAnswers": {
+										"type": "boolean"
+									},
+									"showScoreImmediately": {
+										"type": "boolean"
+									},
+									"feedbackMode": {
+										"type": "string",
+										"enum": [
+											"NONE",
+											"AFTER_SUBMIT",
+											"DETAILED"
+										]
+									},
+									"scoringMode": {
+										"type": "string",
+										"enum": [
+											"STANDARD",
+											"PARTIAL_CREDIT",
+											"NEGATIVE_MARKING"
+										]
+									},
+									"passMarkPercent": {
+										"type": "number",
+										"format": "double",
+										"nullable": true
+									},
+									"totalPoints": {
+										"type": "number",
+										"format": "double",
+										"nullable": true
+									},
+									"examType": {
+										"type": "string",
+										"enum": [
+											"PRACTICE",
+											"MIDTERM",
+											"FINAL",
+											"MOCK",
+											"MOS_DRILL",
+											"PLACEMENT"
+										]
+									},
 									"subjectId": {
 										"type": "number",
 										"format": "double",
@@ -2591,6 +2744,236 @@
 					{
 						"in": "path",
 						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/exams/{id}/questions": {
+			"post": {
+				"operationId": "AddQuestions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"examId": {
+											"type": "number",
+											"format": "double"
+										},
+										"added": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"examId",
+										"added"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Exam not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Exams"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"points": {
+										"type": "number",
+										"format": "double"
+									},
+									"questionIds": {
+										"items": {
+											"type": "number",
+											"format": "double"
+										},
+										"type": "array"
+									}
+								},
+								"required": [
+									"questionIds"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/exams/{id}/questions/{questionId}": {
+			"delete": {
+				"operationId": "RemoveQuestion",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"questionId": {
+											"type": "number",
+											"format": "double"
+										},
+										"examId": {
+											"type": "number",
+											"format": "double"
+										},
+										"removed": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"questionId",
+										"examId",
+										"removed"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Exam not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Exams"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "path",
+						"name": "questionId",
 						"required": true,
 						"schema": {
 							"format": "double",
