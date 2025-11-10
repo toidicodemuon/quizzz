@@ -123,8 +123,8 @@
           :total="total"
           :page-size-options="pageSizeOptions"
           :disabled="loading"
-          @update:page="(p:number)=>{ changePage(p) }"
-          @update:page-size="(sz:number)=>{ setPageSize(sz); reload(); }"
+          @update:page="(p:number)=> changePage(p)"
+          @update:page-size="(sz:number)=>{ pageSize = sz; onPageSizeChange(); }"
         />
       </div>
     </div>
@@ -367,10 +367,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
-import Pagination from "../../components/common/Pagination.vue";
-import { usePaginatedList } from "../../composables/usePaginatedList";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
+import Pagination from "../../components/common/Pagination.vue";
 
 type QuestionListItem = {
   id: number;
@@ -379,27 +378,28 @@ type QuestionListItem = {
 };
 type ExamSummary = { id: number; title: string };
 
+const loading = ref(false);
+const items = ref<QuestionListItem[]>([]);
+const total = ref(0);
+const page = ref(1);
+const pageSize = ref(10);
 const pageSizeOptions = [10, 20, 30, 40, 50];
-const sort = ref<"asc" | "desc">("desc");
-const subjectId = ref(0);
 const search = ref("");
-
-const { items, total, page, pageSize, loading, reload, setPage, setPageSize } =
-  usePaginatedList<QuestionListItem>(async (pg, ps) => {
-    const params: any = { page: pg, pageSize: ps, sort: sort.value };
-    if (subjectId.value > 0) params.subjectId = subjectId.value;
-    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
-      params,
-    });
-    return { items: data.items, total: data.total };
-  });
 const subjects = ref<Array<{ id: number; name: string }>>([]);
+const subjectId = ref(0);
 const selectedIds = reactive(new Set<number>());
+const sort = ref<"asc" | "desc">("desc");
 
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(total.value / pageSize.value))
 );
-// pagination UI is external component; keep only totalPages
+function range(from: number, to: number) {
+  const r: number[] = [];
+  for (let i = from; i <= to; i++) r.push(i);
+  return r;
+}
+
+// Pagination UI moved to reusable component; narrow-mode/page items logic removed.
 
 const filteredItems = computed(() => {
   const q = search.value.trim().toLowerCase();
@@ -419,23 +419,38 @@ const selectedOneId = computed(() =>
 );
 
 async function load() {
-  await reload();
+  loading.value = true;
+  try {
+    const params: any = {
+      page: page.value,
+      pageSize: pageSize.value,
+      sort: sort.value,
+    };
+    if (subjectId.value > 0) params.subjectId = subjectId.value;
+    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
+      params,
+    });
+    items.value = data.items;
+    total.value = data.total;
+  } finally {
+    loading.value = false;
+  }
 }
 function changePage(p: number) {
-  setPage(p);
-  reload();
+  page.value = Math.min(Math.max(1, p), totalPages.value);
+  load();
 }
 function onPageSizeChange() {
-  setPage(1);
-  reload();
+  page.value = 1;
+  load();
 }
 function onSubjectChange() {
-  setPage(1);
-  reload();
+  page.value = 1;
+  load();
 }
 function onSortChange() {
-  setPage(1);
-  reload();
+  page.value = 1;
+  load();
 }
 function onToggle(id: number, ev: Event) {
   const c = (ev.target as HTMLInputElement).checked;
@@ -631,12 +646,9 @@ onMounted(async () => {
 <style scoped>
 @media (max-width: 575.98px) {
   .table td,
-  .table th {
+.table th {
     padding: 0.5rem 0.5rem;
   }
-}
-.pagination {
-  gap: 0.25rem;
 }
 @media (max-width: 575.98px) {
   .modal-body .list-group-item {
