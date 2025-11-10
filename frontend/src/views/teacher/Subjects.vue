@@ -44,10 +44,10 @@
         <table class="table align-middle">
           <thead>
             <tr class="text-uppercase text-muted small">
-              <th style="width: 80px">ID</th>
+              <th>ID</th>
               <th>Tên môn</th>
-              <th class="d-none d-sm-table-cell" style="width: 30%">Mã</th>
-              <th class="text-nowrap" style="width: 160px">Thao tác</th>
+              <th class="d-none d-sm-table-cell">Mã</th>
+              <th class="text-nowrap"></th>
             </tr>
           </thead>
           <tbody>
@@ -57,7 +57,7 @@
               <td class="d-none d-sm-table-cell">
                 <code>{{ s.code || "—" }}</code>
               </td>
-              <td>
+              <td class="text-end">
                 <div class="btn-group btn-group-sm">
                   <button class="btn btn-outline-primary" @click="openEdit(s)">
                     <i class="bi bi-pencil-square me-1"></i>

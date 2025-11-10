@@ -4,7 +4,8 @@
       <h5 class="mb-0">Ngân hàng câu hỏi</h5>
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <button class="btn btn-success" @click="openAdd()">
-          <i class="bi bi-plus-circle me-1"></i> Thêm câu hỏi
+          <i class="bi bi-plus-circle me-1"></i>
+          <span class="d-none d-lg-inline">Thêm câu hỏi</span>
         </button>
         <button
           class="btn btn-outline-primary"
@@ -73,9 +74,9 @@
                   @change="toggleSelectAll($event)"
                 />
               </th>
-              <th class="d-none d-sm-table-cell" style="width: 80px">ID</th>
+              <th class="d-none d-sm-table-cell">ID</th>
               <th>Nội dung</th>
-              <th class="text-nowrap" style="width: 180px">Thao tác</th>
+              <th class="text-nowrap text-end"></th>
             </tr>
           </thead>
           <tbody>
@@ -95,7 +96,7 @@
                   {{ q.explanation }}
                 </div>
               </td>
-              <td>
+              <td class="text-end">
                 <div class="btn-group btn-group-sm">
                   <button
                     class="btn btn-outline-primary"
@@ -115,9 +116,11 @@
         </table>
       </div>
 
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="text-muted small">Trang {{ page }} / {{ totalPages }}</div>
-        <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center justify-content-between row">
+        <div class="col-12 col-lg-3 text-muted small text-center text-lg-start">
+          Trang {{ page }} / {{ totalPages }}
+        </div>
+        <div class="col-12 col-lg-3 d-flex text-center gap-2 m-1">
           <div class="input-group input-group-md">
             <span class="input-group-text">Số dòng/trang</span>
             <select
@@ -130,82 +133,79 @@
               </option>
             </select>
           </div>
-          <nav aria-label="Pagination">
-            <ul class="pagination mb-0" :class="{ 'pagination-sm': isNarrow }">
-              <li
-                class="page-item"
-                :class="{ disabled: page === 1 || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(1)"
-                  :disabled="page === 1 || loading"
-                >
-                  <i class="bi bi-chevron-double-left"></i>
-                </button>
-              </li>
-              <li
-                class="page-item"
-                :class="{ disabled: page === 1 || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(page - 1)"
-                  :disabled="page === 1 || loading"
-                >
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-              </li>
-              <li
-                v-for="(it, idx) in pageItems"
-                :key="`p-${idx}-${it}`"
-                class="page-item"
-                :class="{
-                  active: typeof it === 'number' && it === page,
-                  disabled: typeof it === 'string',
-                }"
-              >
-                <span v-if="typeof it === 'string'" class="page-link">…</span>
-                <button
-                  v-else
-                  class="page-link"
-                  type="button"
-                  @click="changePage(it as number)"
-                >
-                  {{ it }}
-                </button>
-              </li>
-              <li
-                class="page-item p-0 m-0"
-                :class="{ disabled: page === totalPages || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(page + 1)"
-                  :disabled="page === totalPages || loading"
-                >
-                  <i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-              <li
-                class="page-item"
-                :class="{ disabled: page === totalPages || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(totalPages)"
-                  :disabled="page === totalPages || loading"
-                >
-                  <i class="bi bi-chevron-double-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
         </div>
+        <nav
+          class="col-12 col-lg-5 justify-content-center d-flex"
+          aria-label="Pagination"
+        >
+          <ul class="pagination mb-0" :class="{ 'pagination-sm': isNarrow }">
+            <li class="page-item" :class="{ disabled: page === 1 || loading }">
+              <button
+                class="page-link"
+                type="button"
+                @click="changePage(1)"
+                :disabled="page === 1 || loading"
+              >
+                <i class="bi bi-chevron-double-left"></i>
+              </button>
+            </li>
+            <li class="page-item" :class="{ disabled: page === 1 || loading }">
+              <button
+                class="page-link"
+                type="button"
+                @click="changePage(page - 1)"
+                :disabled="page === 1 || loading"
+              >
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            <li
+              v-for="(it, idx) in pageItems"
+              :key="`p-${idx}-${it}`"
+              class="page-item"
+              :class="{
+                active: typeof it === 'number' && it === page,
+                disabled: typeof it === 'string',
+              }"
+            >
+              <span v-if="typeof it === 'string'" class="page-link">…</span>
+              <button
+                v-else
+                class="page-link"
+                type="button"
+                @click="changePage(it as number)"
+              >
+                {{ it }}
+              </button>
+            </li>
+            <li
+              class="page-item p-0 m-0"
+              :class="{ disabled: page === totalPages || loading }"
+            >
+              <button
+                class="page-link"
+                type="button"
+                @click="changePage(page + 1)"
+                :disabled="page === totalPages || loading"
+              >
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+            <li
+              class="page-item"
+              :class="{ disabled: page === totalPages || loading }"
+            >
+              <button
+                class="page-link"
+                type="button"
+                @click="changePage(totalPages)"
+                :disabled="page === totalPages || loading"
+              >
+                <i class="bi bi-chevron-double-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
   </div>
