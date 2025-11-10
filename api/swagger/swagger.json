@@ -163,6 +163,23 @@
 						"format": "double",
 						"nullable": true
 					},
+					"subjectId": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"DRAFT",
+							"PUBLISHED",
+							"ARCHIVED"
+						]
+					},
+					"code": {
+						"type": "string",
+						"nullable": true
+					},
 					"description": {
 						"type": "string",
 						"nullable": true
@@ -179,6 +196,9 @@
 					"updatedAt",
 					"createdAt",
 					"authorId",
+					"subjectId",
+					"status",
+					"code",
 					"description",
 					"title",
 					"id"
@@ -195,6 +215,23 @@
 						"type": "string",
 						"nullable": true,
 						"example": "Kiểm tra các kỹ năng tin học cơ bản"
+					},
+					"code": {
+						"type": "string",
+						"nullable": true
+					},
+					"status": {
+						"type": "string",
+						"enum": [
+							"DRAFT",
+							"PUBLISHED",
+							"ARCHIVED"
+						]
+					},
+					"subjectId": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -2438,6 +2475,23 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"subjectId": {
+										"type": "number",
+										"format": "double",
+										"nullable": true
+									},
+									"status": {
+										"type": "string",
+										"enum": [
+											"DRAFT",
+											"PUBLISHED",
+											"ARCHIVED"
+										]
+									},
+									"code": {
+										"type": "string",
+										"nullable": true
+									},
 									"description": {
 										"type": "string",
 										"nullable": true

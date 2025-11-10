@@ -15,11 +15,12 @@ enum Role {
 
 // Replaced enum Subject with Subject table for easier management
 model Subject {
-  id    Int     @id @default(autoincrement())
-  name  String
-  code  String? @unique
+  id   Int     @id @default(autoincrement())
+  name String
+  code String? @unique
 
   questions Question[]
+  exams     Exam[]
 }
 
 enum QuestionType {
@@ -43,10 +44,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  examsAuthored     Exam[]     @relation("ExamAuthor")
   questionsAuthored Question[] @relation("QuestionAuthor")
   roomsCreated      Room[]     @relation("RoomCreator")
   attempts          Attempt[]
+  exams             Exam[]     @relation("ExamAuthor")
 }
 
 model Question {
@@ -82,18 +83,69 @@ model Choice {
 }
 
 model Exam {
-  id          Int      @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   title       String
   description String?
-  author      User?    @relation("ExamAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  authorId    Int?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  code        String?    @unique
+  status      ExamStatus @default(DRAFT)
 
+  // === Phân loại (tùy chọn) ===
+  subjectId Int?
+  subject   Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  // === Loại đề & quy tắc chấm ===
+  examType        ExamType    @default(PRACTICE)
+  totalPoints     Decimal?    @db.Decimal(8, 2) // tổng điểm, có thể tính tự động
+  passMarkPercent Int? // ngưỡng đậu (%)
+  scoringMode     ScoringMode @default(STANDARD)
+
+  // === Cấu hình feedback ===
+  feedbackMode         FeedbackMode @default(DETAILED)
+  showScoreImmediately Boolean      @default(true)
+  showCorrectAnswers   Boolean      @default(false)
+  showExplanation      Boolean      @default(false)
+  reviewWindowMin      Int?
+
+  // === Tác giả & thời gian ===
+  author    User?    @relation("ExamAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  authorId  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // === Quan hệ ===
   items    ExamQuestion[]
   rooms    Room[]
   attempts Attempt[]
 
+  @@index([subjectId])
+  @@index([status])
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ExamType {
+  PRACTICE
+  MIDTERM
+  FINAL
+  MOCK
+  MOS_DRILL
+  PLACEMENT
+}
+
+enum ScoringMode {
+  STANDARD // đúng = đủ điểm, sai = 0
+  PARTIAL_CREDIT // MC cho điểm phần đúng
+  NEGATIVE_MARKING // trừ điểm đoán bừa (nếu bạn áp dụng)
+}
+
+enum FeedbackMode {
+  NONE // không hiện gì sau khi nộp
+  AFTER_SUBMIT // hiện điểm/đáp án sau khi nộp
+  DETAILED // hiện giải thích theo câu (nếu có)
 }
 
 model ExamQuestion {

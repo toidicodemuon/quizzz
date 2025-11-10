@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="row g-3">
     <div class="col-lg-4">
       <div class="card h-100">
@@ -16,7 +16,9 @@
               />
             </div>
             <div class="mb-3">
-              <label class="form-label">Môn học</label>
+              <label class="form-label"
+                >Môn học mặc định (cho câu hỏi mới)</label
+              >
               <select
                 v-model.number="form.subjectId"
                 class="form-select"
@@ -37,10 +39,27 @@
                 placeholder="Mô tả ngắn..."
               ></textarea>
             </div>
+            <div class="mb-3">
+              <label class="form-label">Mã đề (tuỳ chọn)</label>
+              <input
+                v-model.trim="form.code"
+                type="text"
+                class="form-control"
+                placeholder="VD: EXAM_IT_BASIC_001"
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Trạng thái</label>
+              <select v-model="form.status" class="form-select">
+                <option value="DRAFT">DRAFT</option>
+                <option value="PUBLISHED">PUBLISHED</option>
+                <option value="ARCHIVED">ARCHIVED</option>
+              </select>
+            </div>
 
             <div class="mb-3">
               <label class="form-label">Câu hỏi đã chọn</label>
-              <div class="small text-muted">{{ selectedCount }} câu hỏi</div>
+              <div class="small text-muted">{{ selectedIds.size }} câu hỏi</div>
             </div>
 
             <div class="d-grid gap-2">
@@ -145,14 +164,17 @@ import { reactive, ref, onMounted, computed } from "vue";
 import api, { type Paginated } from "../../api";
 
 type BankItem = { id: number; text: string; explanation: string | null };
+type Subject = { id: number; name: string };
 
 const form = reactive<{
   title: string;
   subjectId: number;
   description: string | null;
-}>({ title: "", subjectId: 0, description: null });
+  code: string | null;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+}>({ title: "", subjectId: 0, description: null, code: null, status: "DRAFT" });
 const creating = ref(false);
-const subjects = ref<Array<{ id: number; name: string }>>([]);
+const subjects = ref<Subject[]>([]);
 
 // bank state
 const loading = ref(false);
@@ -176,10 +198,9 @@ const filteredPage = computed(() => {
 });
 const allPageSelected = computed(
   () =>
-    filteredPage.value.every((q) => selectedIds.has(q.id)) &&
-    filteredPage.value.length > 0
+    filteredPage.value.length > 0 &&
+    filteredPage.value.every((q) => selectedIds.has(q.id))
 );
-const selectedCount = computed(() => selectedIds.size);
 
 async function loadBank() {
   loading.value = true;
@@ -199,15 +220,11 @@ function onToggle(id: number, ev: Event) {
   if (checked) selectedIds.add(id);
   else selectedIds.delete(id);
 }
-
 function toggleSelectPage() {
-  if (allPageSelected.value) {
+  if (allPageSelected.value)
     filteredPage.value.forEach((q) => selectedIds.delete(q.id));
-  } else {
-    filteredPage.value.forEach((q) => selectedIds.add(q.id));
-  }
+  else filteredPage.value.forEach((q) => selectedIds.add(q.id));
 }
-
 function clearSelections() {
   selectedIds.clear();
 }
@@ -221,13 +238,15 @@ async function onCreate() {
   if (!form.title || selectedIds.size === 0) return;
   creating.value = true;
   try {
-    // 1) Create exam
-    const { data: exam } = await api.post<{ id: number; title: string }>(
-      "/exams",
-      { title: form.title, description: form.description }
-    );
-
-    // 2) For each selected question, clone content into this exam
+    // 1) Create exam with code/status/subjectId
+    const { data: exam } = await api.post<{ id: number }>("/exams", {
+      title: form.title,
+      description: form.description,
+      code: form.code,
+      status: form.status,
+      subjectId: form.subjectId > 0 ? form.subjectId : null,
+    });
+    // 2) Clone selected questions into this exam
     const ids = Array.from(selectedIds);
     for (const id of ids) {
       const { data: qd } = await api.get<{
@@ -254,11 +273,10 @@ async function onCreate() {
         points: 1,
       });
     }
-
     alert("Tạo đề thi thành công!");
-    // reset form
     form.title = "";
     form.description = null;
+    form.code = null;
     selectedIds.clear();
   } catch (e: any) {
     alert(e?.message || "Không thể tạo đề thi");
