@@ -127,104 +127,16 @@
         </table>
       </div>
 
-      <div class="d-flex align-items-center justify-content-between">
-        <div class="text-muted small">Trang {{ page }} / {{ totalPages }}</div>
-        <div class="d-flex align-items-center gap-2 flex-wrap">
-          <div class="input-group input-group-md">
-            <span class="input-group-text">Số dòng/trang</span>
-            <select
-              class="form-select"
-              v-model.number="pageSize"
-              @change="onPageSizeChange"
-            >
-              <option v-for="opt in pageSizeOptions" :key="opt" :value="opt">
-                {{ opt }}
-              </option>
-            </select>
-          </div>
-          <nav aria-label="Pagination">
-            <ul
-              class="pagination mb-0 flex-wrap"
-              :class="{ 'pagination-sm': isNarrow }"
-            >
-              <li
-                class="page-item"
-                :class="{ disabled: page === 1 || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(1)"
-                  :disabled="page === 1 || loading"
-                >
-                  <i class="bi bi-chevron-double-left"></i
-                  ><span class="d-none d-sm-inline ms-1">First</span>
-                </button>
-              </li>
-              <li
-                class="page-item"
-                :class="{ disabled: page === 1 || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(page - 1)"
-                  :disabled="page === 1 || loading"
-                >
-                  <i class="bi bi-chevron-left"></i
-                  ><span class="d-none d-sm-inline ms-1">Prev</span>
-                </button>
-              </li>
-              <li
-                v-for="(it, idx) in pageItems"
-                :key="`p-${idx}-${it}`"
-                class="page-item"
-                :class="{
-                  active: typeof it === 'number' && it === page,
-                  disabled: typeof it === 'string',
-                }"
-              >
-                <span v-if="typeof it === 'string'" class="page-link">…</span>
-                <button
-                  v-else
-                  class="page-link"
-                  type="button"
-                  @click="changePage(it as number)"
-                >
-                  {{ it }}
-                </button>
-              </li>
-              <li
-                class="page-item p-0 m-0"
-                :class="{ disabled: page === totalPages || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(page + 1)"
-                  :disabled="page === totalPages || loading"
-                >
-                  <span class="d-none d-sm-inline me-1">Next</span
-                  ><i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-              <li
-                class="page-item"
-                :class="{ disabled: page === totalPages || loading }"
-              >
-                <button
-                  class="page-link"
-                  type="button"
-                  @click="changePage(totalPages)"
-                  :disabled="page === totalPages || loading"
-                >
-                  <span class="d-none d-sm-inline me-1">Last</span
-                  ><i class="bi bi-chevron-double-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </div>
+      <div class="mt-2">
+        <Pagination
+          :page="page"
+          :page-size="pageSize"
+          :total="total"
+          :page-size-options="pageSizeOptions"
+          :disabled="loading"
+          @update:page="(p:number)=> changePage(p)"
+          @update:page-size="(sz:number)=>{ pageSize = sz; onPageSizeChange(); }"
+        />
       </div>
     </div>
   </div>
@@ -869,7 +781,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import Pagination from "../../components/common/Pagination.vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 
@@ -937,47 +850,6 @@ function formatDate(d: string) {
   }
 }
 
-function range(from: number, to: number) {
-  const r: number[] = [];
-  for (let i = from; i <= to; i++) r.push(i);
-  return r;
-}
-const isNarrow = ref(false);
-function updateNarrow() {
-  isNarrow.value = window.matchMedia("(max-width: 575.98px)").matches;
-}
-updateNarrow();
-onMounted(() => window.addEventListener("resize", updateNarrow));
-onUnmounted(() => window.removeEventListener("resize", updateNarrow));
-
-const pageItems = computed<(number | string)[]>(() => {
-  const tp = totalPages.value;
-  const cur = page.value;
-  if (tp <= 12) return range(1, tp);
-  if (isNarrow.value) {
-    const around = range(Math.max(1, cur - 1), Math.min(tp, cur + 1));
-    const items: (number | string)[] = [1];
-    if (around[0] > 2) items.push("...l");
-    items.push(...around);
-    if (around[around.length - 1] < tp - 1) items.push("...r");
-    if (tp > 1) items.push(tp);
-    return items;
-  }
-  const edge = 5;
-  const startEdge = range(1, edge);
-  const endEdge = range(tp - edge + 1, tp);
-  if (tp <= edge * 2 + 5) return range(1, tp);
-  const around = range(
-    Math.max(edge + 1, cur - 2),
-    Math.min(tp - edge, cur + 2)
-  );
-  const items: (number | string)[] = [...startEdge];
-  if (around[0] > startEdge[startEdge.length - 1] + 1) items.push("...l");
-  items.push(...around);
-  if (around[around.length - 1] < endEdge[0] - 1) items.push("...r");
-  items.push(...endEdge);
-  return items;
-});
 
 async function load() {
   loading.value = true;

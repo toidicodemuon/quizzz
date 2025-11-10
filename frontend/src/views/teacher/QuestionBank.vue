@@ -116,96 +116,16 @@
         </table>
       </div>
 
-      <div class="d-flex align-items-center justify-content-between row">
-        <div class="col-12 col-lg-3 text-muted small text-center text-lg-start">
-          Trang {{ page }} / {{ totalPages }}
-        </div>
-        <div class="col-12 col-lg-3 d-flex text-center gap-2 m-1">
-          <div class="input-group input-group-md">
-            <span class="input-group-text">Số dòng/trang</span>
-            <select
-              class="form-select"
-              v-model.number="pageSize"
-              @change="onPageSizeChange"
-            >
-              <option v-for="opt in pageSizeOptions" :key="opt" :value="opt">
-                {{ opt }}
-              </option>
-            </select>
-          </div>
-        </div>
-        <nav
-          class="col-12 col-lg-5 justify-content-center d-flex"
-          aria-label="Pagination"
-        >
-          <ul class="pagination mb-0" :class="{ 'pagination-sm': isNarrow }">
-            <li class="page-item" :class="{ disabled: page === 1 || loading }">
-              <button
-                class="page-link"
-                type="button"
-                @click="changePage(1)"
-                :disabled="page === 1 || loading"
-              >
-                <i class="bi bi-chevron-double-left"></i>
-              </button>
-            </li>
-            <li class="page-item" :class="{ disabled: page === 1 || loading }">
-              <button
-                class="page-link"
-                type="button"
-                @click="changePage(page - 1)"
-                :disabled="page === 1 || loading"
-              >
-                <i class="bi bi-chevron-left"></i>
-              </button>
-            </li>
-            <li
-              v-for="(it, idx) in pageItems"
-              :key="`p-${idx}-${it}`"
-              class="page-item"
-              :class="{
-                active: typeof it === 'number' && it === page,
-                disabled: typeof it === 'string',
-              }"
-            >
-              <span v-if="typeof it === 'string'" class="page-link">…</span>
-              <button
-                v-else
-                class="page-link"
-                type="button"
-                @click="changePage(it as number)"
-              >
-                {{ it }}
-              </button>
-            </li>
-            <li
-              class="page-item p-0 m-0"
-              :class="{ disabled: page === totalPages || loading }"
-            >
-              <button
-                class="page-link"
-                type="button"
-                @click="changePage(page + 1)"
-                :disabled="page === totalPages || loading"
-              >
-                <i class="bi bi-chevron-right"></i>
-              </button>
-            </li>
-            <li
-              class="page-item"
-              :class="{ disabled: page === totalPages || loading }"
-            >
-              <button
-                class="page-link"
-                type="button"
-                @click="changePage(totalPages)"
-                :disabled="page === totalPages || loading"
-              >
-                <i class="bi bi-chevron-double-right"></i>
-              </button>
-            </li>
-          </ul>
-        </nav>
+      <div class="mt-2">
+        <Pagination
+          :page="page"
+          :page-size="pageSize"
+          :total="total"
+          :page-size-options="pageSizeOptions"
+          :disabled="loading"
+          @update:page="(p:number)=>{ changePage(p) }"
+          @update:page-size="(sz:number)=>{ setPageSize(sz); reload(); }"
+        />
       </div>
     </div>
   </div>
@@ -446,7 +366,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
+import Pagination from "../../components/common/Pagination.vue";
+import { usePaginatedList } from "../../composables/usePaginatedList";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 
@@ -457,63 +379,27 @@ type QuestionListItem = {
 };
 type ExamSummary = { id: number; title: string };
 
-const loading = ref(false);
-const items = ref<QuestionListItem[]>([]);
-const total = ref(0);
-const page = ref(1);
-const pageSize = ref(10);
 const pageSizeOptions = [10, 20, 30, 40, 50];
-const search = ref("");
-const subjects = ref<Array<{ id: number; name: string }>>([]);
-const subjectId = ref(0);
-const selectedIds = reactive(new Set<number>());
 const sort = ref<"asc" | "desc">("desc");
+const subjectId = ref(0);
+const search = ref("");
+
+const { items, total, page, pageSize, loading, reload, setPage, setPageSize } =
+  usePaginatedList<QuestionListItem>(async (pg, ps) => {
+    const params: any = { page: pg, pageSize: ps, sort: sort.value };
+    if (subjectId.value > 0) params.subjectId = subjectId.value;
+    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
+      params,
+    });
+    return { items: data.items, total: data.total };
+  });
+const subjects = ref<Array<{ id: number; name: string }>>([]);
+const selectedIds = reactive(new Set<number>());
 
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(total.value / pageSize.value))
 );
-function range(from: number, to: number) {
-  const r: number[] = [];
-  for (let i = from; i <= to; i++) r.push(i);
-  return r;
-}
-
-const isNarrow = ref(false);
-function updateNarrow() {
-  isNarrow.value = window.matchMedia("(max-width: 575.98px)").matches;
-}
-updateNarrow();
-onMounted(() => window.addEventListener("resize", updateNarrow));
-onUnmounted(() => window.removeEventListener("resize", updateNarrow));
-
-const pageItems = computed<(number | string)[]>(() => {
-  const tp = totalPages.value;
-  const cur = page.value;
-  if (tp <= 12) return range(1, tp);
-  if (isNarrow.value) {
-    const around = range(Math.max(1, cur - 1), Math.min(tp, cur + 1));
-    const items: (number | string)[] = [1];
-    if (around[0] > 2) items.push("...l");
-    items.push(...around);
-    if (around[around.length - 1] < tp - 1) items.push("...r");
-    if (tp > 1) items.push(tp);
-    return items;
-  }
-  const edge = 5;
-  const startEdge = range(1, edge);
-  const endEdge = range(tp - edge + 1, tp);
-  if (tp <= edge * 2 + 5) return range(1, tp);
-  const around = range(
-    Math.max(edge + 1, cur - 2),
-    Math.min(tp - edge, cur + 2)
-  );
-  const items: (number | string)[] = [...startEdge];
-  if (around[0] > startEdge[startEdge.length - 1] + 1) items.push("...l");
-  items.push(...around);
-  if (around[around.length - 1] < endEdge[0] - 1) items.push("...r");
-  items.push(...endEdge);
-  return items;
-});
+// pagination UI is external component; keep only totalPages
 
 const filteredItems = computed(() => {
   const q = search.value.trim().toLowerCase();
@@ -533,38 +419,23 @@ const selectedOneId = computed(() =>
 );
 
 async function load() {
-  loading.value = true;
-  try {
-    const params: any = {
-      page: page.value,
-      pageSize: pageSize.value,
-      sort: sort.value,
-    };
-    if (subjectId.value > 0) params.subjectId = subjectId.value;
-    const { data } = await api.get<Paginated<QuestionListItem>>("/questions", {
-      params,
-    });
-    items.value = data.items;
-    total.value = data.total;
-  } finally {
-    loading.value = false;
-  }
+  await reload();
 }
 function changePage(p: number) {
-  page.value = Math.min(Math.max(1, p), totalPages.value);
-  load();
+  setPage(p);
+  reload();
 }
 function onPageSizeChange() {
-  page.value = 1;
-  load();
+  setPage(1);
+  reload();
 }
 function onSubjectChange() {
-  page.value = 1;
-  load();
+  setPage(1);
+  reload();
 }
 function onSortChange() {
-  page.value = 1;
-  load();
+  setPage(1);
+  reload();
 }
 function onToggle(id: number, ev: Event) {
   const c = (ev.target as HTMLInputElement).checked;
