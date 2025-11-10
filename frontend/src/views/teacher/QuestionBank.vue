@@ -62,59 +62,37 @@
         <div class="col-md-3 col-6 text-muted small">Tổng: {{ total }}</div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table align-middle">
-          <thead>
-            <tr class="text-uppercase text-muted small">
-              <th style="width: 36px">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  :checked="allPageSelected"
-                  @change="toggleSelectAll($event)"
-                />
-              </th>
-              <th class="d-none d-sm-table-cell">ID</th>
-              <th>Nội dung</th>
-              <th class="text-nowrap text-end"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="q in filteredItems" :key="q.id">
-              <td>
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  :checked="selectedIds.has(q.id)"
-                  @change="onToggle(q.id, $event)"
-                />
-              </td>
-              <td class="fw-semibold d-none d-sm-table-cell">#{{ q.id }}</td>
-              <td>
-                <div class="fw-semibold">{{ q.text }}</div>
-                <div class="text-muted small" v-if="q.explanation">
-                  {{ q.explanation }}
-                </div>
-              </td>
-              <td class="text-end">
-                <div class="btn-group btn-group-sm">
-                  <button
-                    class="btn btn-outline-primary"
-                    @click="openEdit(q.id)"
-                  >
-                    <i class="bi bi-pencil-square me-1"></i>
-                    <span class="d-none d-sm-inline">Sửa</span>
-                  </button>
-                  <button class="btn btn-outline-danger" @click="delOne(q.id)">
-                    <i class="bi bi-trash me-1"></i>
-                    <span class="d-none d-sm-inline">Xóa</span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        :columns="columns"
+        :items="filteredItems"
+        row-key="id"
+        :loading="loading"
+        :show-checkbox="true"
+        :selected-ids="selectedIds"
+        empty-text="Không có câu hỏi"
+      >
+        <template #cell-id="{ value }">
+          <span class="fw-semibold d-none d-sm-inline">#{{ value }}</span>
+        </template>
+        <template #cell-text="{ row }">
+          <div class="fw-semibold">{{ row.text }}</div>
+          <div class="text-muted small" v-if="row.explanation">
+            {{ row.explanation }}
+          </div>
+        </template>
+        <template #row-actions="{ row }">
+          <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-primary" @click="openEdit(row.id)">
+              <i class="bi bi-pencil-square me-1"></i>
+              <span class="d-none d-sm-inline">Sửa</span>
+            </button>
+            <button class="btn btn-outline-danger" @click="delOne(row.id)">
+              <i class="bi bi-trash me-1"></i>
+              <span class="d-none d-sm-inline">Xóa</span>
+            </button>
+          </div>
+        </template>
+      </DataTable>
 
       <div class="mt-2">
         <Pagination
@@ -370,6 +348,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 import Pagination from "../../components/common/Pagination.vue";
+import DataTable from "../../components/common/DataTable.vue";
 
 type QuestionListItem = {
   id: number;
@@ -393,11 +372,6 @@ const sort = ref<"asc" | "desc">("desc");
 const totalPages = computed(() =>
   Math.max(1, Math.ceil(total.value / pageSize.value))
 );
-function range(from: number, to: number) {
-  const r: number[] = [];
-  for (let i = from; i <= to; i++) r.push(i);
-  return r;
-}
 
 // Pagination UI moved to reusable component; narrow-mode/page items logic removed.
 
@@ -409,14 +383,14 @@ const filteredItems = computed(() => {
   );
 });
 
-const allPageSelected = computed(
-  () =>
-    filteredItems.value.length > 0 &&
-    filteredItems.value.every((it) => selectedIds.has(it.id))
-);
 const selectedOneId = computed(() =>
   selectedIds.size === 1 ? Array.from(selectedIds)[0] : 0
 );
+
+const columns = [
+  { key: "id", title: "ID", thClass: "d-none d-sm-table-cell", tdClass: "d-none d-sm-table-cell" },
+  { key: "text", title: "Nội dung" },
+];
 
 async function load() {
   loading.value = true;
@@ -452,17 +426,7 @@ function onSortChange() {
   page.value = 1;
   load();
 }
-function onToggle(id: number, ev: Event) {
-  const c = (ev.target as HTMLInputElement).checked;
-  if (c) selectedIds.add(id);
-  else selectedIds.delete(id);
-}
-function toggleSelectAll(ev: Event) {
-  const c = (ev.target as HTMLInputElement).checked;
-  filteredItems.value.forEach((it) =>
-    c ? selectedIds.add(it.id) : selectedIds.delete(it.id)
-  );
-}
+// Selection handling is managed inside DataTable via selectedIds set.
 
 async function delOne(id: number) {
   if (!confirm("Xóa câu hỏi #" + id + "?")) return;
