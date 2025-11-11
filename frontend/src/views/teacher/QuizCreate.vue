@@ -134,8 +134,8 @@
           :total="total"
           :page-size-options="pageSizeOptions"
           :disabled="loading"
-          @update:page="(p:number)=> changePage(p)"
-          @update:page-size="(sz:number)=>{ pageSize = sz; onPageSizeChange(); }"
+          @update:page="changePage"
+          @update:page-size="onPageSizeChange"
         />
       </div>
     </div>
@@ -881,7 +881,8 @@ function changePage(p: number) {
   page.value = Math.min(Math.max(1, p), totalPages.value);
   load();
 }
-function onPageSizeChange() {
+function onPageSizeChange(sz: number) {
+  pageSize.value = sz;
   page.value = 1;
   load();
 }

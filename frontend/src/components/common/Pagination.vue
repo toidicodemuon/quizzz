@@ -36,6 +36,7 @@
       <div class="btn-group" role="group" aria-label="Pager">
         <button
           class="btn btn-outline-secondary btn-sm"
+          type="button"
           :disabled="page <= 1 || disabled"
           @click="go(1)"
           title="First"
@@ -44,6 +45,7 @@
         </button>
         <button
           class="btn btn-outline-secondary btn-sm"
+          type="button"
           :disabled="page <= 1 || disabled"
           @click="go(page - 1)"
           title="Prev"
@@ -68,6 +70,7 @@
       <div class="btn-group" role="group" aria-label="Pager">
         <button
           class="btn btn-outline-secondary btn-sm"
+          type="button"
           :disabled="page >= totalPages || disabled"
           @click="go(page + 1)"
           title="Next"
@@ -76,6 +79,7 @@
         </button>
         <button
           class="btn btn-outline-secondary btn-sm"
+          type="button"
           :disabled="page >= totalPages || disabled"
           @click="go(totalPages)"
           title="Last"

@@ -64,7 +64,7 @@
 
       <DataTable
         :columns="columns"
-        :items="filteredItems"
+        :items="itemsToShow"
         row-key="id"
         :loading="loading"
         :show-checkbox="true"
@@ -101,8 +101,8 @@
           :total="total"
           :page-size-options="pageSizeOptions"
           :disabled="loading"
-          @update:page="(p:number)=> changePage(p)"
-          @update:page-size="(sz:number)=>{ pageSize = sz; onPageSizeChange(); }"
+          @update:page="changePage"
+          @update:page-size="onPageSizeChange"
         />
       </div>
     </div>
@@ -345,6 +345,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
+import { storeToRefs } from "pinia";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 import Pagination from "../../components/common/Pagination.vue";
@@ -360,14 +361,8 @@ const selectedIds = reactive(new Set<number>());
 
 // Shared store for question bank
 const qb = useQuestionBankStore();
-const loading = qb.loading;
-const total = qb.total;
-const page = qb.page;
-const pageSize = qb.pageSize;
-const subjectId = qb.subjectId;
-const sort = qb.sort;
-const search = qb.search;
-const filteredItems = qb.filteredItems as unknown as any;
+const { loading, total, page, pageSize, subjectId, sort, search, filteredItems, items } = storeToRefs(qb);
+const itemsToShow = computed(() => (search.value && search.value.trim() ? filteredItems.value : items.value));
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
 
@@ -387,8 +382,8 @@ function changePage(p: number) {
   qb.setPage(Math.min(Math.max(1, p), totalPages.value));
   qb.reload();
 }
-function onPageSizeChange() {
-  qb.setPage(1);
+function onPageSizeChange(sz: number) {
+  qb.setPageSize(sz);
   qb.reload();
 }
 function onSubjectChange() {

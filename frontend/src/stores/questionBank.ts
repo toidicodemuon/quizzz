@@ -16,16 +16,19 @@ export const useQuestionBankStore = defineStore("questionBank", () => {
   const search = ref("");
 
   // actions
+  let lastReloadToken = 0;
   async function reload() {
+    const token = ++lastReloadToken;
     loading.value = true;
     try {
       const params: any = { page: page.value, pageSize: pageSize.value, sort: sort.value };
       if (subjectId.value > 0) params.subjectId = subjectId.value;
       const { data } = await api.get<Paginated<QuestionLite>>("/questions", { params });
+      if (token !== lastReloadToken) return; // discard stale response
       items.value = data.items || [];
       total.value = data.total || 0;
     } finally {
-      loading.value = false;
+      if (token === lastReloadToken) loading.value = false;
     }
   }
   function setPage(p: number) {
