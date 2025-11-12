@@ -28,7 +28,7 @@ export class QuestionController extends Controller {
             text: true,
             explanation: true,
             examLinks: {
-              where: { exam: { status: 'PUBLISHED' as any } },
+              where: { exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } },
               select: { examId: true },
               take: 1,
             },
@@ -49,7 +49,7 @@ export class QuestionController extends Controller {
             text: true,
             explanation: true,
             examLinks: {
-              where: { exam: { status: 'PUBLISHED' as any } },
+              where: { exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } },
               select: { examId: true },
               take: 1,
             },
@@ -83,7 +83,7 @@ export class QuestionController extends Controller {
         explanation: true,
         choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: "asc" } },
         type: true,
-        examLinks: { where: { exam: { status: 'PUBLISHED' as any } }, select: { examId: true }, take: 1 },
+        examLinks: { where: { exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } }, select: { examId: true }, take: 1 },
       },
     });
     if (!q) {
@@ -179,10 +179,10 @@ export class QuestionController extends Controller {
       throw err;
     }
 
-    // Disallow editing if question is linked to any PUBLISHED exam
-    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: id, exam: { status: 'PUBLISHED' as any } }, select: { examId: true } });
-    if (linkedPublished) {
-      const err: any = new Error("Cannot edit: question is used in a published exam");
+    // If linked to any PUBLISHED exam with attempts, do not allow changing type (but allow text/explanation)
+    const linkedPublishedWithAttempts = await prisma.examQuestion.findFirst({ where: { questionId: id, exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } }, select: { examId: true } });
+    if (linkedPublishedWithAttempts && typeof body.type !== 'undefined') {
+      const err: any = new Error("Cannot change type: question is used in a published exam with attempts");
       err.status = 409;
       throw err;
     }
@@ -212,10 +212,10 @@ export class QuestionController extends Controller {
       err.status = 403;
       throw err;
     }
-    // Disallow deletion if linked to any PUBLISHED exam
-    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: id, exam: { status: 'PUBLISHED' as any } }, select: { examId: true } });
+    // Disallow deletion if linked to any PUBLISHED exam that already has attempts
+    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: id, exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } }, select: { examId: true } });
     if (linkedPublished) {
-      const err: any = new Error("Cannot delete: question is used in a published exam");
+      const err: any = new Error("Cannot delete: question is used in a published exam with attempts");
       err.status = 409;
       throw err;
     }

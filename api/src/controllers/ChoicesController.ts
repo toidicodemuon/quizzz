@@ -83,8 +83,8 @@ export class ChoiceController extends Controller {
       throw err;
     }
 
-    // Disallow creating a choice if the question is in a published exam
-    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: body.questionId, exam: { status: 'PUBLISHED' as any } }, select: { examId: true } });
+    // Disallow creating a choice if the question is in a published exam that already has attempts
+    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: body.questionId, exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } }, select: { examId: true } });
     if (linkedPublished) {
       const err: any = new Error("Cannot modify choices for question used in a published exam");
       err.status = 409;
@@ -132,8 +132,8 @@ export class ChoiceController extends Controller {
       throw err;
     }
 
-    // Disallow updating a choice if its question is in a published exam
-    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: existing.questionId, exam: { status: 'PUBLISHED' as any } }, select: { examId: true } });
+    // Disallow updating a choice if its question is in a published exam that already has attempts
+    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: existing.questionId, exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } }, select: { examId: true } });
     if (linkedPublished) {
       const err: any = new Error("Cannot modify choices for question used in a published exam");
       err.status = 409;
@@ -174,8 +174,8 @@ export class ChoiceController extends Controller {
       throw err;
     }
 
-    // Disallow deleting a choice if its question is in a published exam
-    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: (existing as any).question.id, exam: { status: 'PUBLISHED' as any } }, select: { examId: true } });
+    // Disallow deleting a choice if its question is in a published exam that already has attempts
+    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: (existing as any).question.id, exam: { status: 'PUBLISHED' as any, attempts: { some: {} } } }, select: { examId: true } });
     if (linkedPublished) {
       const err: any = new Error("Cannot modify choices for question used in a published exam");
       err.status = 409;

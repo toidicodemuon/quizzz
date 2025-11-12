@@ -9,8 +9,7 @@
         </button>
         <button
           class="btn btn-outline-primary"
-          :disabled="selectedIds.size !== 1 || selectedOneLocked"
-          :title="selectedOneLocked ? 'Không thể sửa: câu hỏi đang trong đề thi đã xuất bản' : ''"
+          :disabled="selectedIds.size !== 1"
           @click="openEdit(selectedOneId)"
         >
           <i class="bi bi-pencil-square me-1"></i>
@@ -84,8 +83,6 @@
           <div class="btn-group btn-group-sm">
             <button
               class="btn btn-outline-primary"
-              :disabled="row.locked"
-              :title="row.locked ? 'Bị khóa (đang thuộc đề thi đã xuất bản)' : ''"
               @click="openEdit(row.id)"
             >
               <i class="bi bi-pencil-square me-1"></i>
@@ -94,7 +91,7 @@
             <button
               class="btn btn-outline-danger"
               :disabled="row.locked"
-              :title="row.locked ? 'Bị khóa (đang thuộc đề thi đã xuất bản)' : ''"
+              :title="row.locked ? 'Không thể xóa: câu hỏi đang thuộc đề thi đã xuất bản đã có lượt thi' : ''"
               @click="delOne(row.id)"
             >
               <i class="bi bi-trash me-1"></i>
@@ -301,14 +298,13 @@
         <div class="modal-body">
           <div v-if="editLocked" class="alert alert-warning d-flex align-items-center" role="alert">
             <i class="bi bi-lock-fill me-2"></i>
-            Câu hỏi đang thuộc đề thi đã xuất bản. Không thể chỉnh sửa.
+            Không thể sửa đáp án vì câu hỏi đang thuộc đề thi đã xuất bản và đã có lượt thi. Bạn vẫn có thể sửa nội dung và giải thích.
           </div>
           <div class="mb-3">
             <label class="form-label">Nội dung</label>
             <textarea
               v-model.trim="editForm.text"
               class="form-control"
-              :disabled="editLocked"
               rows="3"
             ></textarea>
           </div>
@@ -317,7 +313,6 @@
             <textarea
               v-model.trim="editForm.explanation"
               class="form-control"
-              :disabled="editLocked"
               rows="2"
             ></textarea>
           </div>
@@ -388,7 +383,7 @@
           <button class="btn btn-light" @click="closeEdit">Đóng</button>
           <button
             class="btn btn-primary"
-            :disabled="saving || editLocked || !canSubmitEdit"
+            :disabled="saving || !canSubmitEdit"
             @click="submitEdit"
           >
             <span
@@ -449,12 +444,7 @@ const totalPages = computed(() =>
 const selectedOneId = computed(() =>
   selectedIds.size === 1 ? Array.from(selectedIds)[0] : 0
 );
-const selectedOneLocked = computed(() => {
-  const id = selectedOneId.value;
-  if (!id) return false;
-  const row = itemsToShow.value.find((r: any) => r.id === id);
-  return !!row?.locked;
-});
+// when a single is selected, we still allow editing even if locked (only answers disabled)
 
 const columns = [
   {
@@ -668,11 +658,13 @@ function onToggleEditCorrect(idx: number, e: Event) {
   }
 }
 const canSubmitEdit = computed(() => {
-  if (editLocked.value) return false;
-  if (editType.value === "TEXT") return editForm.text.trim().length > 0;
+  const hasText = editForm.text.trim().length > 0;
+  if (!hasText) return false;
+  if (editType.value === "TEXT") return true;
+  if (editLocked.value) return true; // choices locked; allow saving text/explanation only
   const nonEmpty = editChoices.value.some((c) => c.content && c.content.trim());
   const anyCorrect = editChoices.value.some((c) => !!c.isCorrect);
-  return editForm.text.trim().length > 0 && nonEmpty && anyCorrect;
+  return nonEmpty && anyCorrect;
 });
 async function submitEdit() {
   saving.value = true;
