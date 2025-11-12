@@ -425,6 +425,43 @@
 			},
 			"AttemptSummary": {
 				"properties": {
+					"pass": {
+						"type": "boolean",
+						"nullable": true
+					},
+					"passMarkPercent": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
+					"totalQuestions": {
+						"type": "number",
+						"format": "double"
+					},
+					"correctCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"examTitle": {
+						"type": "string",
+						"nullable": true
+					},
+					"examCode": {
+						"type": "string",
+						"nullable": true
+					},
+					"studentCode": {
+						"type": "string",
+						"nullable": true
+					},
+					"studentEmail": {
+						"type": "string",
+						"nullable": true
+					},
+					"studentName": {
+						"type": "string",
+						"nullable": true
+					},
 					"status": {
 						"$ref": "#/components/schemas/AttemptStatus"
 					},
@@ -3732,6 +3769,15 @@
 					},
 					{
 						"in": "query",
+						"name": "roomId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
 						"name": "page",
 						"required": false,
 						"schema": {
@@ -3857,6 +3903,203 @@
 						}
 					}
 				}
+			}
+		},
+		"/attempts/{id}/detail": {
+			"get": {
+				"operationId": "GetDetail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"answers": {
+											"items": {
+												"properties": {
+													"choices": {
+														"items": {
+															"properties": {
+																"selected": {
+																	"type": "boolean"
+																},
+																"isCorrect": {
+																	"type": "boolean"
+																},
+																"content": {
+																	"type": "string"
+																},
+																"id": {
+																	"type": "number",
+																	"format": "double"
+																}
+															},
+															"required": [
+																"selected",
+																"isCorrect",
+																"content",
+																"id"
+															],
+															"type": "object"
+														},
+														"type": "array"
+													},
+													"points": {
+														"type": "number",
+														"format": "double",
+														"nullable": true
+													},
+													"earned": {
+														"type": "number",
+														"format": "double",
+														"nullable": true
+													},
+													"isCorrect": {
+														"type": "boolean",
+														"nullable": true
+													},
+													"questionText": {
+														"type": "string"
+													},
+													"questionId": {
+														"type": "number",
+														"format": "double"
+													}
+												},
+												"required": [
+													"choices",
+													"points",
+													"earned",
+													"isCorrect",
+													"questionText",
+													"questionId"
+												],
+												"type": "object"
+											},
+											"type": "array"
+										},
+										"status": {
+											"$ref": "#/components/schemas/AttemptStatus"
+										},
+										"roomId": {
+											"type": "number",
+											"format": "double"
+										},
+										"examTitle": {
+											"type": "string",
+											"nullable": true
+										},
+										"examId": {
+											"type": "number",
+											"format": "double"
+										},
+										"studentCode": {
+											"type": "string",
+											"nullable": true
+										},
+										"studentEmail": {
+											"type": "string",
+											"nullable": true
+										},
+										"studentName": {
+											"type": "string",
+											"nullable": true
+										},
+										"studentId": {
+											"type": "number",
+											"format": "double"
+										},
+										"timeTakenSec": {
+											"type": "number",
+											"format": "double",
+											"nullable": true
+										},
+										"submittedAt": {
+											"type": "string",
+											"format": "date-time",
+											"nullable": true
+										},
+										"startedAt": {
+											"type": "string",
+											"format": "date-time"
+										},
+										"score": {
+											"type": "number",
+											"format": "double",
+											"nullable": true
+										},
+										"id": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"answers",
+										"status",
+										"roomId",
+										"examId",
+										"studentId",
+										"timeTakenSec",
+										"submittedAt",
+										"startedAt",
+										"score",
+										"id"
+									],
+									"type": "object",
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Attempt not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Attempt"
+				],
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
 			}
 		},
 		"/attempts/{id}": {

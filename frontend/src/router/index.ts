@@ -53,6 +53,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { pageTitle: "TẠO PHÒNG THI" },
       },
       {
+        path: "teacher/attempts",
+        name: "teacher-attempts",
+        component: () => import("../views/teacher/AttemptsManage.vue"),
+        meta: { pageTitle: "QUẢN LÝ BÀI THI" },
+      },
+      {
         path: "teacher/question-bank",
         name: "teacher-question-bank",
         component: () => import("../views/teacher/QuestionBank.vue"),

@@ -9,7 +9,8 @@ function randItem<T>(arr: T[]): T {
 function randomCode(prefix: string, len = 6) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let s = prefix;
-  for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < len; i++)
+    s += chars[Math.floor(Math.random() * chars.length)];
   return s;
 }
 
@@ -50,24 +51,32 @@ export async function seedExamsWithQuestions(
           showCorrectAnswers: true,
           showExplanation: true,
           // random optional fields
-          passMarkPercent: Math.random() < 0.5 ? 50 + Math.floor(Math.random() * 31) : null,
-          reviewWindowMin: Math.random() < 0.5 ? 15 * (1 + Math.floor(Math.random() * 8)) : null,
+          passMarkPercent:
+            Math.random() < 0.5 ? 50 + Math.floor(Math.random() * 31) : null,
+          reviewWindowMin:
+            Math.random() < 0.5
+              ? 15 * (1 + Math.floor(Math.random() * 8))
+              : null,
         },
         select: { id: true },
       });
 
       // pick 5-20 random questions in this subject
-      const totalQs = await prisma.question.count({ where: { subjectId: subj.id } });
+      const totalQs = await prisma.question.count({
+        where: { subjectId: subj.id },
+      });
       if (totalQs > 0) {
         const limit = Math.max(5, Math.min(20, totalQs));
         const take = Math.floor(Math.random() * (limit - 4)) + 5; // between 5..limit
         // fetch random subset: use offset sampling if many
-        const qids = await prisma.question.findMany({
-          where: { subjectId: subj.id },
-          select: { id: true },
-          orderBy: { id: "asc" },
-          take: limit, // cap read
-        }).then((rows) => rows.map((r) => r.id));
+        const qids = await prisma.question
+          .findMany({
+            where: { subjectId: subj.id },
+            select: { id: true },
+            orderBy: { id: "asc" },
+            take: limit, // cap read
+          })
+          .then((rows) => rows.map((r) => r.id));
         // shuffle
         for (let j = qids.length - 1; j > 0; j--) {
           const m = Math.floor(Math.random() * (j + 1));
@@ -91,4 +100,3 @@ export async function seedExamsWithQuestions(
   }
   return created;
 }
-

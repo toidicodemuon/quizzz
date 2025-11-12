@@ -34,9 +34,15 @@ async function main() {
   );
   console.log(`Seeded ${exams.length} exams with questions`);
 
-  // Create one room per exam, and attempts for the student on 14 random exams
-  await seedRoomsAndAttempts(prisma, exams, users.teacher.id, users.student.id, 14);
-  console.log("Seeded rooms and 14 attempts for the student");
+  // Create one room per exam, and attempts for 12 seeded students
+  await seedRoomsAndAttempts(
+    prisma,
+    exams,
+    users.teacher.id,
+    users.students.map((s) => ({ id: s.id })),
+    5
+  );
+  console.log("Seeded rooms and attempts for seeded students");
 }
 
 main()

@@ -13,6 +13,15 @@ type AttemptSummary = {
   examId: number;
   roomId: number;
   status: AttemptStatus;
+  studentName?: string | null;
+  studentEmail?: string | null;
+  studentCode?: string | null;
+  examCode?: string | null;
+  examTitle?: string | null;
+  correctCount?: number;
+  totalQuestions?: number;
+  passMarkPercent?: number | null;
+  pass?: boolean | null;
 };
 
 @Route("attempts")
@@ -24,6 +33,7 @@ export class AttemptController extends Controller {
   public async listSubmissions(
     @Request() req: ExRequest,
     @Query() examId?: number,
+    @Query() roomId?: number,
     @Query() page?: number,
     @Query() pageSize?: number
   ): Promise<{ items: AttemptSummary[]; total: number }> {
@@ -33,7 +43,9 @@ export class AttemptController extends Controller {
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
 
     if (role === "ADMIN") {
-      const where = typeof examId === "number" ? { examId } : undefined;
+      const where: any = {};
+      if (typeof examId === 'number') where.examId = examId;
+      if (typeof roomId === 'number') where.roomId = roomId;
       const [raw, total] = await Promise.all([
         prisma.attempt.findMany({
           where,
@@ -47,6 +59,8 @@ export class AttemptController extends Controller {
             examId: true,
             roomId: true,
             status: true,
+            student: { select: { fullName: true, email: true, userCode: true } },
+            exam: { select: { code: true, title: true, passMarkPercent: true } },
           },
           orderBy: { id: "asc" },
           skip,
@@ -54,18 +68,39 @@ export class AttemptController extends Controller {
         }),
         prisma.attempt.count({ where }),
       ]);
+      // compute counts
+      const attemptIds = raw.map((r) => r.id);
+      const examIds = Array.from(new Set(raw.map((r) => r.examId)));
+      const [correctGroups, totalGroups] = await Promise.all([
+        prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds }, isCorrect: true }, _count: { _all: true } }),
+        prisma.examQuestion.groupBy({ by: ["examId"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+      ]);
+      const correctMap = new Map<number, number>();
+      for (const g of correctGroups as any) correctMap.set(g.attemptId, Number(g._count._all || 0));
+      const totalMap = new Map<number, number>();
+      for (const g of totalGroups as any) totalMap.set(g.examId, Number(g._count._all || 0));
+
       const items = raw.map((i) => ({
         ...i,
         score: i.score === null ? null : Number(i.score as any),
+        studentName: (i as any).student?.fullName ?? null,
+        studentEmail: (i as any).student?.email ?? null,
+        studentCode: (i as any).student?.userCode ?? null,
+        exam: undefined,
+        examCode: (i as any).exam?.code ?? null,
+        examTitle: (i as any).exam?.title ?? null,
+        passMarkPercent: (i as any).exam?.passMarkPercent ?? null,
+        correctCount: correctMap.get(i.id) || 0,
+        totalQuestions: totalMap.get(i.examId) || 0,
+        pass: typeof (i as any).exam?.passMarkPercent === "number" && i.score !== null ? (Number(i.score) >= Number((i as any).exam.passMarkPercent)) : null,
       })) as any;
       return { items, total };
     }
 
     if (role === "TEACHER") {
-      const where: any = {
-        exam: { authorId: user.id },
-        ...(typeof examId === "number" ? { examId } : {}),
-      };
+      const where: any = { exam: { authorId: user.id } };
+      if (typeof examId === 'number') where.examId = examId;
+      if (typeof roomId === 'number') where.roomId = roomId;
       const [raw, total] = await Promise.all([
         prisma.attempt.findMany({
           where,
@@ -79,6 +114,8 @@ export class AttemptController extends Controller {
             examId: true,
             roomId: true,
             status: true,
+            student: { select: { fullName: true, email: true, userCode: true } },
+            exam: { select: { code: true, title: true, passMarkPercent: true } },
           },
           orderBy: { id: "asc" },
           skip,
@@ -86,15 +123,38 @@ export class AttemptController extends Controller {
         }),
         prisma.attempt.count({ where }),
       ]);
+      const attemptIds = raw.map((r) => r.id);
+      const examIds = Array.from(new Set(raw.map((r) => r.examId)));
+      const [correctGroups, totalGroups] = await Promise.all([
+        prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds }, isCorrect: true }, _count: { _all: true } }),
+        prisma.examQuestion.groupBy({ by: ["examId"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+      ]);
+      const correctMap = new Map<number, number>();
+      for (const g of correctGroups as any) correctMap.set(g.attemptId, Number(g._count._all || 0));
+      const totalMap = new Map<number, number>();
+      for (const g of totalGroups as any) totalMap.set(g.examId, Number(g._count._all || 0));
+
       const items = raw.map((i) => ({
         ...i,
         score: i.score === null ? null : Number(i.score as any),
+        studentName: (i as any).student?.fullName ?? null,
+        studentEmail: (i as any).student?.email ?? null,
+        studentCode: (i as any).student?.userCode ?? null,
+        exam: undefined,
+        examCode: (i as any).exam?.code ?? null,
+        examTitle: (i as any).exam?.title ?? null,
+        passMarkPercent: (i as any).exam?.passMarkPercent ?? null,
+        correctCount: correctMap.get(i.id) || 0,
+        totalQuestions: totalMap.get(i.examId) || 0,
+        pass: typeof (i as any).exam?.passMarkPercent === "number" && i.score !== null ? (Number(i.score) >= Number((i as any).exam.passMarkPercent)) : null,
       })) as any;
       return { items, total };
     }
 
     // STUDENT: only own attempts
-    const where: any = { studentId: user.id, ...(typeof examId === "number" ? { examId } : {}) };
+    const where: any = { studentId: user.id };
+    if (typeof examId === 'number') where.examId = examId;
+    if (typeof roomId === 'number') where.roomId = roomId;
     const [raw, total] = await Promise.all([
       prisma.attempt.findMany({
         where,
@@ -108,6 +168,8 @@ export class AttemptController extends Controller {
           examId: true,
           roomId: true,
           status: true,
+          student: { select: { fullName: true, email: true, userCode: true } },
+          exam: { select: { code: true, title: true, passMarkPercent: true } },
         },
         orderBy: { id: "asc" },
         skip,
@@ -115,11 +177,149 @@ export class AttemptController extends Controller {
       }),
       prisma.attempt.count({ where }),
     ]);
+    const attemptIds = raw.map((r) => r.id);
+    const examIds = Array.from(new Set(raw.map((r) => r.examId)));
+    const [correctGroups, totalGroups] = await Promise.all([
+      prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds }, isCorrect: true }, _count: { _all: true } }),
+      prisma.examQuestion.groupBy({ by: ["examId"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+    ]);
+    const correctMap = new Map<number, number>();
+    for (const g of correctGroups as any) correctMap.set(g.attemptId, Number(g._count._all || 0));
+    const totalMap = new Map<number, number>();
+    for (const g of totalGroups as any) totalMap.set(g.examId, Number(g._count._all || 0));
+
     const items = raw.map((i) => ({
       ...i,
       score: i.score === null ? null : Number(i.score as any),
+      studentName: (i as any).student?.fullName ?? null,
+      studentEmail: (i as any).student?.email ?? null,
+      studentCode: (i as any).student?.userCode ?? null,
+      exam: undefined,
+      examCode: (i as any).exam?.code ?? null,
+      examTitle: (i as any).exam?.title ?? null,
+      passMarkPercent: (i as any).exam?.passMarkPercent ?? null,
+      correctCount: correctMap.get(i.id) || 0,
+      totalQuestions: totalMap.get(i.examId) || 0,
+      pass: typeof (i as any).exam?.passMarkPercent === "number" && i.score !== null ? (Number(i.score) >= Number((i as any).exam.passMarkPercent)) : null,
     })) as any;
     return { items, total };
+  }
+
+  @Get("{id}/detail")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(404, "Attempt not found")
+  @Security("bearerAuth")
+  public async getDetail(@Request() req: ExRequest, @Path() id: number): Promise<{
+    id: number;
+    score: number | null;
+    startedAt: Date;
+    submittedAt: Date | null;
+    timeTakenSec: number | null;
+    studentId: number;
+    studentName?: string | null;
+    studentEmail?: string | null;
+    studentCode?: string | null;
+    examId: number;
+    examTitle?: string | null;
+    roomId: number;
+    status: AttemptStatus;
+    answers: Array<{
+      questionId: number;
+      questionText: string;
+      isCorrect: boolean | null;
+      earned: number | null;
+      points: number | null;
+      choices: Array<{ id: number; content: string; isCorrect: boolean; selected: boolean }>;
+    }>;
+  } | null> {
+    const user = (req as any).user as { id: number; role: string };
+    const role = user.role?.toUpperCase();
+
+    const sub = await prisma.attempt.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        score: true,
+        startedAt: true,
+        submittedAt: true,
+        timeTakenSec: true,
+        studentId: true,
+        examId: true,
+        roomId: true,
+        status: true,
+        exam: { select: { authorId: true, title: true, passMarkPercent: true } },
+        student: { select: { fullName: true, email: true, userCode: true } },
+      },
+    });
+    if (!sub) {
+      const err: any = new Error("Attempt not found");
+      err.status = 404;
+      throw err;
+    }
+    if (role === "STUDENT" && sub.studentId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+    if (role === "TEACHER" && (sub as any).exam.authorId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+
+    const answers = await prisma.attemptAnswer.findMany({
+      where: { attemptId: id },
+      select: {
+        id: true,
+        questionId: true,
+        isCorrect: true,
+        earned: true,
+        question: { select: { text: true, choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: 'asc' } } } },
+        choices: { select: { choiceId: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
+    // Load full exam structure to include unanswered questions
+    const examQuestions = await prisma.examQuestion.findMany({ where: { examId: sub.examId }, select: { questionId: true, points: true, question: { select: { text: true, choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: 'asc' } } } } }, orderBy: { order: 'asc' } });
+    const pts = examQuestions.map((eq) => ({ questionId: eq.questionId, points: eq.points }));
+    const pointMap = new Map<number, number>();
+    for (const p of pts) pointMap.set(p.questionId, Number(p.points));
+
+    // Map answers by question
+    const aaByQ = new Map<number, (typeof answers)[number]>();
+    for (const a of answers) aaByQ.set(a.questionId, a);
+
+    return {
+      id: sub.id,
+      score: sub.score === null ? null : Number(sub.score as any),
+      startedAt: sub.startedAt,
+      submittedAt: sub.submittedAt,
+      timeTakenSec: sub.timeTakenSec,
+      studentId: sub.studentId,
+      studentName: (sub as any).student?.fullName ?? null,
+      studentEmail: (sub as any).student?.email ?? null,
+      studentCode: (sub as any).student?.userCode ?? null,
+      examId: sub.examId,
+      examTitle: (sub as any).exam?.title ?? null,
+      passMarkPercent: (sub as any).exam?.passMarkPercent ?? null,
+      roomId: sub.roomId,
+      status: sub.status,
+      answers: examQuestions.map((eq) => {
+        const a = aaByQ.get(eq.questionId);
+        const selectedIds = new Set((a?.choices || []).map((c) => c.choiceId));
+        const allChoices = ((eq as any).question?.choices || []).map((ch: any) => ({ id: ch.id, content: ch.content, isCorrect: !!ch.isCorrect, selected: selectedIds.has(ch.id) }));
+        const isCorrect = a?.isCorrect ?? false;
+        const earned = a?.earned === null || typeof a?.earned === 'undefined' ? 0 : Number(a?.earned as any);
+        return {
+          questionId: eq.questionId,
+          questionText: (eq as any).question?.text ?? '',
+          isCorrect,
+          earned,
+          points: Number(eq.points as any) ?? null,
+          choices: allChoices,
+        };
+      }),
+    };
   }
 
   @Get("{id}")

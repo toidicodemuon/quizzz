@@ -18,27 +18,39 @@ export async function seedUsers(prisma: PrismaClient) {
       email: "teacher1@example.com",
       password: teacherPassword,
       fullName: "Nguyễn Văn Giáo Viên",
+      userCode: "GV001",
       role: Role.TEACHER,
     },
   });
 
-  const student = await prisma.user.create({
-    data: {
-      email: "student1@example.com",
-      password: studentPassword,
-      fullName: "Trần Văn Học Sinh",
-      role: Role.STUDENT,
-    },
-  });
+  const prefixes = ["MSEX", "MSWO", "MOSPP", "PT", "THL10", "THCB"];
+  // Create 12 students (only keep id for downstream usage)
+  const students: Array<{ id: number }> = [];
+  for (let i = 1; i <= 12; i++) {
+    const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const num = String(i).padStart(3, "0");
+    const s = await prisma.user.create({
+      data: {
+        email: `student${i}@example.com`,
+        password: studentPassword,
+        fullName: `Sinh viên ${i}`,
+        userCode: `${pfx}${num}`,
+        role: Role.STUDENT,
+      },
+      select: { id: true },
+    });
+    students.push({ id: s.id });
+  }
 
   const admin = await prisma.user.create({
     data: {
       email: "admin@example.com",
       password: adminPassword,
       fullName: "System Administrator",
+      userCode: "ADM001",
       role: Role.ADMIN,
     },
   });
 
-  return { teacher, student, admin };
+  return { teacher, students, admin };
 }

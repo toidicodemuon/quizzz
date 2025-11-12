@@ -3,6 +3,7 @@ export const MENU: Record<string, Array<{ label: string; to: string }>> = {
     { label: "Dashboard", to: "/teacher/dashboard" },
     { label: "Quản lý đề thi", to: "/teacher/quiz/create" },
     { label: "Quản lý phòng thi", to: "/teacher/room/create" },
+    { label: "Quản lý bài thi", to: "/teacher/attempts" },
     { label: "Quản lý câu hỏi", to: "/teacher/question-bank" },
     { label: "Quản lý học viên", to: "/teacher/student" },
     { label: "Quản lý chủ đề", to: "/teacher/subjects" },
