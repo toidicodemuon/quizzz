@@ -17,10 +17,26 @@
         <ul class="nav flex-column">
           <template v-for="(item, idx) in items" :key="idx">
             <li v-if="!item.children" class="nav-item">
-              <RouterLink :to="item.to || '#'" class="nav-link">
-                <i v-if="item.icon" :class="['bi me-2', item.icon]"></i>
-                <span class="label">{{ item.label }}</span>
-              </RouterLink>
+              <div class="nav-link d-flex align-items-center justify-content-between">
+                <RouterLink
+                  :to="item.to || '#'"
+                  class="flex-grow-1 d-flex align-items-center text-reset text-decoration-none"
+                >
+                  <i v-if="item.icon" :class="['bi me-2', item.icon]"></i>
+                  <span class="label">{{ item.label }}</span>
+                </RouterLink>
+                <a
+                  v-if="item.newTab && item.to"
+                  :href="toHref(item.to!)"
+                  target="_blank"
+                  rel="noopener"
+                  class="btn btn-sm btn-outline-light ms-2 open-tab position-relative"
+                  title="Mở tab mới"
+                  @click.stop
+                >
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+              </div>
             </li>
             <li v-else class="nav-item">
               <button
@@ -38,10 +54,23 @@
               </button>
               <ul class="nav flex-column submenu" v-show="openGroups.has(idx)">
                 <li v-for="(sub, j) in item.children" :key="j" class="nav-item">
-                  <RouterLink :to="sub.to || '#'" class="nav-link">
-                    <i v-if="sub.icon" :class="['bi me-2', sub.icon]"></i>
-                    <span class="label">{{ sub.label }}</span>
-                  </RouterLink>
+                  <div class="nav-link d-flex align-items-center justify-content-between">
+                    <RouterLink :to="sub.to || '#'" class="flex-grow-1 d-flex align-items-center text-reset text-decoration-none">
+                      <i v-if="sub.icon" :class="['bi me-2', sub.icon]"></i>
+                      <span class="label">{{ sub.label }}</span>
+                    </RouterLink>
+                    <a
+                      v-if="sub.newTab && sub.to"
+                      :href="toHref(sub.to!)"
+                      target="_blank"
+                      rel="noopener"
+                      class="btn btn-sm btn-outline-light ms-2 open-tab position-relative"
+                      title="Mở tab mới"
+                      @click.stop
+                    >
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                  </div>
                 </li>
               </ul>
             </li>
@@ -61,6 +90,7 @@ type MenuItem = {
   label: string;
   to?: string;
   icon?: string;
+  newTab?: boolean;
   children?: MenuItem[];
 };
 
@@ -75,6 +105,10 @@ const openGroups = reactive(new Set<number>());
 function toggleGroup(index: number) {
   if (openGroups.has(index)) openGroups.delete(index);
   else openGroups.add(index);
+}
+
+function toHref(to: string) {
+  return '#' + to.replace(/^#?\/?/, '/');
 }
 
 const appName = import.meta.env.VITE_APP_NAME || "THAT";
@@ -99,6 +133,10 @@ const collapsed = computed(() => !!props.collapsed);
   color: #eaf2f6;
   padding: 0.75rem 1rem;
   border-radius: 0;
+}
+.menu .open-tab {
+  padding: 0.15rem 0.35rem;
+  z-index: 2;
 }
 .menu .nav-link:hover,
 .menu .nav-link.router-link-active {

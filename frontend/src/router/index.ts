@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import { isAuthenticated, getRole } from "../utils/auth";
+import { getMenuByRole } from "../menu";
 
 const MainLayout = () => import("../layouts/MainLayout.vue");
 
@@ -111,6 +112,23 @@ router.beforeEach((to, _from, next) => {
     return next({ name: "login" });
   }
   next();
+});
+
+// Update document title based on route meta or menu label
+router.afterEach((to) => {
+  const appName = (import.meta as any).env?.VITE_APP_NAME || "THAT";
+  // Prefer menu label to ensure consistency with sidebar text
+  const role = getRole();
+  const items = getMenuByRole(role);
+  const flatten = (arr: any[]): any[] =>
+    arr.flatMap((it: any) => [it, ...(Array.isArray(it.children) ? flatten(it.children) : [])]);
+  const all = flatten(items);
+  const normalize = (p: string) => "/" + String(p || "").replace(/^\/+/, "");
+  const found = all.find((it: any) => typeof it.to === "string" && normalize(to.path) === normalize(it.to));
+  const menuLabel = found?.label as string | undefined;
+  const metaTitle = typeof to.meta?.pageTitle === "string" ? (to.meta.pageTitle as string) : undefined;
+  const title = menuLabel || metaTitle;
+  document.title = title ? `${title} - ${appName}` : appName;
 });
 
 export default router;
