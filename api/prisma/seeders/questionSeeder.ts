@@ -8,6 +8,7 @@ import { PrismaClient, QuestionType } from "@prisma/client";
 export async function seedQuestionsBySubjects(
   prisma: PrismaClient,
   subjects: Array<{ id: number; name: string }>,
+  authorId: number,
   perSubject = 20
 ): Promise<void> {
   for (const s of subjects) {
@@ -18,6 +19,7 @@ export async function seedQuestionsBySubjects(
           type: QuestionType.SC,
           text: `[${s.name}] Câu hỏi ${i}: chọn đáp án đúng`,
           explanation: `Giải thích cho câu hỏi ${i} (${s.name}).`,
+          authorId,
         },
         select: { id: true },
       });

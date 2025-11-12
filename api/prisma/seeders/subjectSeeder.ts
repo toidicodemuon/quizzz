@@ -21,6 +21,7 @@ const subjectNames: string[] = [
   "MOS Word",
   "MOS Excel",
   "MOS PowerPoint",
+  "Lập trình Web",
 ];
 
 function makeCode(name: string) {
