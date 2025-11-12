@@ -1656,6 +1656,9 @@
 										"items": {
 											"items": {
 												"properties": {
+													"locked": {
+														"type": "boolean"
+													},
 													"explanation": {
 														"type": "string",
 														"nullable": true
@@ -1947,6 +1950,12 @@
 												"type": "object"
 											},
 											"type": "array"
+										},
+										"locked": {
+											"type": "boolean"
+										},
+										"type": {
+											"$ref": "#/components/schemas/QuestionType"
 										},
 										"explanation": {
 											"type": "string",

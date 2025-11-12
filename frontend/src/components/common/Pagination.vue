@@ -1,7 +1,7 @@
 <template>
   <div class="row g-2 d-flex">
     <div
-      class="col-12 col-xxl-6 d-flex align-items-center gap-2 flex-wrap justify-content-start"
+      class="col-12 col-xxl-8 col-xxl-8 col-lg-8 col-md-6 d-flex align-items-center gap-2 flex-wrap justify-content-start"
     >
       <div class="input-group input-group-sm" style="max-width: 200px">
         <span class="input-group-text">Hiển thị</span>
@@ -31,7 +31,7 @@
       <div v-else class="small text-muted">Không có mục nào để hiển thị.</div>
     </div>
     <div
-      class="col-12 col-md-6 d-flex align-items-center gap-2 flex-wrap justify-content-start justify-content-xxl-end justify-content-xl-end justify-content-lg-end justify-content-md-end"
+      class="col-12 col-xxl-4 col-xxl-3 col-lg-4 col-md-6 d-flex align-items-center gap-2 flex-wrap justify-content-start justify-content-xxl-end justify-content-xl-end justify-content-lg-end justify-content-md-end"
     >
       <div class="btn-group" role="group" aria-label="Pager">
         <button

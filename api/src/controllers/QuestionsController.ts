@@ -15,7 +15,7 @@ export class QuestionController extends Controller {
     @Query() pageSize?: number,
     @Query() subjectId?: number,
     @Query() sort?: 'asc' | 'desc'
-  ): Promise<{ items: Array<{ id: number; text: string; explanation: string | null }>; total: number }> {
+  ): Promise<{ items: Array<{ id: number; text: string; explanation: string | null; locked?: boolean }>; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const order = (sort === 'asc' || sort === 'ASC') ? 'asc' : 'desc';
@@ -23,17 +23,43 @@ export class QuestionController extends Controller {
       const [items, total] = await Promise.all([
         prisma.question.findMany({
           where: { examLinks: { some: { examId } }, ...(typeof subjectId === 'number' ? { subjectId } : {}) },
-          select: { id: true, text: true, explanation: true },
+          select: {
+            id: true,
+            text: true,
+            explanation: true,
+            examLinks: {
+              where: { exam: { status: 'PUBLISHED' as any } },
+              select: { examId: true },
+              take: 1,
+            },
+          },
           orderBy: { id: order as any },
           skip,
           take,
-        }),
+        }).then((rows) => rows.map((r: any) => ({ id: r.id, text: r.text, explanation: r.explanation, locked: (r.examLinks || []).length > 0 }))),
         prisma.examQuestion.count({ where: { examId } }),
       ]);
       return { items, total };
     }
     const [items, total] = await Promise.all([
-      prisma.question.findMany({ select: { id: true, text: true, explanation: true }, where: (typeof subjectId === 'number' ? { subjectId } : undefined), orderBy: { id: order as any }, skip, take }),
+      prisma.question
+        .findMany({
+          select: {
+            id: true,
+            text: true,
+            explanation: true,
+            examLinks: {
+              where: { exam: { status: 'PUBLISHED' as any } },
+              select: { examId: true },
+              take: 1,
+            },
+          },
+          where: typeof subjectId === 'number' ? { subjectId } : undefined,
+          orderBy: { id: order as any },
+          skip,
+          take,
+        })
+        .then((rows) => rows.map((r: any) => ({ id: r.id, text: r.text, explanation: r.explanation, locked: (r.examLinks || []).length > 0 }))),
       prisma.question.count({ where: (typeof subjectId === 'number' ? { subjectId } : undefined) }),
     ]);
     return { items, total };
@@ -46,16 +72,27 @@ export class QuestionController extends Controller {
   public async getQuestionById(
     @Path() id: number
   ): Promise<
-    | { id: number; text: string; explanation: string | null; choices: Array<{ id: number; content: string; isCorrect: boolean; order: number }> }
+    | { id: number; text: string; explanation: string | null; type?: QuestionType; locked?: boolean; choices: Array<{ id: number; content: string; isCorrect: boolean; order: number }> }
     | null
   > {
-    const q = await prisma.question.findUnique({ where: { id }, select: { id: true, text: true, explanation: true, choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: "asc" } } } });
+    const q = await prisma.question.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        text: true,
+        explanation: true,
+        choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: "asc" } },
+        type: true,
+        examLinks: { where: { exam: { status: 'PUBLISHED' as any } }, select: { examId: true }, take: 1 },
+      },
+    });
     if (!q) {
       const err: any = new Error("Question not found");
       err.status = 404;
       throw err;
     }
-    return q;
+    const { examLinks, ...rest } = q as any;
+    return { ...rest, locked: (examLinks || []).length > 0 } as any;
   }
 
   @Post("/")
@@ -142,6 +179,14 @@ export class QuestionController extends Controller {
       throw err;
     }
 
+    // Disallow editing if question is linked to any PUBLISHED exam
+    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: id, exam: { status: 'PUBLISHED' as any } }, select: { examId: true } });
+    if (linkedPublished) {
+      const err: any = new Error("Cannot edit: question is used in a published exam");
+      err.status = 409;
+      throw err;
+    }
+
     const data: any = {};
     if (typeof body.text !== "undefined") data.text = body.text;
     if (typeof body.explanation !== "undefined") data.explanation = body.explanation;
@@ -165,6 +210,13 @@ export class QuestionController extends Controller {
     if (user.role?.toUpperCase() === "TEACHER" && existing.authorId !== user.id) {
       const err: any = new Error("Forbidden");
       err.status = 403;
+      throw err;
+    }
+    // Disallow deletion if linked to any PUBLISHED exam
+    const linkedPublished = await prisma.examQuestion.findFirst({ where: { questionId: id, exam: { status: 'PUBLISHED' as any } }, select: { examId: true } });
+    if (linkedPublished) {
+      const err: any = new Error("Cannot delete: question is used in a published exam");
+      err.status = 409;
       throw err;
     }
     await prisma.examQuestion.deleteMany({ where: { questionId: id } });

@@ -1,6 +1,6 @@
 <template>
   <div class="table-responsive">
-    <table class="table align-middle mb-0">
+    <table class="table table-sm align-middle mb-0">
       <thead>
         <tr class="text-uppercase text-muted small">
           <th v-if="showCheckbox" style="width: 36px">
@@ -11,7 +11,9 @@
               @change="toggleSelectAll"
             />
           </th>
-          <th v-for="col in columns" :key="col.key" :class="col.thClass">{{ col.title }}</th>
+          <th v-for="col in columns" :key="col.key" :class="col.thClass">
+            {{ col.title }}
+          </th>
           <th v-if="$slots['row-actions']" class="text-end"></th>
         </tr>
       </thead>
@@ -22,7 +24,7 @@
               class="form-check-input"
               type="checkbox"
               :checked="isSelected(row)"
-              @change="(e)=>onToggle(row, e)"
+              @change="(e) => onToggle(row, e)"
             />
           </td>
           <td v-for="col in columns" :key="col.key" :class="col.tdClass">
@@ -35,8 +37,15 @@
           </td>
         </tr>
         <tr v-if="!loading && items.length === 0">
-          <td :colspan="columns.length + (showCheckbox ? 1 : 0) + ($slots['row-actions'] ? 1 : 0)" class="text-center text-muted">
-            {{ emptyText || 'Không có dữ liệu' }}
+          <td
+            :colspan="
+              columns.length +
+              (showCheckbox ? 1 : 0) +
+              ($slots['row-actions'] ? 1 : 0)
+            "
+            class="text-center text-muted"
+          >
+            {{ emptyText || "Không có dữ liệu" }}
           </td>
         </tr>
       </tbody>
@@ -45,9 +54,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from "vue";
 
-type Column = { key: string; title: string; thClass?: string; tdClass?: string };
+type Column = {
+  key: string;
+  title: string;
+  thClass?: string;
+  tdClass?: string;
+};
 const props = defineProps<{
   columns: Column[];
   items: any[];
@@ -67,7 +81,9 @@ const allPageSelected = computed(
   () =>
     !!props.showCheckbox &&
     (props.items?.length || 0) > 0 &&
-    props.items.every((r) => (props.selectedIds ? props.selectedIds.has(r[props.rowKey]) : false))
+    props.items.every((r) =>
+      props.selectedIds ? props.selectedIds.has(r[props.rowKey]) : false
+    )
 );
 
 function onToggle(row: any, ev: Event) {
@@ -80,11 +96,14 @@ function onToggle(row: any, ev: Event) {
 function toggleSelectAll(ev: Event) {
   if (!props.selectedIds) return;
   const c = (ev.target as HTMLInputElement).checked;
-  props.items.forEach((r) => (c ? props.selectedIds!.add(r[props.rowKey]) : props.selectedIds!.delete(r[props.rowKey])));
+  props.items.forEach((r) =>
+    c
+      ? props.selectedIds!.add(r[props.rowKey])
+      : props.selectedIds!.delete(r[props.rowKey])
+  );
 }
 </script>
 
 <style scoped>
 /* Keep table compact */
 </style>
-

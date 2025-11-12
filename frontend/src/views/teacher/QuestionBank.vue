@@ -1,5 +1,5 @@
 <template>
-  <div class="card">
+  <div class="card rounded-0">
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Ngân hàng câu hỏi</h5>
       <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -9,7 +9,8 @@
         </button>
         <button
           class="btn btn-outline-primary"
-          :disabled="selectedIds.size !== 1"
+          :disabled="selectedIds.size !== 1 || selectedOneLocked"
+          :title="selectedOneLocked ? 'Không thể sửa: câu hỏi đang trong đề thi đã xuất bản' : ''"
           @click="openEdit(selectedOneId)"
         >
           <i class="bi bi-pencil-square me-1"></i>
@@ -59,7 +60,6 @@
             </select>
           </div>
         </div>
-        <div class="col-md-3 col-6 text-muted small">Tổng: {{ total }}</div>
       </div>
 
       <DataTable
@@ -82,11 +82,21 @@
         </template>
         <template #row-actions="{ row }">
           <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-primary" @click="openEdit(row.id)">
+            <button
+              class="btn btn-outline-primary"
+              :disabled="row.locked"
+              :title="row.locked ? 'Bị khóa (đang thuộc đề thi đã xuất bản)' : ''"
+              @click="openEdit(row.id)"
+            >
               <i class="bi bi-pencil-square me-1"></i>
               <span class="d-none d-sm-inline">Sửa</span>
             </button>
-            <button class="btn btn-outline-danger" @click="delOne(row.id)">
+            <button
+              class="btn btn-outline-danger"
+              :disabled="row.locked"
+              :title="row.locked ? 'Bị khóa (đang thuộc đề thi đã xuất bản)' : ''"
+              @click="delOne(row.id)"
+            >
               <i class="bi bi-trash me-1"></i>
               <span class="d-none d-sm-inline">Xóa</span>
             </button>
@@ -289,11 +299,16 @@
           <button class="btn-close" @click="closeEdit"></button>
         </div>
         <div class="modal-body">
+          <div v-if="editLocked" class="alert alert-warning d-flex align-items-center" role="alert">
+            <i class="bi bi-lock-fill me-2"></i>
+            Câu hỏi đang thuộc đề thi đã xuất bản. Không thể chỉnh sửa.
+          </div>
           <div class="mb-3">
             <label class="form-label">Nội dung</label>
             <textarea
               v-model.trim="editForm.text"
               class="form-control"
+              :disabled="editLocked"
               rows="3"
             ></textarea>
           </div>
@@ -302,32 +317,78 @@
             <textarea
               v-model.trim="editForm.explanation"
               class="form-control"
+              :disabled="editLocked"
               rows="2"
             ></textarea>
           </div>
           <div class="mt-4">
             <div class="fw-semibold mb-2">Đáp án</div>
-            <ul class="list-group">
-              <li
-                v-for="c in editChoices"
-                :key="c.id"
-                class="list-group-item d-flex align-items-center"
-              >
-                <i
-                  v-if="c.isCorrect"
-                  class="bi bi-check-circle-fill text-success me-2"
-                ></i>
-                <i v-else class="bi bi-circle me-2 text-muted"></i>
-                <span>{{ c.content }}</span>
-              </li>
-            </ul>
+            <template v-if="!editLocked && editType !== 'TEXT'">
+              <ul class="list-group">
+                <li
+                  v-for="(c, idx) in editChoices"
+                  :key="c.id ?? 'new-' + idx"
+                  class="list-group-item"
+                >
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <div class="form-check me-2">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        :checked="!!c.isCorrect"
+                        @change="(e) => onToggleEditCorrect(idx, e)"
+                      />
+                    </div>
+                    <input
+                      v-model="c.content"
+                      type="text"
+                      class="form-control flex-grow-1"
+                      placeholder="Nội dung đáp án"
+                      style="min-width: 220px"
+                    />
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-outline-secondary" @click="moveEditChoice(idx, -1)" :disabled="idx === 0">
+                        ↑
+                      </button>
+                      <button class="btn btn-outline-secondary" @click="moveEditChoice(idx, 1)" :disabled="idx === editChoices.length - 1">
+                        ↓
+                      </button>
+                      <button class="btn btn-outline-danger" @click="removeEditChoice(idx)" :disabled="editChoices.length <= 2">
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+              <div class="mt-2">
+                <button class="btn btn-light btn-sm" @click="addEditChoice">
+                  <i class="bi bi-plus-circle me-1"></i> Thêm đáp án
+                </button>
+              </div>
+            </template>
+            <template v-else>
+              <ul class="list-group">
+                <li
+                  v-for="c in editChoices"
+                  :key="c.id"
+                  class="list-group-item d-flex align-items-center"
+                >
+                  <i
+                    v-if="c.isCorrect"
+                    class="bi bi-check-circle-fill text-success me-2"
+                  ></i>
+                  <i v-else class="bi bi-circle me-2 text-muted"></i>
+                  <span>{{ c.content }}</span>
+                </li>
+              </ul>
+            </template>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-light" @click="closeEdit">Đóng</button>
           <button
             class="btn btn-primary"
-            :disabled="saving"
+            :disabled="saving || editLocked || !canSubmitEdit"
             @click="submitEdit"
           >
             <span
@@ -352,26 +413,56 @@ import Pagination from "../../components/common/Pagination.vue";
 import DataTable from "../../components/common/DataTable.vue";
 import { useQuestionBankStore } from "../../stores/questionBank";
 
-type QuestionListItem = { id: number; text: string; explanation: string | null };
+type QuestionListItem = {
+  id: number;
+  text: string;
+  explanation: string | null;
+  locked?: boolean;
+};
 type ExamSummary = { id: number; title: string };
 
-const pageSizeOptions = [10, 20, 30, 40, 50];
+const pageSizeOptions = [10, 15, 20, 25, 30, 40, 50];
 const subjects = ref<Array<{ id: number; name: string }>>([]);
 const selectedIds = reactive(new Set<number>());
 
 // Shared store for question bank
 const qb = useQuestionBankStore();
-const { loading, total, page, pageSize, subjectId, sort, search, filteredItems, items } = storeToRefs(qb);
-const itemsToShow = computed(() => (search.value && search.value.trim() ? filteredItems.value : items.value));
+const {
+  loading,
+  total,
+  page,
+  pageSize,
+  subjectId,
+  sort,
+  search,
+  filteredItems,
+  items,
+} = storeToRefs(qb);
+const itemsToShow = computed(() =>
+  search.value && search.value.trim() ? filteredItems.value : items.value
+);
 
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)));
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(total.value / pageSize.value))
+);
 
 const selectedOneId = computed(() =>
   selectedIds.size === 1 ? Array.from(selectedIds)[0] : 0
 );
+const selectedOneLocked = computed(() => {
+  const id = selectedOneId.value;
+  if (!id) return false;
+  const row = itemsToShow.value.find((r: any) => r.id === id);
+  return !!row?.locked;
+});
 
 const columns = [
-  { key: "id", title: "ID", thClass: "d-none d-sm-table-cell", tdClass: "d-none d-sm-table-cell" },
+  {
+    key: "id",
+    title: "ID",
+    thClass: "d-none d-sm-table-cell",
+    tdClass: "d-none d-sm-table-cell",
+  },
   { key: "text", title: "Nội dung" },
 ];
 
@@ -397,6 +488,11 @@ function onSortChange() {
 // Selection handling is managed inside DataTable via selectedIds set.
 
 async function delOne(id: number) {
+  const row = itemsToShow.value.find((r: any) => r.id === id);
+  if (row?.locked) {
+    alert("Không thể xóa: Câu hỏi thuộc đề thi đã xuất bản");
+    return;
+  }
   if (!confirm("Xóa câu hỏi #" + id + "?")) return;
   await api.delete(`/questions/${id}`);
   selectedIds.delete(id);
@@ -518,25 +614,31 @@ async function submitAdd() {
   }
 }
 
-// Edit modal (chỉ sửa nội dung/giải thích)
+// Edit modal (sửa nội dung/giải thích và đáp án khi chưa bị khóa)
 const showEdit = ref(false);
 const editForm = reactive<{
   id: number;
   text: string;
   explanation: string | null;
 }>({ id: 0, text: "", explanation: null });
-const editChoices = ref<
-  Array<{ id: number; content: string; isCorrect: boolean; order: number }>
->([]);
+const editType = ref<"SC" | "MC" | "TEXT">("SC");
+const editLocked = ref(false);
+type EditChoice = { id?: number; content: string; isCorrect: boolean; order?: number };
+const editChoices = ref<Array<EditChoice>>([]);
+let originalChoices: Array<EditChoice> = [];
 async function openEdit(id: number) {
   try {
     const { data } = await api.get(`/questions/${id}`);
     editForm.id = data.id;
     editForm.text = data.text;
     editForm.explanation = data.explanation ?? null;
+    editType.value = (data.type || "SC") as any;
+    editLocked.value = !!data.locked;
     editChoices.value = (data.choices || [])
       .slice()
-      .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+      .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
+      .map((c: any) => ({ id: c.id, content: c.content, isCorrect: !!c.isCorrect, order: c.order }));
+    originalChoices = editChoices.value.map((c) => ({ ...c }));
     showEdit.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể mở form sửa");
@@ -545,6 +647,33 @@ async function openEdit(id: number) {
 function closeEdit() {
   showEdit.value = false;
 }
+function addEditChoice() {
+  editChoices.value.push({ content: "", isCorrect: false });
+}
+function removeEditChoice(i: number) {
+  editChoices.value.splice(i, 1);
+}
+function moveEditChoice(i: number, delta: number) {
+  const j = i + delta;
+  if (j < 0 || j >= editChoices.value.length) return;
+  const arr = editChoices.value;
+  [arr[i], arr[j]] = [arr[j], arr[i]];
+}
+function onToggleEditCorrect(idx: number, e: Event) {
+  const checked = (e.target as HTMLInputElement).checked;
+  if (editType.value === "SC") {
+    editChoices.value.forEach((c, i) => (c.isCorrect = i === idx ? checked : false));
+  } else {
+    editChoices.value[idx].isCorrect = checked;
+  }
+}
+const canSubmitEdit = computed(() => {
+  if (editLocked.value) return false;
+  if (editType.value === "TEXT") return editForm.text.trim().length > 0;
+  const nonEmpty = editChoices.value.some((c) => c.content && c.content.trim());
+  const anyCorrect = editChoices.value.some((c) => !!c.isCorrect);
+  return editForm.text.trim().length > 0 && nonEmpty && anyCorrect;
+});
 async function submitEdit() {
   saving.value = true;
   try {
@@ -552,6 +681,50 @@ async function submitEdit() {
       text: editForm.text,
       explanation: editForm.explanation,
     });
+    if (!editLocked.value && editType.value !== "TEXT") {
+      // compute diff for choices
+      const current = editChoices.value.map((c, idx) => ({ ...c, order: idx }));
+      const origMap = new Map<number, EditChoice>();
+      originalChoices.forEach((c) => {
+        if (typeof c.id === "number") origMap.set(c.id, c);
+      });
+      const currMap = new Map<number, EditChoice>();
+      current.forEach((c: any) => {
+        if (typeof c.id === "number") currMap.set(c.id, c);
+      });
+      // deletions
+      const toDelete = originalChoices
+        .filter((c) => typeof c.id === "number" && !currMap.has(c.id!))
+        .map((c) => c.id!) as number[];
+      for (const id of toDelete) {
+        try { await api.delete(`/choices/${id}`); } catch {}
+      }
+      // updates
+      for (const [id, curr] of currMap) {
+        const prev = origMap.get(id)!;
+        if (
+          prev.content !== curr.content ||
+          !!prev.isCorrect !== !!curr.isCorrect ||
+          (prev.order ?? 0) !== (curr.order ?? 0)
+        ) {
+          await api.put(`/choices/${id}`, {
+            content: curr.content,
+            isCorrect: !!curr.isCorrect,
+            order: curr.order ?? 0,
+          });
+        }
+      }
+      // creations
+      const toCreate = current.filter((c) => typeof c.id !== "number" && c.content && c.content.trim());
+      for (const c of toCreate) {
+        await api.post(`/choices`, {
+          questionId: editForm.id,
+          content: c.content.trim(),
+          isCorrect: !!c.isCorrect,
+          order: c.order ?? 0,
+        });
+      }
+    }
     closeEdit();
     load();
   } catch (e: any) {
@@ -578,7 +751,7 @@ onMounted(async () => {
 <style scoped>
 @media (max-width: 575.98px) {
   .table td,
-.table th {
+  .table th {
     padding: 0.5rem 0.5rem;
   }
 }

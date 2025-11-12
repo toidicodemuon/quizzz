@@ -19,7 +19,7 @@
           @toggle-sidebar="toggleSidebar"
           @toggle-collapse="toggleCollapse"
         />
-        <div class="p-0 p-lg-4">
+        <div class="p-0">
           <router-view />
         </div>
       </main>

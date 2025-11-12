@@ -2,7 +2,7 @@
   <aside :class="['app-sidebar', { 'd-none': !open, collapsed }]">
     <div class="sidebar-inner h-100 d-flex flex-column">
       <div
-        class="sidebar-header d-none d-lg-flex align-items-center justify-content-between px-3 py-3 border-bottom border-1 border-light"
+        class="sidebar-header d-none d-lg-flex align-items-center justify-content-between p-2 my-2 border-bottom border-1 border-light"
       >
         <a
           class="brand d-flex align-items-center text-white text-decoration-none"
