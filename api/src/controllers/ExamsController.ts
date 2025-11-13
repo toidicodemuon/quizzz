@@ -90,6 +90,7 @@ export class ExamsController extends Controller {
     const where: any = {};
 
     if (typeof authorId === "number") where.authorId = authorId;
+    if (typeof subjectId === "number") where.subjectId = subjectId;
     const [items, total] = await Promise.all([
       prisma.exam.findMany({
         where,
@@ -119,7 +120,11 @@ export class ExamsController extends Controller {
       }),
       prisma.exam.count({ where }),
     ]);
-    return { items, total };
+    const mapped: ExamSummary[] = items.map((e: any) => ({
+      ...e,
+      totalPoints: e.totalPoints === null ? null : Number(e.totalPoints as any),
+    }));
+    return { items: mapped, total };
   }
 
   @Get("/{id}")
@@ -155,7 +160,14 @@ export class ExamsController extends Controller {
       err.status = 404;
       throw err;
     }
-    return exam;
+    const mapped: ExamSummary = {
+      ...(exam as any),
+      totalPoints:
+        (exam as any).totalPoints === null
+          ? null
+          : Number((exam as any).totalPoints as any),
+    };
+    return mapped;
   }
 
   @Post("/")
@@ -203,7 +215,7 @@ export class ExamsController extends Controller {
       data.showExplanation = !!body.showExplanation;
     if (typeof body.reviewWindowMin !== "undefined")
       data.reviewWindowMin = body.reviewWindowMin as any;
-    return prisma.exam.create({
+    const created = await prisma.exam.create({
       data,
       select: {
         id: true,
@@ -226,6 +238,14 @@ export class ExamsController extends Controller {
         updatedAt: true,
       },
     });
+    const mapped: ExamSummary = {
+      ...(created as any),
+      totalPoints:
+        (created as any).totalPoints === null
+          ? null
+          : Number((created as any).totalPoints as any),
+    };
+    return mapped;
   }
 
   @Put("/{id}")
@@ -305,7 +325,7 @@ export class ExamsController extends Controller {
       data.showExplanation = !!body.showExplanation;
     if (typeof body.reviewWindowMin !== "undefined")
       data.reviewWindowMin = body.reviewWindowMin as any;
-    return prisma.exam.update({
+    const updated = await prisma.exam.update({
       where: { id },
       data,
       select: {
@@ -329,6 +349,14 @@ export class ExamsController extends Controller {
         updatedAt: true,
       },
     });
+    const mapped: ExamSummary = {
+      ...(updated as any),
+      totalPoints:
+        (updated as any).totalPoints === null
+          ? null
+          : Number((updated as any).totalPoints as any),
+    };
+    return mapped;
   }
 
   @Delete("/{id}")

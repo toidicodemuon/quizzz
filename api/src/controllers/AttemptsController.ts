@@ -221,6 +221,7 @@ export class AttemptController extends Controller {
     studentCode?: string | null;
     examId: number;
     examTitle?: string | null;
+    passMarkPercent?: number | null;
     roomId: number;
     status: AttemptStatus;
     answers: Array<{

@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Request } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 
 interface RequestWithOriginalUrl extends Request {

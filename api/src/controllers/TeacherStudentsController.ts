@@ -92,14 +92,15 @@ export class TeacherStudentsController extends Controller {
     }
     const bcrypt = await import("bcryptjs");
     const passwordHash = await bcrypt.hash(body.password, 10);
+    const data: any = {
+      fullName: body.fullName ?? null,
+      userCode: body.userCode,
+      password: passwordHash,
+      role: Role.STUDENT,
+    };
+    if (typeof body.email !== "undefined") data.email = body.email;
     const user = await prisma.user.create({
-      data: {
-        fullName: body.fullName ?? null,
-        email: body.email ?? null,
-        userCode: body.userCode,
-        password: passwordHash,
-        role: Role.STUDENT,
-      },
+      data,
       select: TeacherStudentsController.select,
     });
     this.setStatus(201);

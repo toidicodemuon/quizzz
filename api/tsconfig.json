@@ -30,7 +30,9 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "sourceMap": false
   },
   "include": [
     "src/**/*.ts"

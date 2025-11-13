@@ -50,10 +50,10 @@ export class AttemptAnswerController extends Controller {
 
     const answers = await prisma.attemptAnswer.findMany({
       where: { attemptId },
-      select: { id: true, attemptId: true, questionId: true, isCorrect: true, earned: true, attemptAnswerChoices: { select: { choiceId: true } } },
+      select: { id: true, attemptId: true, questionId: true, isCorrect: true, earned: true, choices: { select: { choiceId: true } } },
       orderBy: { id: "asc" },
     });
-    return answers.map((a) => ({ id: a.id, attemptId: a.attemptId, questionId: a.questionId, isCorrect: a.isCorrect, earned: a.earned === null ? null : Number(a.earned as any), selectedChoiceIds: a.attemptAnswerChoices.map((c) => c.choiceId) }));
+    return answers.map((a) => ({ id: a.id, attemptId: a.attemptId, questionId: a.questionId, isCorrect: a.isCorrect, earned: a.earned === null ? null : Number(a.earned as any), selectedChoiceIds: a.choices.map((c) => c.choiceId) }));
   }
 
   @Get("{id}")
@@ -68,7 +68,7 @@ export class AttemptAnswerController extends Controller {
     const user = (req as any).user as { id: number; role: string };
     const role = user.role?.toUpperCase();
 
-    const sa = await prisma.attemptAnswer.findUnique({ where: { id }, select: { id: true, attemptId: true, questionId: true, isCorrect: true, earned: true, attempt: { select: { studentId: true, exam: { select: { authorId: true } } } }, attemptAnswerChoices: { select: { choiceId: true } } } });
+    const sa = await prisma.attemptAnswer.findUnique({ where: { id }, select: { id: true, attemptId: true, questionId: true, isCorrect: true, earned: true, attempt: { select: { studentId: true, exam: { select: { authorId: true } } } }, choices: { select: { choiceId: true } } } });
 
     if (!sa) {
       const err: any = new Error("Not found");
@@ -88,7 +88,6 @@ export class AttemptAnswerController extends Controller {
     }
 
     const { attempt: _omit, ...rest } = sa as any;
-    return { ...rest, selectedChoiceIds: sa.attemptAnswerChoices.map((c) => c.choiceId) } as AttemptAnswerSummary;
+    return { ...rest, selectedChoiceIds: sa.choices.map((c) => c.choiceId) } as AttemptAnswerSummary;
   }
 }
-

@@ -4587,6 +4587,11 @@
 											"type": "number",
 											"format": "double"
 										},
+										"passMarkPercent": {
+											"type": "number",
+											"format": "double",
+											"nullable": true
+										},
 										"examTitle": {
 											"type": "string",
 											"nullable": true

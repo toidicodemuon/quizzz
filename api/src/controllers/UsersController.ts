@@ -109,7 +109,7 @@ export class UserController extends Controller {
       role: Role; // must be ADMIN or TEACHER
     }
   ): Promise<{ message: string; user: UserResponse }> {
-    if (!body?.role || ![Role.ADMIN, Role.TEACHER].includes(body.role)) {
+    if (!body?.role || (body.role !== Role.ADMIN && body.role !== Role.TEACHER)) {
       const err: any = new Error(
         "Only ADMIN or TEACHER can be created by admin"
       );
@@ -158,7 +158,7 @@ export class UserController extends Controller {
     if (typeof body.password !== "undefined")
       data.password = await bcrypt.hash(body.password, 10);
     if (typeof body.role !== "undefined") {
-      if (![Role.ADMIN, Role.TEACHER].includes(body.role)) {
+      if (body.role !== Role.ADMIN && body.role !== Role.TEACHER) {
         const err: any = new Error("Role must be ADMIN or TEACHER");
         err.status = 400;
         throw err;
