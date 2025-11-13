@@ -66,6 +66,12 @@ const routes: Array<RouteRecordRaw> = [
         meta: { pageTitle: "NGÂN HÀNG CÂU HỎI" },
       },
       {
+        path: "teacher/student",
+        name: "teacher-student",
+        component: () => import("../views/teacher/Students.vue"),
+        meta: { pageTitle: "QUẢN LÝ HỌC VIÊN" },
+      },
+      {
         path: "teacher/subjects",
         name: "teacher-subjects",
         component: () => import("../views/teacher/Subjects.vue"),
@@ -91,6 +97,13 @@ const routes: Array<RouteRecordRaw> = [
         name: "admin-users",
         component: () => import("../views/admin/Users.vue"),
         meta: { pageTitle: "QUẢN LÝ NGƯỜI DÙNG" },
+      },
+      // common
+      {
+        path: "profile",
+        name: "profile",
+        component: () => import("../views/Profile.vue"),
+        meta: { pageTitle: "THÔNG TIN CÁ NHÂN" },
       },
     ],
   },

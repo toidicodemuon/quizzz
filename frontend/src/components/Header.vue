@@ -40,6 +40,13 @@
         <span class="badge bg-secondary" v-if="role">{{ role }}</span>
         <button
           class="btn btn-sm btn-outline-secondary"
+          title="Cài đặt tài khoản"
+          @click="openProfile"
+        >
+          <i class="bi bi-gear"></i>
+        </button>
+        <button
+          class="btn btn-sm btn-outline-secondary"
           title="Đăng xuất"
           @click="onLogout"
         >
@@ -48,12 +55,14 @@
       </div>
     </div>
   </header>
-</template>
+    <ProfileModal v-model:open="showProfile" />
+  </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { getRole, logout, getUser } from "../utils/auth";
+import ProfileModal from "./ProfileModal.vue";
 
 defineOptions({ name: "AppHeader" });
 
@@ -72,6 +81,11 @@ const collapsed = computed(() => !!props.collapsed);
 function onLogout() {
   logout();
   router.push({ name: "login" });
+}
+
+const showProfile = ref(false);
+function openProfile() {
+  showProfile.value = true;
 }
 </script>
 

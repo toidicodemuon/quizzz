@@ -7,7 +7,7 @@ export type LoginSuccessResponse = {
   refreshToken: string;
   user: {
     id: number;
-    email: string;
+    email: string | null;
     fullName: string;
     role: string;
   };
@@ -27,13 +27,13 @@ export async function refreshTokens(refreshToken: string): Promise<LoginSuccessR
     const payload: any = jwt.verify(refreshToken, secret)
     const user = await prisma.user.findUnique({ where: { id: Number(payload?.sub) } })
     if (!user) throw new AuthError(401, 'Invalid refresh token')
-    const base = { sub: user.id, email: user.email, role: user.role } as const
+    const base = { sub: user.id, username: user.userCode ?? user.email ?? String(user.id), role: user.role } as const
     const accessToken = jwt.sign(base, secret, { expiresIn: '1h' })
     const newRefresh = jwt.sign(base, secret, { expiresIn: '7d' })
     return {
       accessToken,
       refreshToken: newRefresh,
-      user: { id: user.id, email: user.email, fullName: user.fullName ?? '', role: user.role },
+      user: { id: user.id, email: user.email ?? null, fullName: user.fullName ?? '', role: user.role },
     }
   } catch (e: any) {
     if (e?.name === 'TokenExpiredError') throw new AuthError(401, 'Refresh token expired')
@@ -47,15 +47,23 @@ export async function refreshTokens(refreshToken: string): Promise<LoginSuccessR
  * Thực hiện xác thực user và sinh JWT
  */
 export async function authenticateUser(
-  email: string,
+  identifier: string,
   password: string
 ): Promise<LoginSuccessResponse> {
-  if (!email || !password) {
-    throw new AuthError(400, "email and password are required");
+  if (!identifier || !password) {
+    throw new AuthError(400, "identifier and password are required");
   }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    // identifier can be userCode or email
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { userCode: identifier },
+          { email: identifier },
+        ],
+      },
+    });
     if (!user) {
       throw new AuthError(401, "Invalid credentials");
     }
@@ -72,7 +80,7 @@ export async function authenticateUser(
 
     const payload = {
       sub: user.id,
-      email: user.email,
+      username: user.userCode ?? user.email ?? String(user.id),
       role: user.role,
     } as const;
 
@@ -84,7 +92,7 @@ export async function authenticateUser(
       refreshToken,
       user: {
         id: user.id,
-        email: user.email,
+        email: user.email ?? null,
         fullName: user.fullName ?? "",
         role: user.role,
       },

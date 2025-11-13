@@ -3,20 +3,20 @@
     <div
       class="card-header d-flex align-items-center justify-content-between gap-2 flex-wrap"
     >
-      <h5 class="mb-0">Quản lý người dùng</h5>
+      <h5 class="mb-0">Quản lý học viên</h5>
       <div class="d-flex gap-2">
         <button
           class="btn btn-primary btn-sm"
           type="button"
           @click="openCreate()"
         >
-          <i class="bi bi-plus-lg me-1"></i> Thêm người dùng
+          <i class="bi bi-plus-lg me-1"></i> Thêm học viên
         </button>
         <button
           class="btn btn-outline-secondary btn-sm"
           type="button"
           :disabled="loading"
-          @click="fetchUsers()"
+          @click="fetchStudents()"
         >
           <i class="bi bi-arrow-repeat me-1" :class="{ spin: loading }"></i> Tải
           lại
@@ -26,46 +26,35 @@
     <div class="card-body">
       <!-- Filters -->
       <div class="row g-2 align-items-end mb-3">
-        <div class="col-12 col-md-4">
-          <label class="form-label small text-muted">Tìm kiếm</label>
-          <input
-            type="text"
-            class="form-control form-control-sm"
-            v-model.trim="filters.search"
-            placeholder="Tìm theo email hoặc họ tên..."
-            @keyup.enter="onApplyFilters()"
-          />
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label small text-muted">Vai trò</label>
-          <select
-            class="form-select form-select-sm"
-            v-model="filters.role"
-            @change="onApplyFilters()"
-          >
-            <option :value="''">Tất cả</option>
-            <option value="TEACHER">Giáo viên</option>
-            <option value="ADMIN">Quản trị</option>
-          </select>
-        </div>
-        <div class="col-12 col-md-3">
-          <label class="form-label d-block small text-muted">&nbsp;</label>
-          <button
-            class="btn btn-sm btn-primary me-2"
-            type="button"
-            :disabled="loading"
-            @click="onApplyFilters()"
-          >
-            <i class="bi bi-filter me-1"></i> Áp dụng
-          </button>
-          <button
-            class="btn btn-sm btn-outline-secondary"
-            type="button"
-            :disabled="loading"
-            @click="onResetFilters()"
-          >
-            Xóa bộ lọc
-          </button>
+        <div class="col-12 col-md-6 col-lg-5">
+          <div class="input-group input-group-sm">
+            <input
+              type="text"
+              class="form-control"
+              v-model.trim="search"
+              placeholder="Tìm theo mã số, email hoặc họ tên..."
+              @keyup.enter="applyFilters()"
+            />
+            <button
+              v-if="search"
+              class="btn btn-outline-secondary"
+              type="button"
+              :disabled="loading"
+              title="Xóa bộ lọc"
+              @click="clearSearch()"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+            <button
+              class="btn btn-primary"
+              type="button"
+              :disabled="loading"
+              title="Tìm kiếm"
+              @click="applyFilters()"
+            >
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -77,9 +66,6 @@
         row-key="id"
         :empty-text="loading ? 'Đang tải...' : 'Không có dữ liệu'"
       >
-        <template #cell-userCode="{ value }">
-          <code>{{ value }}</code>
-        </template>
         <template #cell-email="{ value }">
           <code>{{ value }}</code>
         </template>
@@ -124,7 +110,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h6 class="modal-title mb-0">
-            {{ editing ? "Cập nhật người dùng" : "Thêm người dùng" }}
+            {{ editing ? "Cập nhật học viên" : "Thêm học viên" }}
           </h6>
           <button
             type="button"
@@ -144,25 +130,23 @@
               />
             </div>
             <div class="col-12">
+              <label class="form-label">Mã số học viên</label>
+              <input
+                type="text"
+                class="form-control"
+                v-model.trim="form.userCode"
+                placeholder="VD: SV20240001"
+                :disabled="editing"
+              />
+            </div>
+            <div class="col-12">
               <label class="form-label">Email</label>
               <input
                 type="email"
                 class="form-control"
                 v-model.trim="form.email"
                 placeholder="email@domain.com"
-                :disabled="editing"
               />
-            </div>
-            <div class="col-12">
-              <label class="form-label">Vai trò</label>
-              <select
-                class="form-select"
-                v-model="form.role"
-                :disabled="editing"
-              >
-                <option value="TEACHER">Giáo viên</option>
-                <option value="ADMIN">Quản trị</option>
-              </select>
             </div>
             <div class="col-12">
               <label class="form-label">Mật khẩu</label>
@@ -175,7 +159,11 @@
                     editing ? 'Để trống nếu không đổi' : 'Tối thiểu 6 ký tự'
                   "
                 />
-                <button type="button" class="btn btn-outline-secondary" @click="showPassword = !showPassword">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  @click="showPassword = !showPassword"
+                >
                   <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
                 </button>
               </div>
@@ -213,84 +201,66 @@ import api, { type Paginated } from "../../api";
 import DataTable from "../../components/common/DataTable.vue";
 import Pagination from "../../components/common/Pagination.vue";
 
-type Role = "ADMIN" | "TEACHER" | "STUDENT";
-type User = {
+type Student = {
   id: number;
   email: string | null;
   fullName: string | null;
   userCode?: string | null;
-  role: Role;
   createdAt: string | Date;
   updatedAt: string | Date;
 };
 
 const loading = ref(false);
-const items = ref<User[]>([]);
+const items = ref<Student[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
-
-const filters = reactive<{ search: string; role: "" | Role }>({
-  search: "",
-  role: "",
-});
+const search = ref("");
 
 const columns = [
-  { key: "userCode", title: "Tên đăng nhập" },
+  { key: "userCode", title: "Mã số" },
   { key: "email", title: "Email" },
   { key: "fullName", title: "Họ tên" },
-  {
-    key: "role",
-    title: "Vai trò",
-    thClass: "text-center",
-    tdClass: "text-center",
-  },
   { key: "createdAt", title: "Ngày tạo" },
 ];
 
-async function fetchUsers() {
+async function fetchStudents() {
   loading.value = true;
   try {
-    const params: any = {
-      page: page.value,
-      pageSize: pageSize.value,
-    };
-    if (filters.search) params.search = filters.search;
-    if (filters.role) params.role = filters.role;
-    // Never list students in Admin Users view
-    params.excludeStudent = true;
-
-    const res = await api.get<Paginated<User>>("/users", { params });
+    const params: any = { page: page.value, pageSize: pageSize.value };
+    if (search.value) params.search = search.value;
+    const res = await api.get<Paginated<Student>>("/teacher/students", {
+      params,
+    });
     items.value = (res.data?.items || []).map((it) => ({
       ...it,
       createdAt: it.createdAt,
     }));
     total.value = res.data?.total || 0;
-  } catch (e: any) {
+  } catch (e) {
     console.error(e);
-    alert("Không tải được danh sách người dùng.");
+    alert("Không tải được danh sách học viên.");
   } finally {
     loading.value = false;
   }
 }
 
-function onApplyFilters() {
+function applyFilters() {
   page.value = 1;
-  fetchUsers();
+  fetchStudents();
 }
-function onResetFilters() {
-  filters.search = "";
-  filters.role = "";
-  onApplyFilters();
+function resetFilters() {
+  search.value = "";
+  applyFilters();
 }
 
-watch([page, pageSize], () => {
-  fetchUsers();
-});
+function clearSearch() {
+  search.value = "";
+  applyFilters();
+}
 
-onMounted(() => {
-  fetchUsers();
-});
+watch([page, pageSize], () => fetchStudents());
+onMounted(() => fetchStudents());
 
 function formatDate(v: string | Date): string {
   try {
@@ -311,13 +281,13 @@ const showPassword = ref(false);
 const form = reactive<{
   fullName: string;
   email: string;
+  userCode: string;
   password: string;
-  role: Role;
 }>({
   fullName: "",
   email: "",
+  userCode: "",
   password: "",
-  role: "TEACHER",
 });
 
 function openCreate() {
@@ -325,15 +295,16 @@ function openCreate() {
   currentId.value = null;
   form.fullName = "";
   form.email = "";
+  form.userCode = "";
   form.password = "";
-  form.role = "TEACHER";
   showModal.value = true;
 }
-function openEdit(row: User) {
+function openEdit(row: Student) {
   editing.value = true;
   currentId.value = row.id;
   form.fullName = row.fullName || "";
-  form.email = row.email;
+  form.email = row.email || "";
+  form.userCode = (row as any).userCode || "";
   form.password = "";
   showModal.value = true;
 }
@@ -343,30 +314,30 @@ function closeModal() {
 }
 async function save() {
   if (saving.value) return;
-  if (!form.email || (!editing.value && !form.password)) {
-    alert("Vui lòng nhập email và mật khẩu.");
+  if (!form.userCode || (!editing.value && !form.password)) {
+    alert("Vui lòng nhập mã số và mật khẩu.");
     return;
   }
   saving.value = true;
   try {
     if (editing.value && currentId.value) {
-      await api.put(`/users/${currentId.value}`, {
+      await api.put(`/teacher/students/${currentId.value}`, {
         fullName: form.fullName || null,
-        // email can be updated server-side, but keep disabled in UI to avoid confusion
+        email: form.email || null,
+        userCode: form.userCode,
         password: form.password ? form.password : undefined,
-        // role unchanged
       });
     } else {
-      await api.post("/users", {
+      await api.post("/teacher/students", {
         fullName: form.fullName || null,
-        email: form.email,
+        email: form.email || null,
+        userCode: form.userCode,
         password: form.password,
-        role: form.role,
       });
     }
     showModal.value = false;
-    fetchUsers();
-  } catch (e: any) {
+    fetchStudents();
+  } catch (e) {
     console.error(e);
     alert("Không thể lưu. Vui lòng thử lại.");
   } finally {
@@ -374,14 +345,14 @@ async function save() {
   }
 }
 
-async function confirmDelete(row: User) {
-  if (!confirm(`Xóa tài khoản: ${row.email}?`)) return;
+async function confirmDelete(row: Student) {
+  if (!confirm(`Xóa học viên: ${row.email}?`)) return;
   try {
-    await api.delete(`/users/${row.id}`);
-    fetchUsers();
+    await api.delete(`/teacher/students/${row.id}`);
+    fetchStudents();
   } catch (e: any) {
     console.error(e);
-    const msg = e?.response?.data?.message || "Không thể xóa người dùng.";
+    const msg = e?.response?.data?.message || "Không thể xóa học viên.";
     alert(msg);
   }
 }
@@ -400,7 +371,6 @@ async function confirmDelete(row: User) {
   }
 }
 
-/* Lightweight modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
