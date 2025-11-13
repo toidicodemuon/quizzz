@@ -175,8 +175,15 @@
                     editing ? 'Để trống nếu không đổi' : 'Tối thiểu 6 ký tự'
                   "
                 />
-                <button type="button" class="btn btn-outline-secondary" @click="showPassword = !showPassword">
-                  <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  @click="showPassword = !showPassword"
+                >
+                  <i
+                    class="bi"
+                    :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"
+                  ></i>
                 </button>
               </div>
               <div class="form-text" v-if="editing">
@@ -212,6 +219,10 @@ import { onMounted, reactive, ref, watch } from "vue";
 import api, { type Paginated } from "../../api";
 import DataTable from "../../components/common/DataTable.vue";
 import Pagination from "../../components/common/Pagination.vue";
+
+defineOptions({
+  name: "UsersList",
+});
 
 type Role = "ADMIN" | "TEACHER" | "STUDENT";
 type User = {
@@ -333,7 +344,7 @@ function openEdit(row: User) {
   editing.value = true;
   currentId.value = row.id;
   form.fullName = row.fullName || "";
-  form.email = row.email;
+  form.email = row.email || "";
   form.password = "";
   showModal.value = true;
 }

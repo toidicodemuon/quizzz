@@ -22,7 +22,12 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Tên đăng nhập</label>
-            <input type="text" class="form-control" v-model="form.userCode" disabled />
+            <input
+              type="text"
+              class="form-control"
+              v-model="form.userCode"
+              disabled
+            />
           </div>
           <div class="mb-3">
             <label class="form-label">Email</label>
@@ -88,7 +93,12 @@ const emit = defineEmits<{ (e: "update:open", v: boolean): void }>();
 const loading = ref(false);
 const saving = ref(false);
 const showPassword = ref(false);
-const form = reactive<{ fullName: string; email: string; userCode: string; password: string }>({
+const form = reactive<{
+  fullName: string;
+  email: string;
+  userCode: string;
+  password: string;
+}>({
   fullName: "",
   email: "",
   userCode: "",

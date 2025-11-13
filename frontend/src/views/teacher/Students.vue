@@ -164,7 +164,10 @@
                   class="btn btn-outline-secondary"
                   @click="showPassword = !showPassword"
                 >
-                  <i class="bi" :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  <i
+                    class="bi"
+                    :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"
+                  ></i>
                 </button>
               </div>
               <div class="form-text" v-if="editing">
@@ -196,6 +199,10 @@
 </template>
 
 <script setup lang="ts">
+defineOptions({
+  name: "TeacherStudents",
+});
+
 import { onMounted, reactive, ref, watch } from "vue";
 import api, { type Paginated } from "../../api";
 import DataTable from "../../components/common/DataTable.vue";
@@ -248,10 +255,6 @@ async function fetchStudents() {
 function applyFilters() {
   page.value = 1;
   fetchStudents();
-}
-function resetFilters() {
-  search.value = "";
-  applyFilters();
 }
 
 function clearSearch() {

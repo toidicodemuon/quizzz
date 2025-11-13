@@ -1,6 +1,20 @@
 import { Role } from "@prisma/client";
 import { prisma } from "../utils/prisma";
-import { Get, Route, Tags, Path, Post, Body, Controller, Response, SuccessResponse, Security, Put, Delete, Query } from "tsoa";
+import {
+  Get,
+  Route,
+  Tags,
+  Path,
+  Post,
+  Body,
+  Controller,
+  Response,
+  SuccessResponse,
+  Security,
+  Put,
+  Delete,
+  Query,
+} from "tsoa";
 import bcrypt from "bcryptjs";
 
 export type UserResponse = {
@@ -46,10 +60,7 @@ export class UserController extends Controller {
     if (typeof role !== "undefined") where.role = role;
     if (search && search.trim()) {
       const q = search.trim();
-      where.OR = [
-        { email: { contains: q } },
-        { fullName: { contains: q } },
-      ];
+      where.OR = [{ email: { contains: q } }, { fullName: { contains: q } }];
     }
     const [items, total] = await Promise.all([
       prisma.user.findMany({
@@ -69,9 +80,7 @@ export class UserController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
   @Security("bearerAuth", ["ADMIN"])
-  public async getUserById(
-    @Path() id: number
-  ): Promise<UserResponse | null> {
+  public async getUserById(@Path() id: number): Promise<UserResponse | null> {
     const user = await prisma.user.findUnique({
       where: { id },
       select: UserController.userSelect,
@@ -101,7 +110,9 @@ export class UserController extends Controller {
     }
   ): Promise<{ message: string; user: UserResponse }> {
     if (!body?.role || ![Role.ADMIN, Role.TEACHER].includes(body.role)) {
-      const err: any = new Error("Only ADMIN or TEACHER can be created by admin");
+      const err: any = new Error(
+        "Only ADMIN or TEACHER can be created by admin"
+      );
       err.status = 400;
       throw err;
     }
@@ -180,7 +191,9 @@ export class UserController extends Controller {
 
     // Prevent deleting student accounts with existing attempts
     if (existing.role === Role.STUDENT) {
-      const relatedAttempts = await prisma.attempt.count({ where: { studentId: id } });
+      const relatedAttempts = await prisma.attempt.count({
+        where: { studentId: id },
+      });
       if (relatedAttempts > 0) {
         const err: any = new Error(
           "Không thể xóa học viên vì đã có dữ liệu bài thi của học viên này. Vui lòng xóa các bài thi liên quan trước."

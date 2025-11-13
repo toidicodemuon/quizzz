@@ -78,7 +78,12 @@ export class TeacherStudentsController extends Controller {
   @Security("bearerAuth", ["TEACHER", "ADMIN"])
   public async createStudent(
     @Body()
-    body: { fullName: string; userCode: string; email?: string | null; password: string }
+    body: {
+      fullName: string;
+      userCode: string;
+      email?: string | null;
+      password: string;
+    }
   ): Promise<{ message: string; user: StudentResponse }> {
     if (!body?.userCode || !String(body.userCode).trim()) {
       const err: any = new Error("userCode is required");
@@ -109,7 +114,12 @@ export class TeacherStudentsController extends Controller {
   public async updateStudent(
     @Path() id: number,
     @Body()
-    body: { fullName?: string | null; email?: string | null; password?: string; userCode?: string }
+    body: {
+      fullName?: string | null;
+      email?: string | null;
+      password?: string;
+      userCode?: string;
+    }
   ): Promise<{ message: string; user: StudentResponse }> {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing || existing.role !== Role.STUDENT) {
@@ -138,7 +148,9 @@ export class TeacherStudentsController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
   @Security("bearerAuth", ["TEACHER", "ADMIN"])
-  public async deleteStudent(@Path() id: number): Promise<{ message: string; id: number }> {
+  public async deleteStudent(
+    @Path() id: number
+  ): Promise<{ message: string; id: number }> {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing || existing.role !== Role.STUDENT) {
       const err: any = new Error("Student not found");
@@ -146,7 +158,9 @@ export class TeacherStudentsController extends Controller {
       throw err;
     }
     // Do not allow deleting student if there are attempts
-    const relatedAttempts = await prisma.attempt.count({ where: { studentId: id } });
+    const relatedAttempts = await prisma.attempt.count({
+      where: { studentId: id },
+    });
     if (relatedAttempts > 0) {
       const err: any = new Error(
         "Không thể xóa học viên vì đã có dữ liệu bài thi của học viên này. Vui lòng xóa các bài thi liên quan trước."
