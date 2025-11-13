@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "build": "tsoa spec-and-routes && tsc",
-    "postbuild": "node scripts/minify.mjs",
+    "postbuild": "node scripts/obfuscate.mjs",
+    "postbuild:minify": "node scripts/minify.mjs",
+    "postbuild:obfuscate": "node scripts/obfuscate.mjs",
     "start": "cross-env NODE_ENV=production node dist/src/index.js",
     "dev": "concurrently \"npm run watch:tsoa\" \"vite\"",
     "dev:restart": "vite",
@@ -46,6 +48,7 @@
     "@types/swagger-ui-express": "^4.1.7",
     "cheerio": "^1.0.0",
     "concurrently": "^9.1.0",
+    "javascript-obfuscator": "^4.1.1",
     "nodemon": "^3.1.7",
     "prisma": "^6.19.0",
     "terser": "^5.44.1",
