@@ -17,7 +17,9 @@
         <ul class="nav flex-column">
           <template v-for="(item, idx) in items" :key="idx">
             <li v-if="!item.children" class="nav-item">
-              <div class="nav-link d-flex align-items-center justify-content-between">
+              <div
+                class="nav-link d-flex align-items-center justify-content-between"
+              >
                 <RouterLink
                   :to="item.to || '#'"
                   class="flex-grow-1 d-flex align-items-center text-reset text-decoration-none"
@@ -30,7 +32,7 @@
                   :href="toHref(item.to!)"
                   target="_blank"
                   rel="noopener"
-                  class="btn btn-sm btn-outline-light ms-2 open-tab position-relative"
+                  class="btn btn-sm btn-outline-light ms-2 open-tab position-relative border-0"
                   title="Mở tab mới"
                   @click.stop
                 >
@@ -54,8 +56,13 @@
               </button>
               <ul class="nav flex-column submenu" v-show="openGroups.has(idx)">
                 <li v-for="(sub, j) in item.children" :key="j" class="nav-item">
-                  <div class="nav-link d-flex align-items-center justify-content-between">
-                    <RouterLink :to="sub.to || '#'" class="flex-grow-1 d-flex align-items-center text-reset text-decoration-none">
+                  <div
+                    class="nav-link d-flex align-items-center justify-content-between"
+                  >
+                    <RouterLink
+                      :to="sub.to || '#'"
+                      class="flex-grow-1 d-flex align-items-center text-reset text-decoration-none"
+                    >
                       <i v-if="sub.icon" :class="['bi me-2', sub.icon]"></i>
                       <span class="label">{{ sub.label }}</span>
                     </RouterLink>
@@ -108,7 +115,7 @@ function toggleGroup(index: number) {
 }
 
 function toHref(to: string) {
-  return '#' + to.replace(/^#?\/?/, '/');
+  return "#" + to.replace(/^#?\/?/, "/");
 }
 
 const appName = import.meta.env.VITE_APP_NAME || "THAT";
