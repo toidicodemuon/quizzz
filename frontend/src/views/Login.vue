@@ -70,9 +70,9 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { saveAuth, getRole } from "../utils/auth";
 
-  const router = useRouter();
-  const identifier = ref("");
-  const password = ref("");
+const router = useRouter();
+const identifier = ref("");
+const password = ref("");
 const loading = ref(false);
 const error = ref("");
 const success = ref(false);
@@ -95,7 +95,10 @@ async function onSubmit() {
     const res = await fetch(`${apiBase.value}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier: identifier.value, password: password.value }),
+      body: JSON.stringify({
+        identifier: identifier.value,
+        password: password.value,
+      }),
     });
 
     const data = await res.json();
@@ -111,7 +114,7 @@ async function onSubmit() {
       const role = getRole();
       if (role === "TEACHER") router.push({ name: "teacher-dashboard" });
       else if (role === "STUDENT") router.push({ name: "student-dashboard" });
-      else if (role === "ADMIN") router.push({ name: "admin-dashboard" });
+      else if (role === "ADMIN") router.push({ name: "admin-users" });
       else router.push("/");
     }, 300);
   } catch (e: any) {

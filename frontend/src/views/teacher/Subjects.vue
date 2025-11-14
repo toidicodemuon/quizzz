@@ -11,7 +11,7 @@
           <input
             v-model.trim="form.name"
             type="text"
-            class="form-control"
+            class="form-control form-control-sm"
             placeholder="Nhập tên môn"
           />
         </div>
@@ -20,14 +20,14 @@
           <input
             v-model.trim="form.code"
             type="text"
-            class="form-control"
+            class="form-control form-control-sm"
             placeholder="VD: IT_BASIC"
           />
         </div>
         <div class="col-12 col-md-2 d-grid">
           <button
             type="button"
-            class="btn btn-primary"
+            class="btn btn-sm btn-primary"
             :disabled="saving || !canAdd"
             @click="add"
           >

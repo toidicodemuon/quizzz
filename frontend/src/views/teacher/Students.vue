@@ -29,22 +29,12 @@
         <div class="col-12 col-md-6 col-lg-5">
           <div class="input-group input-group-sm">
             <input
-              type="text"
+              type="search"
               class="form-control"
               v-model.trim="search"
               placeholder="Tìm theo mã số, email hoặc họ tên..."
               @keyup.enter="applyFilters()"
             />
-            <button
-              v-if="search"
-              class="btn btn-outline-secondary"
-              type="button"
-              :disabled="loading"
-              title="Xóa bộ lọc"
-              @click="clearSearch()"
-            >
-              <i class="bi bi-x-lg"></i>
-            </button>
             <button
               class="btn btn-primary"
               type="button"

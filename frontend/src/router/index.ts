@@ -11,7 +11,7 @@ const routes: Array<RouteRecordRaw> = [
       const role = getRole();
       if (role === "TEACHER") return "/teacher/dashboard";
       if (role === "STUDENT") return "/student/dashboard";
-      if (role === "ADMIN") return "/admin/dashboard";
+      if (role === "ADMIN") return "/admin/users";
       return "/login";
     },
   },
@@ -33,13 +33,6 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../views/student/Dashboard.vue"),
         meta: { pageTitle: "DASHBOARD" },
       },
-      {
-        path: "admin/dashboard",
-        name: "admin-dashboard",
-        component: () => import("../views/admin/Dashboard.vue"),
-        meta: { pageTitle: "DASHBOARD" },
-      },
-
       // teacher
       {
         path: "teacher/quiz/create",
@@ -134,12 +127,21 @@ router.afterEach((to) => {
   const role = getRole();
   const items = getMenuByRole(role);
   const flatten = (arr: any[]): any[] =>
-    arr.flatMap((it: any) => [it, ...(Array.isArray(it.children) ? flatten(it.children) : [])]);
+    arr.flatMap((it: any) => [
+      it,
+      ...(Array.isArray(it.children) ? flatten(it.children) : []),
+    ]);
   const all = flatten(items);
   const normalize = (p: string) => "/" + String(p || "").replace(/^\/+/, "");
-  const found = all.find((it: any) => typeof it.to === "string" && normalize(to.path) === normalize(it.to));
+  const found = all.find(
+    (it: any) =>
+      typeof it.to === "string" && normalize(to.path) === normalize(it.to)
+  );
   const menuLabel = found?.label as string | undefined;
-  const metaTitle = typeof to.meta?.pageTitle === "string" ? (to.meta.pageTitle as string) : undefined;
+  const metaTitle =
+    typeof to.meta?.pageTitle === "string"
+      ? (to.meta.pageTitle as string)
+      : undefined;
   const title = menuLabel || metaTitle;
   document.title = title ? `${title} - ${appName}` : appName;
 });

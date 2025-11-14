@@ -3,12 +3,12 @@
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Đề thi</h5>
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <button class="btn btn-success" @click="openAdd()">
+        <button class="btn btn-sm btn-success" @click="openAdd()">
           <i class="bi bi-plus-circle me-1"></i>
           <span class="d-none d-sm-inline">Tạo đề thi</span>
         </button>
         <button
-          class="btn btn-outline-primary"
+          class="btn btn-sm btn-outline-primary"
           :disabled="selectedIds.size !== 1"
           @click="openEditBySelection()"
         >
@@ -16,16 +16,12 @@
           <span class="d-none d-sm-inline">Sửa</span>
         </button>
         <button
-          class="btn btn-outline-danger"
+          class="btn btn-sm btn-outline-danger"
           :disabled="selectedIds.size === 0"
           @click="bulkDelete()"
         >
           <i class="bi bi-trash me-1"></i>
           <span class="d-none d-sm-inline">Xóa</span>
-        </button>
-        <button class="btn btn-outline-primary" @click="openBank()">
-          <i class="bi bi-journal-text me-1"></i>
-          <span class="d-none d-sm-inline">Ngân hàng câu hỏi</span>
         </button>
       </div>
     </div>
@@ -35,15 +31,15 @@
           <input
             v-model.trim="search"
             type="search"
-            class="form-control"
+            class="form-control form-control-sm"
             placeholder="Tìm đề thi..."
           />
         </div>
         <div class="col-6 col-md-3">
-          <div class="input-group">
+          <div class="input-group input-group-sm">
             <span class="input-group-text">Môn</span>
             <select
-              class="form-select"
+              class="form-select form-select-sm"
               v-model.number="subjectId"
               @change="reload()"
             >
@@ -116,7 +112,10 @@
                     <i class="bi bi-pencil-square me-1"></i>
                     <span class="d-none d-sm-inline">Sửa</span>
                   </button>
-                  <button class="btn btn-outline-danger" @click="delOne(e)">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    @click="delOne(e)"
+                  >
                     <i class="bi bi-trash me-1"></i>
                     <span class="d-none d-sm-inline">Xóa</span>
                   </button>
@@ -216,7 +215,10 @@
                 <select
                   class="form-select"
                   v-model.number="qb.subjectId"
-                  @change="qb.setPage(1); qb.reload()"
+                  @change="
+                    qb.setPage(1);
+                    qb.reload();
+                  "
                 >
                   <option :value="0">Tất cả</option>
                   <option v-for="s in subjects" :key="s.id" :value="s.id">
@@ -541,7 +543,10 @@
                       <select
                         class="form-select"
                         v-model.number="qb.subjectId"
-                        @change="qb.setPage(1); qb.reload()"
+                        @change="
+                          qb.setPage(1);
+                          qb.reload();
+                        "
                       >
                         <option :value="0">Tất cả</option>
                         <option v-for="s in subjects" :key="s.id" :value="s.id">
@@ -849,7 +854,6 @@ function formatDate(d: string) {
   }
 }
 
-
 async function load() {
   loading.value = true;
   try {
@@ -1102,10 +1106,6 @@ async function delOne(e: ExamRow) {
   }
 }
 
-function openBank() {
-  window.location.hash = "#/teacher/question-bank";
-}
-
 // === Question picker logic ===
 type QuestionLite = { id: number; text: string; explanation: string | null };
 const examQuestions = ref<QuestionLite[]>([]);
@@ -1143,7 +1143,9 @@ async function removeSelectedFromExam() {
   for (const qid of Array.from(selectedExamQuestionIds)) {
     try {
       await api.delete(`/exams/${id}/questions/${qid}`);
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   }
   await loadExamQuestions();
 }
@@ -1152,7 +1154,9 @@ async function removeSelectedFromExam() {
 const qb = useQuestionBankStore();
 const selectedBankIds = reactive(new Set<number>());
 const allBankSelected = computed(
-  () => qb.filteredItems.length > 0 && qb.filteredItems.every((q) => selectedBankIds.has(q.id))
+  () =>
+    qb.filteredItems.length > 0 &&
+    qb.filteredItems.every((q) => selectedBankIds.has(q.id))
 );
 function onToggleBank(id: number, ev: Event) {
   const c = (ev.target as HTMLInputElement).checked;
@@ -1161,7 +1165,9 @@ function onToggleBank(id: number, ev: Event) {
 }
 function toggleSelectAllBank(ev: Event) {
   const c = (ev.target as HTMLInputElement).checked;
-  qb.filteredItems.forEach((q) => (c ? selectedBankIds.add(q.id) : selectedBankIds.delete(q.id)));
+  qb.filteredItems.forEach((q) =>
+    c ? selectedBankIds.add(q.id) : selectedBankIds.delete(q.id)
+  );
 }
 const defaultAddPoints = ref(1);
 async function addSelectedToExam() {
@@ -1179,7 +1185,9 @@ onMounted(async () => {
     subjects.value = Array.isArray(data?.items)
       ? data.items.map((s: any) => ({ id: s.id, name: s.name }))
       : [];
-  } catch {}
+  } catch (e) {
+    console.error(e);
+  }
   load();
   // watch selection to load exam questions when selecting from list
   watch(

@@ -3,12 +3,12 @@
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Ngân hàng câu hỏi</h5>
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <button class="btn btn-success" @click="openAdd()">
+        <button class="btn btn-sm btn-success" @click="openAdd()">
           <i class="bi bi-plus-circle me-1"></i>
           <span class="d-none d-lg-inline">Thêm câu hỏi</span>
         </button>
         <button
-          class="btn btn-outline-primary"
+          class="btn btn-sm btn-outline-primary"
           :disabled="selectedIds.size !== 1"
           @click="openEdit(selectedOneId)"
         >
@@ -16,7 +16,7 @@
           <span class="d-none d-sm-inline">Sửa</span>
         </button>
         <button
-          class="btn btn-outline-danger"
+          class="btn btn-sm btn-outline-danger"
           :disabled="selectedIds.size === 0"
           @click="bulkDelete()"
         >
@@ -31,15 +31,15 @@
           <input
             v-model.trim="search"
             type="search"
-            class="form-control"
+            class="form-control form-control-sm"
             placeholder="Tìm câu hỏi..."
           />
         </div>
         <div class="col-md-3 col-6">
-          <div class="input-group">
+          <div class="input-group input-group-sm">
             <span class="input-group-text">Môn</span>
             <select
-              class="form-select"
+              class="form-select form-select-sm"
               v-model.number="subjectId"
               @change="onSubjectChange"
             >
@@ -51,9 +51,13 @@
           </div>
         </div>
         <div class="col-md-3 col-6">
-          <div class="input-group">
+          <div class="input-group input-group-sm">
             <span class="input-group-text">Sắp xếp</span>
-            <select class="form-select" v-model="sort" @change="onSortChange">
+            <select
+              class="form-select form-select-sm"
+              v-model="sort"
+              @change="onSortChange"
+            >
               <option value="desc">Mới nhất</option>
               <option value="asc">Cũ nhất</option>
             </select>
@@ -81,17 +85,18 @@
         </template>
         <template #row-actions="{ row }">
           <div class="btn-group btn-group-sm">
-            <button
-              class="btn btn-outline-primary"
-              @click="openEdit(row.id)"
-            >
+            <button class="btn btn-outline-primary" @click="openEdit(row.id)">
               <i class="bi bi-pencil-square me-1"></i>
               <span class="d-none d-sm-inline">Sửa</span>
             </button>
             <button
               class="btn btn-outline-danger"
               :disabled="row.locked"
-              :title="row.locked ? 'Không thể xóa: câu hỏi đang thuộc đề thi đã xuất bản đã có lượt thi' : ''"
+              :title="
+                row.locked
+                  ? 'Không thể xóa: câu hỏi đang thuộc đề thi đã xuất bản đã có lượt thi'
+                  : ''
+              "
               @click="delOne(row.id)"
             >
               <i class="bi bi-trash me-1"></i>
@@ -296,9 +301,14 @@
           <button class="btn-close" @click="closeEdit"></button>
         </div>
         <div class="modal-body">
-          <div v-if="editLocked" class="alert alert-warning d-flex align-items-center" role="alert">
+          <div
+            v-if="editLocked"
+            class="alert alert-warning d-flex align-items-center"
+            role="alert"
+          >
             <i class="bi bi-lock-fill me-2"></i>
-            Không thể sửa đáp án vì câu hỏi đang thuộc đề thi đã xuất bản và đã có lượt thi. Bạn vẫn có thể sửa nội dung và giải thích.
+            Không thể sửa đáp án vì câu hỏi đang thuộc đề thi đã xuất bản và đã
+            có lượt thi. Bạn vẫn có thể sửa nội dung và giải thích.
           </div>
           <div class="mb-3">
             <label class="form-label">Nội dung</label>
@@ -342,13 +352,25 @@
                       style="min-width: 220px"
                     />
                     <div class="btn-group btn-group-sm">
-                      <button class="btn btn-outline-secondary" @click="moveEditChoice(idx, -1)" :disabled="idx === 0">
+                      <button
+                        class="btn btn-outline-secondary"
+                        @click="moveEditChoice(idx, -1)"
+                        :disabled="idx === 0"
+                      >
                         ↑
                       </button>
-                      <button class="btn btn-outline-secondary" @click="moveEditChoice(idx, 1)" :disabled="idx === editChoices.length - 1">
+                      <button
+                        class="btn btn-outline-secondary"
+                        @click="moveEditChoice(idx, 1)"
+                        :disabled="idx === editChoices.length - 1"
+                      >
                         ↓
                       </button>
-                      <button class="btn btn-outline-danger" @click="removeEditChoice(idx)" :disabled="editChoices.length <= 2">
+                      <button
+                        class="btn btn-outline-danger"
+                        @click="removeEditChoice(idx)"
+                        :disabled="editChoices.length <= 2"
+                      >
                         <i class="bi bi-x"></i>
                       </button>
                     </div>
@@ -407,13 +429,6 @@ import { getUser } from "../../utils/auth";
 import Pagination from "../../components/common/Pagination.vue";
 import DataTable from "../../components/common/DataTable.vue";
 import { useQuestionBankStore } from "../../stores/questionBank";
-
-type QuestionListItem = {
-  id: number;
-  text: string;
-  explanation: string | null;
-  locked?: boolean;
-};
 type ExamSummary = { id: number; title: string };
 
 const pageSizeOptions = [10, 15, 20, 25, 30, 40, 50];
@@ -613,7 +628,12 @@ const editForm = reactive<{
 }>({ id: 0, text: "", explanation: null });
 const editType = ref<"SC" | "MC" | "TEXT">("SC");
 const editLocked = ref(false);
-type EditChoice = { id?: number; content: string; isCorrect: boolean; order?: number };
+type EditChoice = {
+  id?: number;
+  content: string;
+  isCorrect: boolean;
+  order?: number;
+};
 const editChoices = ref<Array<EditChoice>>([]);
 let originalChoices: Array<EditChoice> = [];
 async function openEdit(id: number) {
@@ -627,7 +647,12 @@ async function openEdit(id: number) {
     editChoices.value = (data.choices || [])
       .slice()
       .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
-      .map((c: any) => ({ id: c.id, content: c.content, isCorrect: !!c.isCorrect, order: c.order }));
+      .map((c: any) => ({
+        id: c.id,
+        content: c.content,
+        isCorrect: !!c.isCorrect,
+        order: c.order,
+      }));
     originalChoices = editChoices.value.map((c) => ({ ...c }));
     showEdit.value = true;
   } catch (e: any) {
@@ -652,7 +677,9 @@ function moveEditChoice(i: number, delta: number) {
 function onToggleEditCorrect(idx: number, e: Event) {
   const checked = (e.target as HTMLInputElement).checked;
   if (editType.value === "SC") {
-    editChoices.value.forEach((c, i) => (c.isCorrect = i === idx ? checked : false));
+    editChoices.value.forEach(
+      (c, i) => (c.isCorrect = i === idx ? checked : false)
+    );
   } else {
     editChoices.value[idx].isCorrect = checked;
   }
@@ -689,7 +716,11 @@ async function submitEdit() {
         .filter((c) => typeof c.id === "number" && !currMap.has(c.id!))
         .map((c) => c.id!) as number[];
       for (const id of toDelete) {
-        try { await api.delete(`/choices/${id}`); } catch {}
+        try {
+          await api.delete(`/choices/${id}`);
+        } catch (e) {
+          console.log(e);
+        }
       }
       // updates
       for (const [id, curr] of currMap) {
@@ -707,7 +738,9 @@ async function submitEdit() {
         }
       }
       // creations
-      const toCreate = current.filter((c) => typeof c.id !== "number" && c.content && c.content.trim());
+      const toCreate = current.filter(
+        (c) => typeof c.id !== "number" && c.content && c.content.trim()
+      );
       for (const c of toCreate) {
         await api.post(`/choices`, {
           questionId: editForm.id,

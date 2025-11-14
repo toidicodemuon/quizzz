@@ -12,15 +12,6 @@
         >
           <i class="bi bi-plus-lg me-1"></i> Thêm người dùng
         </button>
-        <button
-          class="btn btn-outline-secondary btn-sm"
-          type="button"
-          :disabled="loading"
-          @click="fetchUsers()"
-        >
-          <i class="bi bi-arrow-repeat me-1" :class="{ spin: loading }"></i> Tải
-          lại
-        </button>
       </div>
     </div>
     <div class="card-body">
@@ -29,7 +20,7 @@
         <div class="col-12 col-md-4">
           <label class="form-label small text-muted">Tìm kiếm</label>
           <input
-            type="text"
+            type="search"
             class="form-control form-control-sm"
             v-model.trim="filters.search"
             placeholder="Tìm theo email hoặc họ tên..."
@@ -50,21 +41,22 @@
         </div>
         <div class="col-12 col-md-3">
           <label class="form-label d-block small text-muted">&nbsp;</label>
-          <button
+          <!-- <button
             class="btn btn-sm btn-primary me-2"
             type="button"
             :disabled="loading"
             @click="onApplyFilters()"
           >
             <i class="bi bi-filter me-1"></i> Áp dụng
-          </button>
+          </button> -->
           <button
             class="btn btn-sm btn-outline-secondary"
             type="button"
             :disabled="loading"
             @click="onResetFilters()"
           >
-            Xóa bộ lọc
+            <i class="bi bi-arrow-repeat"></i>
+            Tải lại
           </button>
         </div>
       </div>
