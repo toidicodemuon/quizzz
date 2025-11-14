@@ -4546,6 +4546,10 @@
 														},
 														"type": "array"
 													},
+													"explanation": {
+														"type": "string",
+														"nullable": true
+													},
 													"points": {
 														"type": "number",
 														"format": "double",

@@ -230,6 +230,7 @@ export class AttemptController extends Controller {
       isCorrect: boolean | null;
       earned: number | null;
       points: number | null;
+      explanation?: string | null;
       choices: Array<{ id: number; content: string; isCorrect: boolean; selected: boolean }>;
     }>;
   } | null> {
@@ -275,13 +276,35 @@ export class AttemptController extends Controller {
         questionId: true,
         isCorrect: true,
         earned: true,
-        question: { select: { text: true, choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: 'asc' } } } },
+        question: { select: { text: true, explanation: true, choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: 'asc' } } } },
         choices: { select: { choiceId: true } },
       },
       orderBy: { id: 'asc' },
     });
     // Load full exam structure to include unanswered questions
-    const examQuestions = await prisma.examQuestion.findMany({ where: { examId: sub.examId }, select: { questionId: true, points: true, question: { select: { text: true, choices: { select: { id: true, content: true, isCorrect: true, order: true }, orderBy: { order: 'asc' } } } } }, orderBy: { order: 'asc' } });
+    const examQuestions = await prisma.examQuestion.findMany({
+      where: { examId: sub.examId },
+      select: {
+        questionId: true,
+        points: true,
+        question: {
+          select: {
+            text: true,
+            explanation: true,
+            choices: {
+              select: {
+                id: true,
+                content: true,
+                isCorrect: true,
+                order: true,
+              },
+              orderBy: { order: "asc" },
+            },
+          },
+        },
+      },
+      orderBy: { order: "asc" },
+    });
     const pts = examQuestions.map((eq) => ({ questionId: eq.questionId, points: eq.points }));
     const pointMap = new Map<number, number>();
     for (const p of pts) pointMap.set(p.questionId, Number(p.points));
@@ -308,15 +331,23 @@ export class AttemptController extends Controller {
       answers: examQuestions.map((eq) => {
         const a = aaByQ.get(eq.questionId);
         const selectedIds = new Set((a?.choices || []).map((c) => c.choiceId));
-        const allChoices = ((eq as any).question?.choices || []).map((ch: any) => ({ id: ch.id, content: ch.content, isCorrect: !!ch.isCorrect, selected: selectedIds.has(ch.id) }));
+        const allChoices = ((eq as any).question?.choices || []).map(
+          (ch: any) => ({
+            id: ch.id,
+            content: ch.content,
+            isCorrect: !!ch.isCorrect,
+            selected: selectedIds.has(ch.id),
+          })
+        );
         const isCorrect = a?.isCorrect ?? false;
         const earned = a?.earned === null || typeof a?.earned === 'undefined' ? 0 : Number(a?.earned as any);
         return {
           questionId: eq.questionId,
-          questionText: (eq as any).question?.text ?? '',
+          questionText: (eq as any).question?.text ?? "",
           isCorrect,
           earned,
           points: Number(eq.points as any) ?? null,
+          explanation: (eq as any).question?.explanation ?? null,
           choices: allChoices,
         };
       }),

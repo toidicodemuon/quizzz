@@ -1,24 +1,41 @@
-<template>
+﻿<template>
   <div class="card rounded-0">
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Quản lý bài thi sinh viên</h5>
     </div>
     <div class="card-body">
-      <input
-        class="form-control form-control-sm w-300px"
-        list="examsData"
-        v-model="examInput"
-        placeholder="Gõ mã đề hoặc tiêu đề để tìm..."
-        @change="onExamInputChange"
-        type="search"
-      />
-      <datalist id="examsData" class="w-300px">
-        <option
-          v-for="e in publishedExams"
-          :key="e.id"
-          :value="(e.code ? e.code + ' - ' : '') + e.title + ' (#' + e.id + ')'"
+      <div class="position-relative" style="max-width: 400px">
+        <input
+          class="form-control form-control-sm"
+          v-model="examInput"
+          placeholder="Tim theo ma de hoac tieu de..."
+          type="search"
+          @focus="showExamDropdown = true"
+          @input="showExamDropdown = true"
+          @keydown.enter.prevent="onExamInputChange"
+          @blur="onExamInputBlur"
         />
-      </datalist>
+        <div
+          v-if="showExamDropdown && filteredExams.length > 0"
+          class="dropdown-menu show w-100"
+          style="max-height: 100vh; overflow-y: auto"
+        >
+          <button
+            v-for="e in filteredExams"
+            :key="e.id"
+            type="button"
+            class="dropdown-item small"
+            @mousedown.prevent="onExamPick(e)"
+          >
+            <span class="fw-semibold">
+              {{ e.code || "-" }}
+            </span>
+            -
+            <span>{{ e.title }}</span>
+            <span class="text-muted">(#{{ e.id }})</span>
+          </button>
+        </div>
+      </div>
       <div class="table-responsive">
         <table class="table table-sm align-middle">
           <thead>
@@ -155,72 +172,7 @@
             </span>
           </div>
           <hr />
-          <div
-            v-for="(ans, idx) in detail?.answers || []"
-            :key="ans.questionId"
-            class="mb-3"
-          >
-            <div class="d-flex align-items-center gap-2">
-              <span
-                class="badge"
-                :class="ans.isCorrect ? 'bg-success' : 'bg-danger'"
-                >{{ ans.isCorrect ? "Đúng" : "Sai" }}</span
-              >
-              <strong class="me-2">Câu {{ idx + 1 }}:</strong>
-              <span>{{ ans.questionText }}</span>
-            </div>
-            <ul class="list-group list-group-flush ms-4 mt-2">
-              <li
-                v-for="ch in ans.choices"
-                :key="ch.id"
-                class="list-group-item py-1 d-flex align-items-center gap-2"
-                :class="
-                  ch.selected
-                    ? ch.isCorrect
-                      ? 'bg-success-subtle'
-                      : 'bg-danger-subtle'
-                    : ''
-                "
-              >
-                <i
-                  :class="[
-                    'bi',
-                    ch.selected
-                      ? ch.isCorrect
-                        ? 'bi-check-circle-fill text-success'
-                        : 'bi-x-circle-fill text-danger'
-                      : ch.isCorrect
-                      ? 'bi-check-circle text-success'
-                      : 'bi-circle text-muted',
-                  ]"
-                />
-                <span
-                  :class="
-                    ch.selected
-                      ? ch.isCorrect
-                        ? 'text-success'
-                        : 'text-danger'
-                      : ''
-                  "
-                  >{{ ch.content }}</span
-                >
-              </li>
-              <li
-                v-if="!(ans.choices || []).some((c) => c.selected)"
-                class="list-group-item py-1 d-flex align-items-center gap-2 bg-danger-subtle text-danger"
-              >
-                <i class="bi bi-x-circle-fill"></i>
-                <span>Không chọn</span>
-              </li>
-            </ul>
-            <div class="small ms-4 mt-1">
-              Điểm:
-              <strong :class="ans.isCorrect ? 'text-success' : 'text-danger'">{{
-                ans.earned ?? 0
-              }}</strong>
-              / {{ ans.points ?? 1 }}
-            </div>
-          </div>
+          <AttemptAnswersList :answers="detail?.answers || []" />
         </div>
         <div class="modal-footer">
           <button class="btn btn-light" @click="closeDetail">Đóng</button>
@@ -234,6 +186,9 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from "vue";
 import Pagination from "../../components/common/Pagination.vue";
+import AttemptAnswersList, {
+  type AttemptAnswerView,
+} from "../../components/attempts/AttemptAnswersList.vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 
@@ -278,19 +233,7 @@ type AttemptDetail = {
   startedAt: string;
   submittedAt: string | null;
   timeTakenSec: number | null;
-  answers: Array<{
-    questionId: number;
-    questionText: string;
-    isCorrect: boolean | null;
-    earned: number | null;
-    points: number | null;
-    choices: Array<{
-      id: number;
-      content: string;
-      isCorrect: boolean;
-      selected: boolean;
-    }>;
-  }>;
+  answers: AttemptAnswerView[];
 };
 
 const exams = ref<ExamSummary[]>([]);
@@ -298,6 +241,19 @@ const publishedExams = computed(() =>
   exams.value.filter((e) => String(e.status).toUpperCase() === "PUBLISHED")
 );
 const examInput = ref("");
+const showExamDropdown = ref(false);
+const filteredExams = computed(() => {
+  const v = (examInput.value || "").trim().toLowerCase();
+  if (!v) return publishedExams.value;
+  return publishedExams.value.filter((e) => {
+    const code = (e.code || "").toLowerCase();
+    const title = e.title.toLowerCase();
+    const idStr = `#${e.id}`;
+    return (
+      code.includes(v) || title.includes(v) || idStr.toLowerCase().includes(v)
+    );
+  });
+});
 
 const examId = ref<number>(0);
 const items = ref<AttemptRow[]>([]);
@@ -387,8 +343,29 @@ function onExamInputChange() {
     found = publishedExams.value.find((e) => e.title.toLowerCase().includes(v));
   }
   examId.value = found ? found.id : 0;
+  if (found) {
+    examInput.value = `${found.code ? found.code + " - " : ""}${
+      found.title
+    } (#${found.id})`;
+  }
+  showExamDropdown.value = false;
   page.value = 1;
   reload();
+}
+
+function onExamPick(e: ExamSummary) {
+  examId.value = e.id;
+  examInput.value = `${e.code ? e.code + " - " : ""}${e.title} (#${e.id})`;
+  showExamDropdown.value = false;
+  page.value = 1;
+  reload();
+}
+
+function onExamInputBlur() {
+  // Delay d? cho ph�p click v�o dropdown (mousedown)
+  setTimeout(() => {
+    showExamDropdown.value = false;
+  }, 150);
 }
 
 async function reload() {
