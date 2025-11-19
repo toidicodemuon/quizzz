@@ -452,7 +452,7 @@
                   </div>
                 </div>
               </div>
-              <div class="col-12 col-md-6">
+              <div class="col-12 col-md-6" v-if="false">
                 <label class="form-label">Thời gian xem lại (phút)</label>
                 <input
                   type="number"
@@ -706,15 +706,13 @@
                   </div>
                   <div>
                     Trạng thái:
-                    <span class="badge bg-secondary">{{
-                      viewExam.status
-                    }}</span>
+                    <span class="badge bg-warning">{{ viewExam.status }}</span>
                   </div>
                 </div>
               </div>
             </div>
             <div class="row g-2 mb-3 small text-muted">
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" v-if="false">
                 Loại đề: {{ viewExam.examType || "PRACTICE" }}
               </div>
               <div class="col-6 col-md-3">
@@ -723,23 +721,23 @@
               <div class="col-6 col-md-3">
                 Điểm đậu: {{ viewExam.passMarkPercent ?? "—" }}%
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" v-if="false">
                 Chấm điểm: {{ viewExam.scoringMode || "STANDARD" }}
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" v-if="false">
                 Feedback: {{ viewExam.feedbackMode || "DETAILED" }}
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" v-if="false">
                 Hiện điểm ngay:
                 {{ viewExam.showScoreImmediately ? "Có" : "Không" }}
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" v-if="false">
                 Hiện đáp án: {{ viewExam.showCorrectAnswers ? "Có" : "Không" }}
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" v-if="false">
                 Hiện giải thích: {{ viewExam.showExplanation ? "Có" : "Không" }}
               </div>
-              <div class="col-6 col-md-3">
+              <div class="col-6 col-md-3" v-if="false">
                 Xem lại (phút): {{ viewExam.reviewWindowMin ?? "—" }}
               </div>
             </div>
@@ -940,8 +938,8 @@ const form = reactive<{
   scoringMode: "STANDARD",
   feedbackMode: "DETAILED",
   showScoreImmediately: true,
-  showCorrectAnswers: false,
-  showExplanation: false,
+  showCorrectAnswers: true,
+  showExplanation: true,
   reviewWindowMin: null,
 });
 function openAdd() {
@@ -958,8 +956,8 @@ function openAdd() {
   form.scoringMode = "STANDARD";
   form.feedbackMode = "DETAILED";
   form.showScoreImmediately = true;
-  form.showCorrectAnswers = false;
-  form.showExplanation = false;
+  form.showCorrectAnswers = true;
+  form.showExplanation = true;
   form.reviewWindowMin = null;
   showModal.value = true;
 }
@@ -1235,6 +1233,13 @@ function closeView() {
 </script>
 
 <style scoped>
+/* Hide advanced exam options in the create/edit modal */
+.modal-body form .row.g-3 > div:nth-of-type(4),
+.modal-body form .row.g-3 > div:nth-of-type(7),
+.modal-body form .row.g-3 > div:nth-of-type(8),
+.modal-body form .row.g-3 > div:nth-of-type(10) {
+  display: none;
+}
 @media (max-width: 575.98px) {
   .table td,
   .table th {
