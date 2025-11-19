@@ -94,8 +94,19 @@
                 <code>{{ e.code || "—" }}</code>
               </td>
               <td>
-                <span class="badge bg-secondary">{{ e.status }}</span>
+                <span
+                  class="badge"
+                  :class="
+                    e.status === 'PUBLISHED'
+                      ? 'bg-success'
+                      : e.status === 'ARCHIVED'
+                      ? 'bg-danger'
+                      : 'bg-warning'
+                  "
+                  >{{ e.status }}</span
+                >
               </td>
+
               <td class="d-none d-lg-table-cell">
                 {{ formatDate(e.createdAt) }}
               </td>
@@ -706,7 +717,18 @@
                   </div>
                   <div>
                     Trạng thái:
-                    <span class="badge bg-warning">{{ viewExam.status }}</span>
+                    <span
+                      class="badge"
+                      :class="
+                        viewExam.status === 'PUBLISHED'
+                          ? 'bg-success'
+                          : viewExam.status === 'ARCHIVED'
+                          ? 'bg-danger'
+                          : 'bg-warning'
+                      "
+                    >
+                      {{ viewExam.status }}
+                    </span>
                   </div>
                 </div>
               </div>
