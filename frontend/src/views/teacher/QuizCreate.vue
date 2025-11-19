@@ -119,6 +119,13 @@
                     <i class="bi bi-eye me-1"></i>
                     <span class="d-none d-sm-inline">Xem</span>
                   </button>
+                  <button
+                    class="btn btn-outline-secondary"
+                    @click="openPickerModal(e)"
+                  >
+                    <i class="bi bi-list-check me-1"></i>
+                    <span class="d-none d-sm-inline">Câu hỏi</span>
+                  </button>
                   <button class="btn btn-outline-primary" @click="openEdit(e)">
                     <i class="bi bi-pencil-square me-1"></i>
                     <span class="d-none d-sm-inline">Sửa</span>
@@ -148,7 +155,7 @@
     </div>
   </div>
 
-  <!-- Question picker (reuse bank) for selected exam -->
+  <!-- Question picker (reuse bank) for selected exam - inline card -->
   <div class="card mt-3" v-if="selectedIds.size === 1">
     <div class="card-header d-flex align-items-center justify-content-between">
       <h6 class="mb-0">Câu hỏi cho đề thi #{{ selectedOneId }}</h6>
@@ -178,6 +185,31 @@
     :exam-id="viewExamId"
     @close="closeView"
   />
+
+  <!-- Question Picker Modal -->
+  <div
+    class="modal fade show"
+    v-if="showPickerModal"
+    style="display: block"
+    aria-modal="true"
+    role="dialog"
+  >
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Chọn câu hỏi cho đề #{{ pickerExamId }}</h5>
+          <button type="button" class="btn-close" @click="closePickerModal" />
+        </div>
+        <div class="modal-body">
+          <ExamQuestionPicker :exam-id="pickerExamId" :subjects="subjects" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" @click="closePickerModal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" v-if="showPickerModal"></div>
 </template>
 
 <script setup lang="ts">
@@ -320,6 +352,8 @@ function handleExamSaved() {
 function handleExamPick(examId: number) {
   selectedIds.clear();
   selectedIds.add(examId);
+  pickerExamId.value = examId;
+  showPickerModal.value = true;
 }
 
 async function delOne(e: ExamRow) {
@@ -332,7 +366,7 @@ async function delOne(e: ExamRow) {
   }
 }
 
-// === View modal ===
+// View modal
 const showViewModal = ref(false);
 const viewExamId = ref<number | null>(null);
 
@@ -342,6 +376,18 @@ function openView(e: ExamRow) {
 }
 function closeView() {
   showViewModal.value = false;
+}
+
+// Picker modal
+const showPickerModal = ref(false);
+const pickerExamId = ref<number | null>(null);
+
+function openPickerModal(e: ExamRow) {
+  pickerExamId.value = e.id;
+  showPickerModal.value = true;
+}
+function closePickerModal() {
+  showPickerModal.value = false;
 }
 
 onMounted(async () => {

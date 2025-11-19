@@ -3,9 +3,9 @@
     <div v-for="(ans, idx) in answers" :key="ans.questionId" class="mb-3">
       <div class="d-flex align-items-center gap-2">
         <span class="badge" :class="ans.isCorrect ? 'bg-success' : 'bg-danger'">
-          {{ ans.isCorrect ? "Dung" : "Sai" }}
+          {{ ans.isCorrect ? "Đúng" : "Sai" }}
         </span>
-        <strong class="me-2">Cau {{ idx + 1 }}:</strong>
+        <strong class="me-2">Câu {{ idx + 1 }}:</strong>
         <span>{{ ans.questionText }}</span>
       </div>
       <ul class="list-group list-group-flush ms-4 mt-2">
@@ -92,4 +92,3 @@ const { answers, showExplanation } = defineProps<{
 </script>
 
 <style scoped></style>
-

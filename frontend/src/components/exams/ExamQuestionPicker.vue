@@ -323,7 +323,7 @@ const pageSizeOptions = [10, 15, 20, 25, 30, 40, 50];
 
 <style scoped>
 .picker-scroll {
-  max-height: 360px;
+  max-height: 600px;
   overflow-y: auto;
 }
 </style>

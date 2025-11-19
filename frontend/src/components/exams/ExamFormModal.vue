@@ -378,4 +378,3 @@ async function submitAndPick() {
   display: none;
 }
 </style>
-

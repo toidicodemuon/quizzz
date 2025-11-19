@@ -15,9 +15,7 @@
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body">
-          <div v-if="loading" class="text-center text-muted">
-            Đang tải...
-          </div>
+          <div v-if="loading" class="text-center text-muted">Đang tải...</div>
           <div v-else-if="!exam" class="text-center text-muted">
             Không tìm thấy đề thi
           </div>
@@ -219,4 +217,3 @@ function close() {
   emit("close");
 }
 </script>
-
