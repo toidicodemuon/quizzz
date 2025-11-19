@@ -57,10 +57,10 @@
 
     <div class="col-12 col-lg-6">
       <div class="row g-2 align-items-center mb-2">
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-lg-3">
           <strong>Ngân hàng câu hỏi</strong>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-12 col-lg-4">
           <div class="input-group input-group-sm">
             <span class="input-group-text">Môn</span>
             <select
@@ -78,12 +78,22 @@
             </select>
           </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="ccol-12 col-lg-3">
           <input
             v-model.trim="qb.search"
             class="form-control form-control-sm"
             placeholder="Tìm câu hỏi..."
           />
+        </div>
+        <div class="col-12 col-lg-2 justify-content-end d-flex">
+          <button
+            class="btn btn-sm btn-primary w-100"
+            :disabled="selectedBankIds.size === 0 || loading"
+            @click="addSelectedToExam"
+          >
+            <i class="bi bi-plus-lg me-1"></i>
+            <span class="">Thêm vào đề</span>
+          </button>
         </div>
       </div>
       <div class="table-responsive border rounded picker-scroll">
@@ -164,13 +174,6 @@
             v-model.number="defaultAddPoints"
           />
         </div>
-        <button
-          class="btn btn-sm btn-primary"
-          :disabled="selectedBankIds.size === 0 || loading"
-          @click="addSelectedToExam"
-        >
-          <i class="bi bi-plus-lg me-1"></i> Thêm vào đề
-        </button>
       </div>
     </div>
   </div>
