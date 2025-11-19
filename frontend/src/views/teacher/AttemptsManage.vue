@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="card rounded-0">
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Quản lý bài thi sinh viên</h5>
@@ -8,7 +8,7 @@
         <input
           class="form-control form-control-sm"
           v-model="examInput"
-          placeholder="Tim theo ma de hoac tieu de..."
+          placeholder="Tìm theo mã đề hoặc tiêu đề..."
           type="search"
           @focus="showExamDropdown = true"
           @input="showExamDropdown = true"
@@ -123,72 +123,20 @@
     </div>
   </div>
 
-  <!-- Detail Modal -->
-  <div
-    class="modal fade show"
-    tabindex="-1"
-    aria-modal="true"
-    role="dialog"
-    v-if="showDetail"
-    style="display: block"
-  >
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            Bài thi #{{ detail?.id }} -
-            {{ detail?.studentName ?? "#" + detail?.studentId }}
-            <span v-if="detail?.studentCode" class="text-muted small"
-              >({{ detail?.studentCode }})</span
-            >
-          </h5>
-          <button class="btn-close" @click="closeDetail"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-2 d-flex flex-wrap gap-3 align-items-center">
-            <!-- <span
-              >Điểm: <strong>{{ detail?.score ?? "-" }}</strong></span
-            > -->
-            <span><b>Bắt đầu:</b> {{ fmtDate(detail?.startedAt) }}</span>
-            <span
-              ><b>Thời gian:</b>
-              {{ fmtDurationText(detail?.timeTakenSec) }}</span
-            >
-            <span
-              ><b>Số câu đúng:</b> <strong>{{ detailCorrect }}</strong
-              >/{{ detailTotal }}</span
-            >
-            <span
-              ><strong>Kết quả:</strong>
-              <span v-if="detailPass === true" class="badge bg-success ms-1"
-                >Đậu</span
-              >
-              <span
-                v-else-if="detailPass === false"
-                class="badge bg-danger ms-1"
-                >Rớt</span
-              >
-              <span v-else class="badge bg-secondary ms-1">-</span>
-            </span>
-          </div>
-          <hr />
-          <AttemptAnswersList :answers="detail?.answers || []" />
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-light" @click="closeDetail">Đóng</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal-backdrop fade show" v-if="showDetail"></div>
+  <!-- Detail Modal (reused) -->
+  <AttemptDetailModal
+    :show="showDetail"
+    mode="teacher"
+    :detail="detail"
+    @close="closeDetail"
+  />
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from "vue";
 import Pagination from "../../components/common/Pagination.vue";
-import AttemptAnswersList, {
-  type AttemptAnswerView,
-} from "../../components/attempts/AttemptAnswersList.vue";
+import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
+import type { AttemptAnswerView } from "../../components/attempts/AttemptAnswersList.vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 
@@ -326,12 +274,10 @@ async function ensureExams() {
 
 function onExamInputChange() {
   const v = (examInput.value || "").trim().toLowerCase();
-  // Try match by code exact
   let found = publishedExams.value.find(
     (e) => (e.code || "").toLowerCase() === v
   );
   if (!found) {
-    // Match by #ID pattern or includes
     const idMatch = v.match(/#?(\d+)/);
     if (idMatch) {
       const id = Number(idMatch[1]);
@@ -339,8 +285,9 @@ function onExamInputChange() {
     }
   }
   if (!found) {
-    // Match by title contains
-    found = publishedExams.value.find((e) => e.title.toLowerCase().includes(v));
+    found = publishedExams.value.find((e) =>
+      e.title.toLowerCase().includes(v)
+    );
   }
   examId.value = found ? found.id : 0;
   if (found) {
@@ -362,7 +309,6 @@ function onExamPick(e: ExamSummary) {
 }
 
 function onExamInputBlur() {
-  // Delay d? cho ph�p click v�o dropdown (mousedown)
   setTimeout(() => {
     showExamDropdown.value = false;
   }, 150);
@@ -413,3 +359,4 @@ onMounted(async () => {
 </script>
 
 <style scoped></style>
+

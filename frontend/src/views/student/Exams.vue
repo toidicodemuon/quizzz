@@ -74,65 +74,21 @@
     </div>
   </div>
 
-  <!-- Detail modal -->
-  <div
-    class="modal fade show"
-    tabindex="-1"
-    aria-modal="true"
-    role="dialog"
-    v-if="showDetail"
-    style="display: block"
-  >
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            Bài thi #{{ detail?.id }} - {{ detail?.examTitle ?? "-" }}
-          </h5>
-          <button type="button" class="btn-close" @click="closeDetail"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-2 d-flex flex-wrap gap-3 align-items-center">
-            <span><b>Bắt đầu:</b> {{ fmtDate(detail?.startedAt) }}</span>
-            <span
-              ><b>Thời gian:</b>
-              {{ fmtDurationText(detail?.timeTakenSec) }}</span
-            >
-            <span v-if="canShowScore">
-              <b>Điểm:</b>
-              <strong>{{ detail?.score ?? "-" }}</strong>
-            </span>
-          </div>
-          <div v-if="!canReviewNow" class="alert alert-warning">
-            Đã hết thời gian xem lại bài thi này.
-          </div>
-          <div v-else-if="!canShowDetail" class="alert alert-info">
-            Bài thi này không cho xem đáp án chi tiết.
-          </div>
-          <div v-else>
-            <AttemptAnswersList
-              :answers="detail?.answers || []"
-              :show-explanation="!!examConfig?.showExplanation"
-            />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-light" @click="closeDetail">
-            Đóng
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal-backdrop fade show" v-if="showDetail"></div>
+  <!-- Detail modal (reused component) -->
+  <AttemptDetailModal
+    :show="showDetail"
+    mode="student"
+    :detail="detail"
+    :exam-config="examConfig"
+    @close="closeDetail"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import api, { type Paginated } from "../../api";
-import AttemptAnswersList, {
-  type AttemptAnswerView,
-} from "../../components/attempts/AttemptAnswersList.vue";
+import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
+import type { AttemptAnswerView } from "../../components/attempts/AttemptAnswersList.vue";
 
 type AttemptRow = {
   id: number;
@@ -206,19 +162,6 @@ function fmtDuration(sec: any) {
   return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
 }
 
-function fmtDurationText(sec: any) {
-  const s = Number(sec || 0);
-  if (!s || s <= 0) return "0 giây";
-  const hh = Math.floor(s / 3600);
-  const mm = Math.floor((s % 3600) / 60);
-  const ss = Math.floor(s % 60);
-  const parts: string[] = [];
-  if (hh > 0) parts.push(`${hh} giờ`);
-  if (mm > 0) parts.push(`${mm} phút`);
-  if (ss > 0) parts.push(`${ss} giây`);
-  return parts.join(" ");
-}
-
 const filteredItems = computed(() => {
   const q = (search.value || "").trim().toLowerCase();
   if (!q) return items.value;
@@ -228,33 +171,6 @@ const filteredItems = computed(() => {
     const idStr = `#${a.id}`.toLowerCase();
     return code.includes(q) || title.includes(q) || idStr.includes(q);
   });
-});
-
-const canReviewNow = computed(() => {
-  if (!detail.value) return false;
-  if (!examConfig.value) return true;
-  const limitMin = examConfig.value.reviewWindowMin;
-  if (!limitMin || !detail.value.submittedAt) return true;
-  const submittedAt = new Date(detail.value.submittedAt).getTime();
-  const until = submittedAt + limitMin * 60 * 1000;
-  return Date.now() <= until;
-});
-
-const canShowScore = computed(() => {
-  if (!detail.value) return false;
-  if (!examConfig.value) return true;
-  if (examConfig.value.feedbackMode === "NONE") return false;
-  if (examConfig.value.showScoreImmediately === false) return false;
-  return canReviewNow.value;
-});
-
-const canShowDetail = computed(() => {
-  if (!detail.value) return false;
-  if (!examConfig.value) return false;
-  if (!canReviewNow.value) return false;
-  if (examConfig.value.feedbackMode !== "DETAILED") return false;
-  if (!examConfig.value.showCorrectAnswers) return false;
-  return true;
 });
 
 async function reload() {
@@ -289,3 +205,4 @@ onMounted(() => {
   reload();
 });
 </script>
+
