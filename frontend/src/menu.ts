@@ -15,9 +15,9 @@ export const MENU: Record<string, Array<AppMenuItem>> = {
       newTab: true,
     },
     {
-      label: "Quản lý đề thi",
-      to: "/teacher/quiz/create",
-      icon: "bi-journal-text",
+      label: "Quản lý bài thi",
+      to: "/teacher/attempts",
+      icon: "bi-clipboard-check",
       newTab: true,
     },
     {
@@ -27,9 +27,9 @@ export const MENU: Record<string, Array<AppMenuItem>> = {
       newTab: true,
     },
     {
-      label: "Quản lý bài thi",
-      to: "/teacher/attempts",
-      icon: "bi-clipboard-check",
+      label: "Quản lý đề thi",
+      to: "/teacher/quiz/create",
+      icon: "bi-journal-text",
       newTab: true,
     },
     {
@@ -45,7 +45,7 @@ export const MENU: Record<string, Array<AppMenuItem>> = {
       newTab: true,
     },
     {
-      label: "Quản lý chủ đề",
+      label: "Quản lý môn học",
       to: "/teacher/subjects",
       icon: "bi-tags",
       newTab: true,

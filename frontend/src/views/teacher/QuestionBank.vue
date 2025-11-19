@@ -182,14 +182,14 @@
             </div>
 
             <div class="row g-3 mt-1">
-              <div class="col-12 col-md-6">
+              <div class="col-12 col-md-6" v-if="false">
                 <label class="form-label">Loại câu hỏi</label>
                 <select class="form-select" v-model="addForm.type">
                   <option value="SC">1 đáp án đúng</option>
                   <option value="MC">Nhiều đáp án đúng</option>
                 </select>
               </div>
-              <div class="col-12 col-md-6">
+              <div class="col-12 col-md-12">
                 <label class="form-label">Điểm</label>
                 <input
                   v-model.number="addForm.points"
