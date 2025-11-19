@@ -8,6 +8,14 @@
           <span class="d-none d-lg-inline">Thêm câu hỏi</span>
         </button>
         <button
+          class="btn btn-sm btn-outline-secondary"
+          :disabled="selectedIds.size !== 1"
+          @click="openView(selectedOneId)"
+        >
+          <i class="bi bi-eye me-1"></i>
+          <span class="d-none d-sm-inline">Xem</span>
+        </button>
+        <button
           class="btn btn-sm btn-outline-primary"
           :disabled="selectedIds.size !== 1"
           @click="openEdit(selectedOneId)"
@@ -85,6 +93,10 @@
         </template>
         <template #row-actions="{ row }">
           <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary" @click="openView(row.id)">
+              <i class="bi bi-eye me-1"></i>
+              <span class="d-none d-sm-inline">Xem</span>
+            </button>
             <button class="btn btn-outline-primary" @click="openEdit(row.id)">
               <i class="bi bi-pencil-square me-1"></i>
               <span class="d-none d-sm-inline">Sửa</span>
@@ -419,6 +431,65 @@
     </div>
   </div>
   <div class="modal-backdrop fade show" v-if="showEdit"></div>
+
+  <!-- View Question Modal -->
+  <div
+    class="modal fade show"
+    v-if="showView"
+    style="display: block"
+    aria-modal="true"
+    role="dialog"
+  >
+    <div
+      class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down"
+    >
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            Xem Câu Hỏi
+            <span v-if="viewQuestion">#{{ viewQuestion.id }}</span>
+          </h5>
+          <button type="button" class="btn-close" @click="closeView"></button>
+        </div>
+        <div class="modal-body">
+          <div v-if="!viewQuestion" class="text-center text-muted">
+            Đang tải...
+          </div>
+          <div v-else>
+            <div class="mb-3">
+              <div class="fw-semibold mb-1">Nội dung</div>
+              <div>{{ viewQuestion.text }}</div>
+            </div>
+            <div class="mb-3" v-if="viewQuestion.explanation">
+              <div class="fw-semibold mb-1">Giải thích</div>
+              <div>{{ viewQuestion.explanation }}</div>
+            </div>
+            <div class="mb-3" v-if="viewQuestion?.choices?.length">
+              <div class="fw-semibold mb-2">Đáp án</div>
+              <ul class="list-group">
+                <li
+                  v-for="c in viewQuestion.choices"
+                  :key="c.id"
+                  class="list-group-item d-flex align-items-center"
+                >
+                  <i
+                    v-if="c.isCorrect"
+                    class="bi bi-check-circle-fill text-success me-2"
+                  ></i>
+                  <i v-else class="bi bi-circle me-2 text-muted"></i>
+                  <span>{{ c.content }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" @click="closeView">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" v-if="showView"></div>
 </template>
 
 <script setup lang="ts">
@@ -620,6 +691,30 @@ async function submitAdd() {
 }
 
 // Edit modal (sửa nội dung/giải thích và đáp án khi chưa bị khóa)
+const showView = ref(false);
+const viewQuestion = ref<null | {
+  id: number;
+  text: string;
+  explanation: string | null;
+  type?: string;
+  locked?: boolean;
+  choices?: Array<{ id: number; content: string; isCorrect: boolean }>;
+}>(null);
+async function openView(id: number) {
+  if (!id) return;
+  showView.value = true;
+  viewQuestion.value = null;
+  try {
+    const { data } = await api.get(`/questions/${id}`);
+    viewQuestion.value = data;
+  } catch (e: any) {
+    alert(e?.message || "Không thể xem câu hỏi");
+    showView.value = false;
+  }
+}
+function closeView() {
+  showView.value = false;
+}
 const showEdit = ref(false);
 const editForm = reactive<{
   id: number;
