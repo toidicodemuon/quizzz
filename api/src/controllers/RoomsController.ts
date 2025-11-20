@@ -1,5 +1,5 @@
 import { prisma } from "../utils/prisma";
-import { Body, Controller, Get, Path, Post, Query, Request, Response, Route, Security, Tags } from "tsoa";
+import { Body, Controller, Delete, Get, Path, Post, Query, Request, Response, Route, Security, Tags } from "tsoa";
 import { Request as ExRequest } from "express";
 
 export type RoomSummary = {
@@ -145,5 +145,103 @@ export class RoomsController extends Controller {
     });
     return created;
   }
-}
 
+  @Post("{id}/close")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Response<null>(404, "Room not found")
+  @Security("bearerAuth", ["TEACHER", "ADMIN"])
+  public async closeRoom(
+    @Request() req: ExRequest,
+    @Path() id: number
+  ): Promise<RoomSummary> {
+    const user = (req as any).user as { id: number; role: string };
+    const role = user.role?.toUpperCase();
+
+    const existing = await prisma.room.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        examId: true,
+        code: true,
+        openAt: true,
+        closeAt: true,
+        durationSec: true,
+        shuffleQuestions: true,
+        shuffleChoices: true,
+        maxAttempts: true,
+        createdById: true,
+        createdAt: true,
+        exam: { select: { authorId: true } },
+      },
+    });
+
+    if (!existing) {
+      const err: any = new Error("Room not found");
+      err.status = 404;
+      throw err;
+    }
+
+    if (role === "TEACHER" && (existing as any).exam?.authorId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+
+    const updated = await prisma.room.update({
+      where: { id },
+      data: { closeAt: new Date() },
+      select: {
+        id: true,
+        examId: true,
+        code: true,
+        openAt: true,
+        closeAt: true,
+        durationSec: true,
+        shuffleQuestions: true,
+        shuffleChoices: true,
+        maxAttempts: true,
+        createdById: true,
+        createdAt: true,
+      },
+    });
+
+    return updated as RoomSummary;
+  }
+
+  @Delete("{id}")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Response<null>(404, "Room not found")
+  @Security("bearerAuth", ["TEACHER", "ADMIN"])
+  public async remove(
+    @Request() req: ExRequest,
+    @Path() id: number
+  ): Promise<{ id: number; message: string }> {
+    const user = (req as any).user as { id: number; role: string };
+    const role = user.role?.toUpperCase();
+
+    const existing = await prisma.room.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        exam: { select: { authorId: true } },
+      },
+    });
+
+    if (!existing) {
+      const err: any = new Error("Room not found");
+      err.status = 404;
+      throw err;
+    }
+
+    if (role === "TEACHER" && (existing as any).exam?.authorId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+
+    await prisma.room.delete({ where: { id } });
+    return { id, message: "Room deleted" };
+  }
+}

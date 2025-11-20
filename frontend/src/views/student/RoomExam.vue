@@ -22,11 +22,10 @@
           <div v-if="durationSec">
             Tổng thời gian làm bài: {{ Math.round(durationSec / 60) }} phút.
           </div>
-          <div v-else>
-            Thời gian làm bài: không giới hạn.
-          </div>
+          <div v-else>Thời gian làm bài: không giới hạn.</div>
           <div class="small mt-1">
-            Bấm <strong>Bắt đầu làm bài</strong> để hiện câu hỏi và bắt đầu đếm giờ.
+            Bấm <strong>Bắt đầu làm bài</strong> để hiện câu hỏi và bắt đầu đếm
+            giờ.
           </div>
         </div>
         <div class="text-center mt-4">
@@ -54,11 +53,7 @@
             Câu {{ idx + 1 }}: {{ q.questionText }}
           </div>
           <div class="ms-3">
-            <div
-              v-for="ch in q.choices"
-              :key="ch.id"
-              class="form-check"
-            >
+            <div v-for="ch in q.choices" :key="ch.id" class="form-check">
               <input
                 class="form-check-input"
                 type="radio"
@@ -92,25 +87,15 @@
     </div>
 
     <div class="card-body" v-else-if="submitted">
-      <div class="alert alert-success mb-3">
-        Đã nộp bài thành công.
-      </div>
+      <div class="alert alert-success mb-3">Đã nộp bài thành công.</div>
       <div v-if="result">
         <div class="mb-2">
           Điểm: <strong>{{ result.score ?? "-" }}</strong>
         </div>
         <div class="mb-2">
           Kết quả:
-          <span
-            v-if="pass === true"
-            class="badge bg-success"
-          >
-            Đạt
-          </span>
-          <span
-            v-else-if="pass === false"
-            class="badge bg-danger"
-          >
+          <span v-if="pass === true" class="badge bg-success"> Đạt </span>
+          <span v-else-if="pass === false" class="badge bg-danger">
             Trượt
           </span>
           <span v-else class="badge bg-secondary">-</span>
@@ -159,7 +144,10 @@ const answers = reactive<Record<number, number | undefined>>({});
 const loaded = ref(false);
 const submitting = ref(false);
 const submitted = ref(false);
-const result = ref<{ score: number | null; passMarkPercent: number | null } | null>(null);
+const result = ref<{
+  score: number | null;
+  passMarkPercent: number | null;
+} | null>(null);
 
 const detail = ref<{
   answers: AttemptAnswerView[];
@@ -240,6 +228,15 @@ async function beginExam() {
   if (started.value || startingExam.value) return;
   startingExam.value = true;
   try {
+    try {
+      await api.post("/attempts/begin", { roomId });
+    } catch (e: any) {
+      // Nếu backend báo đã làm rồi thì vẫn để user xem thông báo khi nộp
+      const msg = e?.message || "";
+      if (msg) {
+        console.warn("beginExam error:", msg);
+      }
+    }
     if (questions.value.length === 0) {
       await loadQuestions();
     }
@@ -318,6 +315,11 @@ onMounted(async () => {
   }
   try {
     await loadRoom();
+    try {
+      await api.post("/attempts/begin", { roomId });
+    } catch (e: any) {
+      console.warn("begin attempt error", e?.message || e);
+    }
     loaded.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể tải dữ liệu phòng thi");
@@ -331,4 +333,3 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-

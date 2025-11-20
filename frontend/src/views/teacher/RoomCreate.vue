@@ -1,329 +1,274 @@
 <template>
-  <div class="card rounded-0">
-    <div class="card-header">
-      <h5 class="mb-0">Quản lý phòng thi & bài thi</h5>
-    </div>
-    <div class="card-body">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-5 col-12">
-          <label class="form-label">Chọn đề thi</label>
-          <select class="form-select" v-model.number="examId" @change="onExamChange">
-            <option :value="0" disabled>-- Chọn đề thi --</option>
-            <option v-for="e in exams" :key="e.id" :value="e.id">#{{ e.id }} - {{ e.title }} ({{ e.status }})</option>
-          </select>
-        </div>
-        <div class="col-md-7 col-12">
-          <div class="alert alert-info py-2" v-if="!examId">
-            Vui lòng chọn một đề thi để quản lý phòng và bài thi sinh viên.
+  <div class="room-create-page">
+    <div class="card rounded-0 mb-3">
+      <div
+        class="card-header d-flex justify-content-between align-items-center"
+      >
+        <div>
+          <h5 class="mb-0">Mở phòng thi cho sinh viên</h5>
+          <div class="small text-muted">
+            Bước 1: chọn đề thi đã publish · Bước 2: tạo phòng · Bước 3:
+            theo dõi trạng thái làm bài.
           </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            @click="showHistory = true"
+          >
+            <i class="bi bi-clock-history me-1"></i>
+            Lịch sử phòng thi
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            @click="toggleConfig"
+            :aria-expanded="showConfig ? 'true' : 'false'"
+          >
+            <i
+              class="bi"
+              :class="showConfig ? 'bi-chevron-up' : 'bi-chevron-down'"
+            ></i>
+          </button>
         </div>
       </div>
-
-      <hr />
-
-      <div class="row g-4" v-if="examId">
-        <div class="col-lg-5">
-          <div class="card h-100">
-            <div class="card-header"><strong>Tạo phòng thi</strong></div>
-            <div class="card-body">
-              <div class="mb-2">
-                <label class="form-label">Mã phòng (tuỳ chọn)</label>
-                <input v-model.trim="form.code" class="form-control" placeholder="Để trống sẽ tự tạo" />
-              </div>
-              <div class="row g-2">
-                <div class="col-6">
-                  <label class="form-label">Mở lúc</label>
-                  <input type="datetime-local" class="form-control" v-model="form.openAt" />
-                </div>
-                <div class="col-6">
-                  <label class="form-label">Đóng lúc</label>
-                  <input type="datetime-local" class="form-control" v-model="form.closeAt" />
-                </div>
-              </div>
-              <div class="row g-2 mt-2">
-                <div class="col-6">
-                  <label class="form-label">Thời lượng (giây)</label>
-                  <input type="number" class="form-control" v-model.number="form.durationSec" placeholder="Ví dụ: 1800" />
-                </div>
-                <div class="col-6">
-                  <label class="form-label">Số lượt tối đa</label>
-                  <input type="number" class="form-control" v-model.number="form.maxAttempts" min="1" />
-                </div>
-              </div>
-              <div class="form-check form-switch mt-3">
-                <input class="form-check-input" type="checkbox" v-model="form.shuffleQuestions" id="sq" />
-                <label class="form-check-label" for="sq">Xáo trộn câu hỏi</label>
-              </div>
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" v-model="form.shuffleChoices" id="sc" />
-                <label class="form-check-label" for="sc">Xáo trộn đáp án</label>
-              </div>
-            </div>
-            <div class="card-footer text-end">
-              <button class="btn btn-primary" :disabled="creating || !examId" @click="createRoom">
-                <span v-if="creating" class="spinner-border spinner-border-sm me-2"></span>
-                Tạo phòng
-              </button>
+      <div class="card-body" v-show="showConfig">
+        <div class="row g-2 align-items-end">
+          <div class="col-12 col-md-4">
+            <label class="form-label">Đề thi (chỉ hiển thị đã publish)</label>
+            <select
+              class="form-select form-select-sm"
+              v-model.number="selectedExamId"
+              @change="onExamChange"
+            >
+              <option :value="0" disabled>-- Chọn đề thi --</option>
+              <option v-for="e in publishedExams" :key="e.id" :value="e.id">
+                #{{ e.id }} - {{ e.title }}
+                <span v-if="e.code">({{ e.code }})</span>
+              </option>
+            </select>
+            <div
+              class="form-text text-muted"
+              v-if="!loadingExams && publishedExams.length === 0"
+            >
+              Bạn chưa có đề thi nào ở trạng thái PUBLISHED.
             </div>
           </div>
-        </div>
-        <div class="col-lg-7">
-          <div class="card h-100">
-            <div class="card-header d-flex align-items-center justify-content-between">
-              <strong>Danh sách phòng</strong>
-              <div class="small text-muted">Tổng: {{ roomsTotal }}</div>
+          <div class="col-12 col-md-8">
+            <div v-if="!selectedExam" class="alert alert-info mb-0">
+              Vui lòng chọn một đề thi đã publish để mở phòng cho sinh viên.
             </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                  <thead>
-                    <tr class="text-muted small">
-                      <th>#</th>
-                      <th>Mã</th>
-                      <th>Mở</th>
-                      <th>Đóng</th>
-                      <th>Dur</th>
-                      <th>Attempts</th>
-                      <th>Shuffle</th>
-                      <th>Tạo lúc</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="r in rooms" :key="r.id">
-                      <td>{{ r.id }}</td>
-                      <td><code>{{ r.code }}</code></td>
-                      <td>{{ fmtDate(r.openAt) }}</td>
-                      <td>{{ fmtDate(r.closeAt) }}</td>
-                      <td>{{ r.durationSec ?? '-' }}</td>
-                      <td>{{ r.maxAttempts }}</td>
-                      <td>
-                        <span class="badge bg-light text-dark">Q: {{ r.shuffleQuestions ? 'Y' : 'N' }}</span>
-                        <span class="badge bg-light text-dark ms-1">C: {{ r.shuffleChoices ? 'Y' : 'N' }}</span>
-                      </td>
-                      <td>{{ fmtDate(r.createdAt) }}</td>
-                    </tr>
-                    <tr v-if="!loadingRooms && rooms.length === 0">
-                      <td colspan="8" class="text-center text-muted">Chưa có phòng</td>
-                    </tr>
-                  </tbody>
-                </table>
+            <div v-else>
+              <div class="mb-2 small text-muted">
+                Đề đã chọn:
+                <strong>{{ selectedExam.title }}</strong>
+                <span v-if="selectedExam.code" class="ms-1">
+                  (Mã đề: <code>{{ selectedExam.code }}</code
+                  >)
+                </span>
               </div>
-              <Pagination
-                class="mt-2"
-                :page="roomsPage"
-                :page-size="roomsPageSize"
-                :total="roomsTotal"
-                :disabled="loadingRooms"
-                @update:page="(p) => { roomsPage = p; loadRooms(); }"
-                @update:page-size="(s) => { roomsPageSize = s; roomsPage = 1; loadRooms(); }"
-              />
+              <RoomCreateForm :creating="creating" @submit="handleCreateRoom" />
             </div>
           </div>
-        </div>
-      </div>
-
-      <hr class="my-4" v-if="examId" />
-
-      <div v-if="examId" class="card">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <strong>Danh sách bài thi sinh viên</strong>
-          <div class="small text-muted">Tổng: {{ attemptsTotal }}</div>
-        </div>
-        <div class="card-body">
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr class="text-muted small">
-                  <th>#</th>
-                  <th>Student</th>
-                  <th>Score</th>
-                  <th>Status</th>
-                  <th>Bắt đầu</th>
-                  <th>Nộp</th>
-                  <th>Thời gian</th>
-                  <th class="text-end">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="a in attempts" :key="a.id">
-                  <td>{{ a.id }}</td>
-                  <td>#{{ a.studentId }}</td>
-                  <td>{{ a.score ?? '-' }}</td>
-                  <td>
-                    <span class="badge" :class="a.status === 'SUBMITTED' ? 'bg-success' : (a.status === 'IN_PROGRESS' ? 'bg-warning text-dark' : 'bg-secondary')">{{ a.status }}</span>
-                  </td>
-                  <td>{{ fmtDate(a.startedAt) }}</td>
-                  <td>{{ fmtDate(a.submittedAt) }}</td>
-                  <td>{{ a.timeTakenSec ? a.timeTakenSec + 's' : '-' }}</td>
-                  <td class="text-end">
-                    <button class="btn btn-sm btn-outline-danger" @click="delAttempt(a.id)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr v-if="!loadingAttempts && attempts.length === 0">
-                  <td colspan="8" class="text-center text-muted">Chưa có dữ liệu</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <Pagination
-            class="mt-2"
-            :page="attemptsPage"
-            :page-size="attemptsPageSize"
-            :total="attemptsTotal"
-            :disabled="loadingAttempts"
-            @update:page="(p) => { attemptsPage = p; loadAttempts(); }"
-            @update:page-size="(s) => { attemptsPageSize = s; attemptsPage = 1; loadAttempts(); }"
-          />
         </div>
       </div>
     </div>
+
+    <RoomActivePanel
+      :room="activeRoom"
+      :exam="selectedExam"
+      :loading-room="loadingActiveRoom"
+      v-if="selectedExamId"
+      class="mb-3"
+      @close-room="handleCloseRoom"
+      @refresh="loadActiveRoom"
+    />
+
+    <RoomHistoryModal
+      :show="showHistory"
+      :exams="publishedExams"
+      @close="showHistory = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue";
-import Pagination from "../../components/common/Pagination.vue";
+import { computed, onMounted, ref } from "vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
+import RoomCreateForm from "../../components/rooms/RoomCreateForm.vue";
+import RoomActivePanel from "../../components/rooms/RoomActivePanel.vue";
+import RoomHistoryModal from "../../components/rooms/RoomHistoryModal.vue";
 
-type ExamSummary = { id: number; title: string; status: string };
-type Room = {
-  id: number; examId: number; code: string; openAt: string | null; closeAt: string | null;
-  durationSec: number | null; shuffleQuestions: boolean; shuffleChoices: boolean; maxAttempts: number; createdAt: string
+type ExamSummary = {
+  id: number;
+  title: string;
+  status: string;
+  code?: string | null;
 };
-type Attempt = {
-  id: number; score: number | null; startedAt: string; submittedAt: string | null; timeTakenSec: number | null; studentId: number; status: string
+
+type RoomSummary = {
+  id: number;
+  examId: number;
+  code: string;
+  openAt: string | null;
+  closeAt: string | null;
+  durationSec: number | null;
+  shuffleQuestions: boolean;
+  shuffleChoices: boolean;
+  maxAttempts: number;
+  createdAt: string;
 };
 
 const exams = ref<ExamSummary[]>([]);
-const examId = ref<number>(0);
-
-const form = reactive({
-  code: "",
-  openAt: "",
-  closeAt: "",
-  durationSec: 1800,
-  shuffleQuestions: true,
-  shuffleChoices: true,
-  maxAttempts: 1,
-});
+const loadingExams = ref(false);
+const selectedExamId = ref<number>(0);
 const creating = ref(false);
+const activeRoom = ref<RoomSummary | null>(null);
+const loadingActiveRoom = ref(false);
+const showHistory = ref(false);
+const showConfig = ref(true);
 
-const rooms = ref<Room[]>([]);
-let roomsPage = ref(1);
-let roomsPageSize = ref(10);
-const roomsTotal = ref(0);
-const loadingRooms = ref(false);
+const publishedExams = computed(() =>
+  exams.value.filter(
+    (e) => String(e.status || "").toUpperCase() === "PUBLISHED"
+  )
+);
 
-const attempts = ref<Attempt[]>([]);
-let attemptsPage = ref(1);
-let attemptsPageSize = ref(10);
-const attemptsTotal = ref(0);
-const loadingAttempts = ref(false);
-
-function fmtDate(d: any) {
-  if (!d) return "-";
-  try {
-    const dt = new Date(d);
-    const yyyy = dt.getFullYear();
-    const mm = String(dt.getMonth() + 1).padStart(2, '0');
-    const dd = String(dt.getDate()).padStart(2, '0');
-    const hh = String(dt.getHours()).padStart(2, '0');
-    const mi = String(dt.getMinutes()).padStart(2, '0');
-    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
-  } catch { return String(d); }
-}
+const selectedExam = computed<ExamSummary | null>(() => {
+  if (!selectedExamId.value) return null;
+  return (
+    publishedExams.value.find((e) => e.id === selectedExamId.value) || null
+  );
+});
 
 async function ensureExams() {
-  const user = getUser();
-  const authorId = Number(user?.id || 0);
-  const { data } = await api.get<Paginated<ExamSummary>>("/exams", {
-    params: { authorId, pageSize: 200 },
-  });
-  exams.value = data.items as any;
-}
-
-function onExamChange() {
-  roomsPage.value = 1;
-  attemptsPage.value = 1;
-  loadRooms();
-  loadAttempts();
-}
-
-async function loadRooms() {
-  if (!examId.value) { rooms.value = []; roomsTotal.value = 0; return; }
-  loadingRooms.value = true;
+  loadingExams.value = true;
   try {
-    const { data } = await api.get<Paginated<Room>>("/rooms", {
-      params: { examId: examId.value, page: roomsPage.value, pageSize: roomsPageSize.value },
+    const user = getUser();
+    const authorId = Number(user?.id || 0);
+    const { data } = await api.get<Paginated<ExamSummary>>("/exams", {
+      params: { authorId, pageSize: 200 },
     });
-    rooms.value = data.items as any;
-    roomsTotal.value = data.total;
+    exams.value = (data.items || []) as any;
   } finally {
-    loadingRooms.value = false;
+    loadingExams.value = false;
   }
 }
 
-async function loadAttempts() {
-  if (!examId.value) { attempts.value = []; attemptsTotal.value = 0; return; }
-  loadingAttempts.value = true;
+function normalizeRoom(r: any): RoomSummary {
+  return {
+    id: Number(r.id),
+    examId: Number(r.examId),
+    code: String(r.code),
+    openAt: (r.openAt as string | null) ?? null,
+    closeAt: (r.closeAt as string | null) ?? null,
+    durationSec:
+      typeof r.durationSec === "number" ? (r.durationSec as number) : null,
+    shuffleQuestions: !!r.shuffleQuestions,
+    shuffleChoices: !!r.shuffleChoices,
+    maxAttempts: Number(r.maxAttempts || 0),
+    createdAt: String(r.createdAt),
+  };
+}
+
+async function loadActiveRoom() {
+  if (!selectedExamId.value) {
+    activeRoom.value = null;
+    return;
+  }
+  loadingActiveRoom.value = true;
   try {
-    const { data } = await api.get<Paginated<Attempt>>("/attempts", {
-      params: { examId: examId.value, page: attemptsPage.value, pageSize: attemptsPageSize.value },
+    const { data } = await api.get<Paginated<RoomSummary>>("/rooms", {
+      params: { examId: selectedExamId.value, page: 1, pageSize: 50 },
     });
-    attempts.value = data.items as any;
-    attemptsTotal.value = data.total;
+    const items = (data.items || []) as any[];
+    const now = new Date();
+    const live = items.filter((r) => {
+      const openAt = r.openAt ? new Date(r.openAt) : null;
+      const closeAt = r.closeAt ? new Date(r.closeAt) : null;
+      const openOk = !openAt || openAt <= now;
+      const closeOk = !closeAt || closeAt >= now;
+      return openOk && closeOk;
+    });
+    const picked = (live[0] || items[0]) ?? null;
+    activeRoom.value = picked ? normalizeRoom(picked) : null;
   } finally {
-    loadingAttempts.value = false;
+    loadingActiveRoom.value = false;
   }
 }
 
-async function createRoom() {
-  if (!examId.value) return;
+async function handleCreateRoom(payload: {
+  code: string;
+  openAt: string;
+  closeAt: string;
+  durationMinutes: number | null;
+  shuffleQuestions: boolean;
+  shuffleChoices: boolean;
+  maxAttempts: number;
+}) {
+  if (!selectedExamId.value) return;
   creating.value = true;
   try {
-    const payload: any = {
-      examId: examId.value,
-      code: form.code || undefined,
-      openAt: form.openAt ? new Date(form.openAt) : null,
-      closeAt: form.closeAt ? new Date(form.closeAt) : null,
-      durationSec: form.durationSec || null,
-      shuffleQuestions: !!form.shuffleQuestions,
-      shuffleChoices: !!form.shuffleChoices,
-      maxAttempts: form.maxAttempts || 1,
+    const body: any = {
+      examId: selectedExamId.value,
+      code: payload.code || undefined,
+      openAt: payload.openAt ? new Date(payload.openAt) : null,
+      closeAt: payload.closeAt ? new Date(payload.closeAt) : null,
+      durationSec: payload.durationMinutes
+        ? Number(payload.durationMinutes) * 60
+        : null,
+      shuffleQuestions: !!payload.shuffleQuestions,
+      shuffleChoices: !!payload.shuffleChoices,
+      maxAttempts: payload.maxAttempts || 1,
     };
-    await api.post("/rooms", payload);
-    form.code = "";
-    loadRooms();
+    await api.post("/rooms", body);
+    await loadActiveRoom();
+    showConfig.value = false;
   } catch (e: any) {
-    alert(e?.message || "Không thể tạo phòng");
+    alert(e?.message || "Không thể tạo phòng thi");
   } finally {
     creating.value = false;
   }
 }
 
-async function delAttempt(id: number) {
-  if (!confirm(`Xóa bài thi #${id}?`)) return;
-  try {
-    await api.delete(`/attempts/${id}`);
-    loadAttempts();
-  } catch (e: any) {
-    alert(e?.message || "Không thể xóa bài thi");
+async function handleCloseRoom() {
+  if (!activeRoom.value) return;
+  if (
+    !window.confirm(
+      "Bạn chắc chắn muốn đóng phòng thi này ngay bây giờ? Sinh viên sẽ không thể vào thêm."
+    )
+  ) {
+    return;
   }
+  try {
+    await api.post(`/rooms/${activeRoom.value.id}/close`);
+    await loadActiveRoom();
+  } catch (e: any) {
+    alert(e?.message || "Không thể đóng phòng thi");
+  }
+}
+
+function onExamChange() {
+  loadActiveRoom();
+}
+
+function toggleConfig() {
+  showConfig.value = !showConfig.value;
 }
 
 onMounted(async () => {
   await ensureExams();
-  if (exams.value.length) {
-    examId.value = exams.value[0].id;
-    loadRooms();
-    loadAttempts();
+  if (publishedExams.value.length > 0) {
+    selectedExamId.value = publishedExams.value[0].id;
+    await loadActiveRoom();
   }
 });
 </script>
 
 <style scoped>
-code { font-size: 0.9rem; }
+.room-create-page code {
+  font-size: 0.9rem;
+}
 </style>

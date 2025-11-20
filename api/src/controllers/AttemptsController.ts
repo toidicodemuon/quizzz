@@ -401,6 +401,79 @@ export class AttemptController extends Controller {
     return mapped as AttemptSummary;
   }
 
+  @Post("/begin")
+  @Response<null>(400, "Bad Request")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Security("bearerAuth", ["STUDENT"])
+  public async beginAttempt(
+    @Request() req: ExRequest,
+    @Body()
+    body: {
+      roomId: number;
+    }
+  ): Promise<AttemptSummary> {
+    const user = (req as any).user as { id: number; role: string };
+
+    const room = await prisma.room.findUnique({
+      where: { id: body.roomId },
+      select: { id: true, examId: true },
+    });
+    if (!room) {
+      this.setStatus(400);
+      throw new Error("Invalid roomId");
+    }
+
+    // Reuse existing attempt if still in progress, otherwise create a new one
+    let attempt = await prisma.attempt.findUnique({
+      where: { roomId_studentId: { roomId: room.id, studentId: user.id } },
+      select: {
+        id: true,
+        score: true,
+        startedAt: true,
+        submittedAt: true,
+        timeTakenSec: true,
+        studentId: true,
+        examId: true,
+        roomId: true,
+        status: true,
+      },
+    });
+
+    if (attempt && attempt.status !== AttemptStatus.IN_PROGRESS) {
+      this.setStatus(400);
+      throw new Error("Attempt already submitted for this room");
+    }
+
+    if (!attempt) {
+      attempt = await prisma.attempt.create({
+        data: {
+          roomId: room.id,
+          examId: room.examId,
+          studentId: user.id,
+          status: AttemptStatus.IN_PROGRESS,
+        },
+        select: {
+          id: true,
+          score: true,
+          startedAt: true,
+          submittedAt: true,
+          timeTakenSec: true,
+          studentId: true,
+          examId: true,
+          roomId: true,
+          status: true,
+        },
+      });
+    }
+
+    const mapped: AttemptSummary = {
+      ...(attempt as any),
+      score: attempt.score === null ? null : Number(attempt.score as any),
+    };
+    return mapped;
+  }
+
   @Post("/")
   @Response<null>(400, "Bad Request")
   @Response<null>(401, "Unauthorized")
@@ -445,12 +518,36 @@ export class AttemptController extends Controller {
 
     let earnedTotal = 0;
     const perQuestion = new Map<number, number>();
-    const points = await prisma.examQuestion.findMany({ where: { examId: room.examId, questionId: { in: questionIds } }, select: { questionId: true, points: true } });
+    const points = await prisma.examQuestion.findMany({
+      where: { examId: room.examId, questionId: { in: questionIds } },
+      select: { questionId: true, points: true },
+    });
     for (const p of points) perQuestion.set(p.questionId, Number(p.points));
 
-    const attempt = await prisma.attempt.create({
-      data: { roomId: room.id, examId: room.examId, studentId: user.id, status: AttemptStatus.IN_PROGRESS },
+    let attempt = await prisma.attempt.findUnique({
+      where: { roomId_studentId: { roomId: room.id, studentId: user.id } },
+      select: { id: true, status: true },
     });
+
+    if (attempt && attempt.status !== AttemptStatus.IN_PROGRESS) {
+      this.setStatus(400);
+      throw new Error("Attempt already submitted for this room");
+    }
+
+    if (!attempt) {
+      attempt = await prisma.attempt.create({
+        data: {
+          roomId: room.id,
+          examId: room.examId,
+          studentId: user.id,
+          status: AttemptStatus.IN_PROGRESS,
+        },
+        select: { id: true, status: true },
+      });
+    }
+
+    // Clear any previous answers (if any) before saving new ones
+    await prisma.attemptAnswer.deleteMany({ where: { attemptId: attempt.id } });
 
     for (const sel of body.answers) {
       const options = byQuestion.get(sel.questionId) || [];
@@ -474,8 +571,23 @@ export class AttemptController extends Controller {
 
     const updated = await prisma.attempt.update({
       where: { id: attempt.id },
-      data: { status: AttemptStatus.SUBMITTED, submittedAt: new Date(), timeTakenSec: Math.floor(300 + Math.random() * 600), score: Number(percent.toFixed(2)) },
-      select: { id: true, score: true, startedAt: true, submittedAt: true, timeTakenSec: true, studentId: true, examId: true, roomId: true, status: true },
+      data: {
+        status: AttemptStatus.SUBMITTED,
+        submittedAt: new Date(),
+        timeTakenSec: Math.floor(300 + Math.random() * 600),
+        score: Number(percent.toFixed(2)),
+      },
+      select: {
+        id: true,
+        score: true,
+        startedAt: true,
+        submittedAt: true,
+        timeTakenSec: true,
+        studentId: true,
+        examId: true,
+        roomId: true,
+        status: true,
+      },
     });
     return updated as AttemptSummary;
   }

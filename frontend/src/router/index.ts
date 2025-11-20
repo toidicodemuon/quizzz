@@ -75,13 +75,13 @@ const routes: Array<RouteRecordRaw> = [
         path: "student/rooms",
         name: "student-rooms",
         component: () => import("../views/student/Rooms.vue"),
-        meta: { pageTitle: "PHONG THI" },
+        meta: { pageTitle: "PHÒNG THI" },
       },
       {
         path: "student/rooms/:roomId",
         name: "student-room-exam",
         component: () => import("../views/student/RoomExam.vue"),
-        meta: { pageTitle: "LAM BAI THI" },
+        meta: { pageTitle: "LÀM BÀI THI" },
       },
       {
         path: "student/exams",
@@ -153,5 +153,3 @@ router.afterEach((to) => {
 });
 
 export default router;
-
-
