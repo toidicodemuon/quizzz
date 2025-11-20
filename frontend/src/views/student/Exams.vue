@@ -28,49 +28,13 @@
           </button>
         </div>
       </div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle">
-          <thead>
-            <tr class="text-muted small">
-              <th>#</th>
-              <th>Mã đề</th>
-              <th>Tiêu đề</th>
-              <th>Điểm</th>
-              <th>Bắt đầu</th>
-              <th>Nộp</th>
-              <th>Thời gian làm</th>
-              <th class="text-end">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="a in filteredItems" :key="a.id">
-              <td>{{ a.id }}</td>
-              <td>
-                <code>{{ a.examCode ?? "-" }}</code>
-              </td>
-              <td>{{ a.examTitle ?? "-" }}</td>
-              <td>{{ a.score ?? "-" }}</td>
-              <td>{{ fmtDate(a.startedAt) }}</td>
-              <td>{{ fmtDate(a.submittedAt) }}</td>
-              <td>{{ fmtDuration(a.timeTakenSec) }}</td>
-              <td class="text-end">
-                <button
-                  class="btn btn-sm btn-outline-primary"
-                  type="button"
-                  @click="openDetail(a.id)"
-                >
-                  Xem
-                </button>
-              </td>
-            </tr>
-            <tr v-if="!loading && items.length === 0">
-              <td colspan="8" class="text-center text-muted">
-                Chưa có bài thi nào.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
+      <AttemptList
+        mode="student"
+        :items="filteredItems"
+        :loading="loading"
+        @view="openDetail"
+      />
     </div>
   </div>
 
@@ -87,6 +51,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import api, { type Paginated } from "../../api";
+import AttemptList from "../../components/attempts/AttemptList.vue";
 import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
 import type { AttemptAnswerView } from "../../components/attempts/AttemptAnswersList.vue";
 
@@ -136,31 +101,6 @@ const search = ref("");
 const showDetail = ref(false);
 const detail = ref<AttemptDetail | null>(null);
 const examConfig = ref<ExamConfig | null>(null);
-
-function fmtDate(d: any) {
-  if (!d) return "-";
-  try {
-    const dt = new Date(d);
-    const yyyy = dt.getFullYear();
-    const mm = String(dt.getMonth() + 1).padStart(2, "0");
-    const dd = String(dt.getDate()).padStart(2, "0");
-    const hh = String(dt.getHours()).padStart(2, "0");
-    const mi = String(dt.getMinutes()).padStart(2, "0");
-    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
-  } catch {
-    return String(d);
-  }
-}
-
-function fmtDuration(sec: any) {
-  const s = Number(sec || 0);
-  if (!s || s <= 0) return "-";
-  const hh = Math.floor(s / 3600);
-  const mm = Math.floor((s % 3600) / 60);
-  const ss = Math.floor(s % 60);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
-}
 
 const filteredItems = computed(() => {
   const q = (search.value || "").trim().toLowerCase();

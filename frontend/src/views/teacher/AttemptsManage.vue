@@ -36,70 +36,16 @@
           </button>
         </div>
       </div>
-      <div class="table-responsive">
-        <table class="table table-sm align-middle">
-          <thead>
-            <tr class="text-muted small">
-              <th>#</th>
-              <th>Mã đề</th>
-              <th>Tiêu đề</th>
-              <th>Mã SV</th>
-              <th>Tên học viên</th>
-              <th>Đúng/Tổng</th>
-              <th>Kết quả</th>
-              <th>Bắt đầu</th>
-              <th>Nộp</th>
-              <th>Thời gian làm</th>
-              <th class="text-end">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="a in items" :key="a.id">
-              <td>{{ a.id }}</td>
-              <td>
-                <code>{{ a.examCode ?? "-" }}</code>
-              </td>
-              <td>{{ a.examTitle ?? "-" }}</td>
-              <td class="small">
-                <code>{{ (a as any).studentCode ?? "-" }}</code>
-              </td>
-              <td>{{ a.studentName ?? "#" + a.studentId }}</td>
-              <td>{{ a.correctCount ?? 0 }}/{{ a.totalQuestions ?? 0 }}</td>
-              <td>
-                <span v-if="a.pass === true" class="badge bg-success">Đậu</span>
-                <span v-else-if="a.pass === false" class="badge bg-danger"
-                  >Rớt</span
-                >
-                <span v-else class="badge bg-secondary">-</span>
-              </td>
-              <td>{{ fmtDate(a.startedAt) }}</td>
-              <td>{{ fmtDate(a.submittedAt) }}</td>
-              <td>{{ fmtDuration(a.timeTakenSec) }}</td>
-              <td class="text-end">
-                <div class="btn-group btn-group-sm">
-                  <button
-                    class="btn btn-outline-primary"
-                    @click="openDetail(a.id)"
-                  >
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <button
-                    class="btn btn-outline-danger"
-                    @click="delAttempt(a.id)"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            <tr v-if="!loading && items.length === 0">
-              <td colspan="10" class="text-center text-muted">
-                Không có dữ liệu
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+
+      <AttemptList
+        class="mt-3"
+        mode="teacher"
+        :items="items"
+        :loading="loading"
+        @view="openDetail"
+        @delete="delAttempt"
+      />
+
       <Pagination
         class="mt-2"
         :page="page"
@@ -135,6 +81,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from "vue";
 import Pagination from "../../components/common/Pagination.vue";
+import AttemptList from "../../components/attempts/AttemptList.vue";
 import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
 import type { AttemptAnswerView } from "../../components/attempts/AttemptAnswersList.vue";
 import api, { type Paginated } from "../../api";
@@ -146,6 +93,7 @@ type ExamSummary = {
   status: string;
   code?: string | null;
 };
+
 type AttemptRow = {
   id: number;
   examId: number;
@@ -166,6 +114,7 @@ type AttemptRow = {
   passMarkPercent?: number | null;
   pass?: boolean | null;
 };
+
 type AttemptDetail = {
   id: number;
   studentId: number;
@@ -212,56 +161,6 @@ const loading = ref(false);
 
 const showDetail = ref(false);
 const detail = ref<AttemptDetail | null>(null);
-
-function fmtDate(d: any) {
-  if (!d) return "-";
-  try {
-    const dt = new Date(d);
-    const yyyy = dt.getFullYear();
-    const mm = String(dt.getMonth() + 1).padStart(2, "0");
-    const dd = String(dt.getDate()).padStart(2, "0");
-    const hh = String(dt.getHours()).padStart(2, "0");
-    const mi = String(dt.getMinutes()).padStart(2, "0");
-    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
-  } catch {
-    return String(d);
-  }
-}
-function fmtDuration(sec: any) {
-  const s = Number(sec || 0);
-  if (!s || s <= 0) return "-";
-  const hh = Math.floor(s / 3600);
-  const mm = Math.floor((s % 3600) / 60);
-  const ss = Math.floor(s % 60);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
-}
-function fmtDurationText(sec: any) {
-  const s = Number(sec || 0);
-  if (!s || s <= 0) return "0 giây";
-  const hh = Math.floor(s / 3600);
-  const mm = Math.floor((s % 3600) / 60);
-  const ss = Math.floor(s % 60);
-  const parts: string[] = [];
-  if (hh > 0) parts.push(`${hh} giờ`);
-  if (mm > 0) parts.push(`${mm} phút`);
-  if (ss > 0) parts.push(`${ss} giây`);
-  return parts.join(" ");
-}
-const detailCorrect = computed(() =>
-  detail.value
-    ? (detail.value.answers || []).filter((a) => !!a.isCorrect).length
-    : 0
-);
-const detailTotal = computed(() =>
-  detail.value ? (detail.value.answers || []).length : 0
-);
-const detailPass = computed(() => {
-  const p = detail.value?.passMarkPercent;
-  const sc = detail.value?.score;
-  if (typeof p !== "number" || typeof sc !== "number") return null;
-  return Number(sc) >= Number(p);
-});
 
 async function ensureExams() {
   const user = getUser();
