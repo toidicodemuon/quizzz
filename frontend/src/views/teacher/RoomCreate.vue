@@ -35,172 +35,180 @@
       </div>
 
       <div class="card-body" v-show="showConfig">
-        <div class="row g-2 align-items-end">
-          <div class="col-12 col-md-4">
-            <label class="form-label">Đề thi (chỉ hiển thị đã publish)</label>
-            <select
-              class="form-select form-select-sm"
-              v-model.number="selectedExamId"
-              @change="onExamChange"
-            >
-              <option :value="0" disabled>-- Chọn đề thi --</option>
-              <option v-for="e in publishedExams" :key="e.id" :value="e.id">
-                #{{ e.id }} - {{ e.title }}
-                <span v-if="e.code">({{ e.code }})</span>
-              </option>
-            </select>
-            <div
-              class="form-text text-muted"
-              v-if="!loadingExams && publishedExams.length === 0"
-            >
-              Bạn chưa có đề thi nào đang trạng thái PUBLISHED.
-            </div>
-          </div>
-          <div class="col-12 col-md-8">
-            <div v-if="selectedExam" class="mb-0 small text-muted">
-              Đề đã chọn:
-              <strong>{{ selectedExam.title }}</strong>
-              <span v-if="selectedExam.code" class="ms-1">
-                (Mã đề: <code>{{ selectedExam.code }}</code>)
-              </span>
-            </div>
-            <div v-else class="small text-muted">
-              Hãy chọn đề thi đã publish để tạo phòng cho sinh viên.
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-3">
-          <div v-if="!selectedExam" class="alert alert-info mb-0">
-            Vui lòng chọn một đề thi đã publish trước khi tạo phòng.
-          </div>
-          <div v-else class="row g-3">
-            <div class="col-12 col-lg-6">
-              <div class="border rounded h-100 p-3 bg-light">
-                <div
-                  class="d-flex justify-content-between align-items-center mb-2"
-                >
-                  <div>
-                    <div class="fw-semibold">Tạo phòng thi</div>
-                    <div class="text-muted small">
-                      Có 2 switch xáo trộn câu hỏi và đáp án bên dưới.
-                    </div>
+        <div class="row g-3">
+          <div class="col-12 col-lg-6">
+            <div class="border rounded h-100 p-3 bg-light">
+              <div
+                class="d-flex justify-content-between align-items-center mb-2"
+              >
+                <div>
+                  <div class="fw-semibold">Tạo phòng thi</div>
+                  <div class="text-muted small">
+                    Có 2 switch xáo trộn câu hỏi và đáp án bên dưới.
                   </div>
                 </div>
-                <RoomCreateForm :creating="creating" @submit="handleCreateRoom" />
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label"
+                  >Đề thi (chỉ hiển thị đã publish)</label
+                >
+                <select
+                  class="form-select form-select-sm"
+                  v-model.number="selectedExamId"
+                  @change="onExamChange"
+                >
+                  <option :value="0" disabled>-- Chọn đề thi --</option>
+                  <option v-for="e in publishedExams" :key="e.id" :value="e.id">
+                    #{{ e.id }} - {{ e.title }}
+                    <span v-if="e.code">({{ e.code }})</span>
+                  </option>
+                </select>
+                <div
+                  class="form-text text-muted"
+                  v-if="!loadingExams && publishedExams.length === 0"
+                >
+                  Bạn chưa có đề thi nào đang trạng thái PUBLISHED.
+                </div>
+                <div class="small text-muted mt-1" v-if="selectedExam">
+                  Đề đã chọn:
+                  <strong>{{ selectedExam.title }}</strong>
+                  <span v-if="selectedExam.code" class="ms-1">
+                    (Mã đề: <code>{{ selectedExam.code }}</code
+                    >)
+                  </span>
+                </div>
+                <div class="small text-muted mt-1" v-else>
+                  Hãy chọn đề thi đã publish để tạo phòng cho sinh viên.
+                </div>
+              </div>
+
+              <div v-if="!selectedExam" class="alert alert-info mb-0">
+                Vui lòng chọn một đề thi đã publish trước khi tạo phòng.
+              </div>
+              <div v-else>
+                <RoomCreateForm
+                  :creating="creating"
+                  @submit="handleCreateRoom"
+                />
               </div>
             </div>
-            <div class="col-12 col-lg-6">
-              <div class="border rounded h-100 p-3">
-                <div
-                  class="d-flex justify-content-between align-items-center mb-2"
-                >
-                  <div>
-                    <div class="fw-semibold">Danh sách phòng thi</div>
-                    <div class="text-muted small">
-                      {{ rooms.length }} phòng | đang chọn:
-                      <strong>{{ selectedRoomLabel }}</strong>
-                    </div>
+          </div>
+          <div class="col-12 col-lg-6">
+            <div class="border rounded h-100 p-3">
+              <div
+                class="d-flex justify-content-between align-items-center mb-2"
+              >
+                <div>
+                  <div class="fw-semibold">Danh sách phòng thi</div>
+                  <div class="text-muted small">
+                    {{ rooms.length }} phòng | đang chọn:
+                    <strong>{{ selectedRoomLabel }}</strong>
                   </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-secondary"
-                    @click="loadRooms()"
-                    :disabled="loadingRooms || !selectedExamId"
-                  >
-                    <span
-                      v-if="loadingRooms"
-                      class="spinner-border spinner-border-sm me-1"
-                    ></span>
-                    Làm mới
-                  </button>
                 </div>
-                <div class="table-responsive">
-                  <table class="table table-sm align-middle mb-0">
-                    <thead>
-                      <tr class="text-muted small">
-                        <th>Phòng</th>
-                        <th>Thời gian</th>
-                        <th>Thiết lập</th>
-                        <th class="text-end">Trạng thái</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-if="loadingRooms">
-                        <td colspan="4" class="text-center text-muted py-3">
-                          <span
-                            class="spinner-border spinner-border-sm me-2"
-                          ></span>
-                          Đang tải danh sách phòng...
-                        </td>
-                      </tr>
-                      <tr v-else-if="rooms.length === 0">
-                        <td colspan="4" class="text-center text-muted py-3">
-                          Chưa có phòng nào cho đề thi này.
-                        </td>
-                      </tr>
-                      <tr
-                        v-else
-                        v-for="r in rooms"
-                        :key="r.id"
-                        :class="r.id === selectedRoomId ? 'table-active' : ''"
-                      >
-                        <td>
-                          <div class="fw-semibold">#{{ r.id }}</div>
-                          <div class="text-muted small">
-                            {{ durationText(r) }} | tối đa {{ r.maxAttempts }}
-                            lượt
-                          </div>
-                        </td>
-                        <td class="small">
-                          <div class="text-muted">Mở: {{ fmtDate(r.openAt) }}</div>
-                          <div class="text-muted">
-                            Đóng: {{ fmtDate(r.closeAt) }}
-                          </div>
-                        </td>
-                        <td class="small">
-                          <div>
-                            <span class="badge bg-light text-dark border me-1">
-                              Q {{ r.shuffleQuestions ? "On" : "Off" }}
-                            </span>
-                            <span class="badge bg-light text-dark border">
-                              A {{ r.shuffleChoices ? "On" : "Off" }}
-                            </span>
-                          </div>
-                        </td>
-                        <td class="text-end">
-                          <div class="mb-1">
-                            <span class="badge" :class="statusClass(r)">
-                              {{ roomStatus(r) }}
-                            </span>
-                          </div>
-                          <div class="btn-group btn-group-sm">
-                            <button
-                              type="button"
-                              class="btn btn-outline-primary"
-                              @click="selectRoom(r.id)"
-                              :disabled="selectedRoomId === r.id"
-                            >
-                              Chọn
-                            </button>
-                            <button
-                              type="button"
-                              class="btn btn-outline-danger"
-                              @click="handleCloseRoom(r.id)"
-                              :disabled="closingRoomId === r.id || !isRoomLive(r)"
-                            >
-                              <span
-                                v-if="closingRoomId === r.id"
-                                class="spinner-border spinner-border-sm me-1"
-                              ></span>
-                              Đóng
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  @click="loadRooms()"
+                  :disabled="loadingRooms || !selectedExamId"
+                >
+                  <span
+                    v-if="loadingRooms"
+                    class="spinner-border spinner-border-sm me-1"
+                  ></span>
+                  Làm mới
+                </button>
+              </div>
+              <div v-if="!selectedExam" class="alert alert-warning mb-0">
+                Chọn đề thi để xem danh sách phòng.
+              </div>
+              <div v-else class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr class="text-muted small">
+                      <th>Phòng</th>
+                      <th>Thời gian</th>
+                      <th>Thiết lập</th>
+                      <th class="text-end">Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="loadingRooms">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        <span
+                          class="spinner-border spinner-border-sm me-2"
+                        ></span>
+                        Đang tải danh sách phòng...
+                      </td>
+                    </tr>
+                    <tr v-else-if="rooms.length === 0">
+                      <td colspan="4" class="text-center text-muted py-3">
+                        Chưa có phòng nào cho đề thi này.
+                      </td>
+                    </tr>
+                    <tr
+                      v-else
+                      v-for="r in rooms"
+                      :key="r.id"
+                      :class="r.id === selectedRoomId ? 'table-active' : ''"
+                    >
+                      <td>
+                        <div class="fw-semibold">#{{ r.id }}</div>
+                        <div class="text-muted small">
+                          {{ durationText(r) }} | tối đa
+                          {{ r.maxAttempts }} lượt
+                        </div>
+                      </td>
+                      <td class="small">
+                        <div class="text-muted">
+                          Mở: {{ fmtDate(r.openAt) }}
+                        </div>
+                        <div class="text-muted">
+                          Đóng: {{ fmtDate(r.closeAt) }}
+                        </div>
+                      </td>
+                      <td class="small">
+                        <div>
+                          <span class="badge bg-light text-dark border me-1">
+                            Q {{ r.shuffleQuestions ? "On" : "Off" }}
+                          </span>
+                          <span class="badge bg-light text-dark border">
+                            A {{ r.shuffleChoices ? "On" : "Off" }}
+                          </span>
+                        </div>
+                      </td>
+                      <td class="text-end">
+                        <div class="mb-1">
+                          <span class="badge" :class="statusClass(r)">
+                            {{ roomStatus(r) }}
+                          </span>
+                        </div>
+                        <div class="btn-group btn-group-sm">
+                          <button
+                            type="button"
+                            class="btn btn-outline-primary"
+                            @click="selectRoom(r.id)"
+                            :disabled="selectedRoomId === r.id"
+                          >
+                            Chọn
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger"
+                            @click="handleCloseRoom(r.id)"
+                            :disabled="closingRoomId === r.id || !isRoomLive(r)"
+                          >
+                            <span
+                              v-if="closingRoomId === r.id"
+                              class="spinner-border spinner-border-sm me-1"
+                            ></span>
+                            Đóng
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -212,12 +220,20 @@
       :room-id="selectedRoomId"
       v-model:auto-refresh="autoRefreshAttempts"
       class="mb-3"
+      @view="openAttemptDetail"
     />
 
     <RoomHistoryModal
       :show="showHistory"
       :exams="publishedExams"
       @close="showHistory = false"
+    />
+
+    <AttemptDetailModal
+      :show="showAttemptDetail"
+      mode="teacher"
+      :detail="attemptDetail"
+      @close="closeAttemptDetail"
     />
   </div>
 </template>
@@ -229,6 +245,7 @@ import { getUser } from "../../utils/auth";
 import AttemptsRealtimeGrid from "../../components/rooms/AttemptsRealtimeGrid.vue";
 import RoomCreateForm from "../../components/rooms/RoomCreateForm.vue";
 import RoomHistoryModal from "../../components/rooms/RoomHistoryModal.vue";
+import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
 
 type ExamSummary = {
   id: number;
@@ -250,6 +267,21 @@ type RoomSummary = {
   createdAt: string;
 };
 
+type AttemptDetail = {
+  id: number;
+  score: number | null;
+  startedAt: string;
+  submittedAt: string | null;
+  timeTakenSec: number | null;
+  examId: number;
+  examTitle?: string | null;
+  passMarkPercent?: number | null;
+  answers: any[];
+  studentId?: number;
+  studentName?: string | null;
+  studentCode?: string | null;
+};
+
 const exams = ref<ExamSummary[]>([]);
 const rooms = ref<RoomSummary[]>([]);
 const loadingExams = ref(false);
@@ -261,6 +293,8 @@ const closingRoomId = ref<number | null>(null);
 const autoRefreshAttempts = ref(true);
 const showHistory = ref(false);
 const showConfig = ref(true);
+const showAttemptDetail = ref(false);
+const attemptDetail = ref<AttemptDetail | null>(null);
 
 const publishedExams = computed(() =>
   exams.value.filter(
@@ -411,7 +445,7 @@ async function handleCreateRoom(payload: {
         ? Number((data as any).id)
         : null;
     await loadRooms(createdId ?? undefined);
-    showConfig.value = false;
+    showConfig.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể tạo phòng thi");
   } finally {
@@ -451,6 +485,20 @@ function onExamChange() {
 
 function toggleConfig() {
   showConfig.value = !showConfig.value;
+}
+
+async function openAttemptDetail(id: number) {
+  try {
+    const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
+    attemptDetail.value = data as any;
+    showAttemptDetail.value = true;
+  } catch (e: any) {
+    alert(e?.message || "Không thể tải chi tiết bài thi");
+  }
+}
+
+function closeAttemptDetail() {
+  showAttemptDetail.value = false;
 }
 
 onMounted(async () => {

@@ -7,12 +7,10 @@
     role="dialog"
     style="display: block"
   >
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-scrollable modal-fullscreen">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">
-            Phòng #{{ room.id }}
-          </h5>
+          <h5 class="modal-title">Phòng #{{ room.id }}</h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body">

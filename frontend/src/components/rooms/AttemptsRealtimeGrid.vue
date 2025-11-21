@@ -1,5 +1,5 @@
 <template>
-  <div class="card mt-3 attempts-grid">
+  <div class="card rounded-0 mt-3 attempts-grid">
     <div
       class="card-header py-2 d-flex justify-content-between align-items-center"
     >
