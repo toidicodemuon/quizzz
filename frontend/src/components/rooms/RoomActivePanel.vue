@@ -36,18 +36,21 @@
     <div class="card-body" v-if="room">
       <div class="row small mb-3">
         <div class="col-12 col-md-4 mb-1">
-          <div class="text-muted">Mã phòng</div>
+          <div class="text-muted">Số phòng</div>
           <div>
-            <code>{{ room.code }}</code>
+            <code>{{ room.id }}</code>
           </div>
         </div>
         <div class="col-12 col-md-4 mb-1">
           <div class="text-muted">Đề thi</div>
           <div class="fw-semibold">
-            {{ examTitle }}
+            {{ examName }}
           </div>
           <div class="text-muted">
-            ID đề: #{{ room.examId }}
+            #{{ room.examId }}
+            <span v-if="examCode">
+              · <code>{{ examCode }}</code>
+            </span>
           </div>
         </div>
         <div class="col-12 col-md-4 mb-1">
@@ -59,9 +62,7 @@
                 : "Không giới hạn"
             }}
           </div>
-          <div class="text-muted">
-            Số lượt tối đa: {{ room.maxAttempts }}
-          </div>
+          <div class="text-muted">Số lượt tối đa: {{ room.maxAttempts }}</div>
         </div>
         <div class="col-12 col-md-4 mb-1">
           <div class="text-muted">Mở lúc</div>
@@ -73,7 +74,9 @@
         </div>
         <div class="col-12 col-md-4 mb-1" v-if="timeLeftText">
           <div class="text-muted">Còn lại</div>
-          <div :class="isClosingSoon ? 'fw-semibold text-danger' : 'fw-semibold'">
+          <div
+            :class="isClosingSoon ? 'fw-semibold text-danger' : 'fw-semibold'"
+          >
             {{ timeLeftText }}
           </div>
         </div>
@@ -83,16 +86,13 @@
     </div>
     <div class="card-body" v-else-if="loadingRoom">
       <div class="d-flex align-items-center small">
-        <span
-          class="spinner-border spinner-border-sm me-2 text-primary"
-        ></span>
+        <span class="spinner-border spinner-border-sm me-2 text-primary"></span>
         <span class="text-muted">Đang tải thông tin phòng thi...</span>
       </div>
     </div>
     <div class="card-body" v-else>
       <div class="small text-muted">
-        Chưa có phòng thi đang mở cho đề này.
-        Hãy tạo phòng mới ở phía trên.
+        Chưa có phòng thi đang mở cho đề này. Hãy tạo phòng mới ở phía trên.
       </div>
     </div>
   </div>
@@ -141,10 +141,12 @@ const isLive = computed(() => {
   return openOk && closeOk;
 });
 
-const examTitle = computed(() => {
-  if (!props.exam) return "-";
-  const code = props.exam.code ? `(${props.exam.code})` : "";
-  return `${props.exam.title} ${code}`.trim();
+const examName = computed(() => {
+  return props.exam?.title || "-";
+});
+
+const examCode = computed(() => {
+  return props.exam?.code ? String(props.exam.code) : "";
 });
 
 const timeLeftText = computed(() => {

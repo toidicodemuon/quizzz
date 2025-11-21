@@ -2201,6 +2201,20 @@
 							}
 						}
 					},
+					"400": {
+						"description": "Cannot delete room with attempts",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
 					"401": {
 						"description": "Unauthorized",
 						"content": {

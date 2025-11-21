@@ -33,7 +33,9 @@
           </button>
         </div>
       </div>
+
       <div class="card-body" v-show="showConfig">
+        <!-- Row 1: chọn đề + thông tin đề -->
         <div class="row g-2 align-items-end">
           <div class="col-12 col-md-4">
             <label class="form-label">Đề thi (chỉ hiển thị đã publish)</label>
@@ -56,20 +58,23 @@
             </div>
           </div>
           <div class="col-12 col-md-8">
-            <div v-if="!selectedExam" class="alert alert-info mb-0">
-              Vui lòng chọn một đề thi đã publish để mở phòng cho sinh viên.
+            <div v-if="selectedExam" class="mb-0 small text-muted">
+              Đề đã chọn:
+              <strong>{{ selectedExam.title }}</strong>
+              <span v-if="selectedExam.code" class="ms-1">
+                (Mã đề: <code>{{ selectedExam.code }}</code>)
+              </span>
             </div>
-            <div v-else>
-              <div class="mb-2 small text-muted">
-                Đề đã chọn:
-                <strong>{{ selectedExam.title }}</strong>
-                <span v-if="selectedExam.code" class="ms-1">
-                  (Mã đề: <code>{{ selectedExam.code }}</code
-                  >)
-                </span>
-              </div>
-              <RoomCreateForm :creating="creating" @submit="handleCreateRoom" />
-            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: form cấu hình phòng chiếm full width -->
+        <div class="mt-2">
+          <div v-if="!selectedExam" class="alert alert-info mb-0">
+            Vui lòng chọn một đề thi đã publish để mở phòng cho sinh viên.
+          </div>
+          <div v-else>
+            <RoomCreateForm :creating="creating" @submit="handleCreateRoom" />
           </div>
         </div>
       </div>
@@ -272,3 +277,4 @@ onMounted(async () => {
   font-size: 0.9rem;
 }
 </style>
+

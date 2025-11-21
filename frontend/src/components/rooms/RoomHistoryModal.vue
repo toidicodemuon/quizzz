@@ -14,7 +14,7 @@
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body">
-          <div class="row g-3 mb-3">
+          <div class="row g-3 mb-3 align-items-end">
             <div class="col-12 col-md-4">
               <label class="form-label">Đề thi</label>
               <select v-model.number="filters.examId" class="form-select">
@@ -26,15 +26,17 @@
               </select>
             </div>
             <div class="col-12 col-md-4">
-              <label class="form-label">Tìm theo mã phòng</label>
+              <label class="form-label">Tìm phòng (ID hoặc mã)</label>
               <input
                 v-model.trim="filters.code"
                 type="search"
                 class="form-control"
-                placeholder="Nhập một phần mã phòng..."
+                placeholder="Nhập ID hoặc mã phòng..."
               />
             </div>
-            <div class="col-12 col-md-4 d-flex align-items-end">
+            <div
+              class="col-12 col-md-4 d-flex align-items-end justify-content-between"
+            >
               <div class="form-check">
                 <input
                   class="form-check-input"
@@ -46,6 +48,18 @@
                   Chỉ hiển thị phòng đang mở
                 </label>
               </div>
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm ms-2"
+                @click="reload"
+                :disabled="loading"
+              >
+                <span
+                  v-if="loading"
+                  class="spinner-border spinner-border-sm me-1"
+                ></span>
+                Tải lại
+              </button>
             </div>
           </div>
 
@@ -55,17 +69,27 @@
             row-key="id"
             :loading="loading"
           >
-            <template #cell-code="{ value }">
-              <code>{{ value }}</code>
+            <template #cell-examId="{ value }">
+              <div class="small">
+                <div>{{ examTitle(value) }}</div>
+                <div class="text-muted">
+                  #{{ value }}
+                  <span v-if="examCode(value)">
+                    · <code>{{ examCode(value) }}</code>
+                  </span>
+                </div>
+              </div>
             </template>
             <template #cell-openAt="{ value }">
               {{ fmtDate(value) }}
             </template>
-            <template #cell-closeAt="{ value, row }">
+            <template #cell-closeAt="{ value }">
               <span>{{ fmtDate(value) }}</span>
-              <span v-if="isRoomLive(row)" class="badge bg-success ms-1"
-                >Đang mở</span
-              >
+            </template>
+            <template #cell-status="{ row }">
+              <span class="badge" :class="statusBadgeClass(row)">
+                {{ getRoomStatus(row) }}
+              </span>
             </template>
             <template #cell-durationSec="{ value }">
               {{ value ? Math.round(Number(value || 0) / 60) + " phút" : "-" }}
@@ -112,23 +136,7 @@
             "
           />
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-light" @click="close">
-            Đóng
-          </button>
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            @click="reload"
-            :disabled="loading"
-          >
-            <span
-              v-if="loading"
-              class="spinner-border spinner-border-sm me-1"
-            ></span>
-            Tải lại dữ liệu
-          </button>
-        </div>
+        <div class="modal-footer"></div>
       </div>
     </div>
   </div>
@@ -190,12 +198,18 @@ const filters = reactive({
 const page = ref(1);
 const pageSize = ref(10);
 
+const examById = computed(() => {
+  const map = new Map<number, ExamSummary>();
+  (props.exams || []).forEach((e) => map.set(e.id, e));
+  return map;
+});
+
 const columns = [
-  { key: "id", title: "#" },
-  { key: "code", title: "Mã phòng" },
+  { key: "id", title: "Số phòng" },
   { key: "examId", title: "ID đề thi" },
   { key: "openAt", title: "Mở lúc" },
   { key: "closeAt", title: "Đóng lúc" },
+  { key: "status", title: "Trạng thái" },
   { key: "durationSec", title: "Thời lượng" },
   { key: "maxAttempts", title: "Lượt tối đa" },
   { key: "createdAt", title: "Tạo lúc" },
@@ -206,13 +220,15 @@ const filteredRooms = computed(() => {
   if (filters.examId) {
     list = list.filter((r) => r.examId === filters.examId);
   }
-  const codeValue = filters.code.trim().toLowerCase();
-  if (codeValue) {
-    list = list.filter((r) =>
-      String(r.code || "")
+  const keyword = filters.code.trim().toLowerCase();
+  if (keyword) {
+    list = list.filter((r) => {
+      const idMatch = String(r.id).toLowerCase().includes(keyword);
+      const codeMatch = String(r.code || "")
         .toLowerCase()
-        .includes(codeValue)
-    );
+        .includes(keyword);
+      return idMatch || codeMatch;
+    });
   }
   if (filters.onlyActive) {
     list = list.filter((r) => isRoomLive(r));
@@ -248,6 +264,33 @@ function isRoomLive(r: RoomRow): boolean {
   return openOk && closeOk;
 }
 
+function examTitle(id: number): string {
+  const ex = examById.value.get(id);
+  return ex?.title || `Đề #${id}`;
+}
+
+function examCode(id: number): string {
+  const ex = examById.value.get(id);
+  return ex?.code ? String(ex.code) : "";
+}
+
+function getRoomStatus(r: RoomRow): string {
+  const now = new Date();
+  const openAt = r.openAt ? new Date(r.openAt) : null;
+  const closeAt = r.closeAt ? new Date(r.closeAt) : null;
+  if (openAt && openAt > now) return "Chưa mở";
+  if (closeAt && closeAt < now) return "Đã đóng";
+  return "Đang mở";
+}
+
+function statusBadgeClass(r: RoomRow): string {
+  if (isRoomLive(r)) return "bg-success";
+  const openAt = r.openAt ? new Date(r.openAt) : null;
+  const now = new Date();
+  if (openAt && openAt > now) return "bg-secondary";
+  return "bg-dark";
+}
+
 async function reload() {
   loading.value = true;
   try {
@@ -280,7 +323,12 @@ async function deleteRoom(room: RoomRow) {
     await api.delete(`/rooms/${room.id}`);
     await reload();
   } catch (e: any) {
-    alert(e?.message || "Không thể xóa phòng thi");
+    const msgCandidates = [
+      e?.response?.data?.message,
+      e?.response?.data?.error,
+      e?.message,
+    ].filter((x) => typeof x === "string" && x.trim()) as string[];
+    alert(msgCandidates[0] || "Không thể xóa phòng thi");
   }
 }
 

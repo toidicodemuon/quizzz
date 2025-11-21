@@ -213,6 +213,7 @@ export class RoomsController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
   @Response<null>(404, "Room not found")
+  @Response<null>(400, "Cannot delete room with attempts")
   @Security("bearerAuth", ["TEACHER", "ADMIN"])
   public async remove(
     @Request() req: ExRequest,
@@ -239,6 +240,12 @@ export class RoomsController extends Controller {
       const err: any = new Error("Forbidden");
       err.status = 403;
       throw err;
+    }
+
+    const attempts = await prisma.attempt.count({ where: { roomId: id } });
+    if (attempts > 0) {
+      this.setStatus(400);
+      throw new Error("Room has attempts and cannot be deleted");
     }
 
     await prisma.room.delete({ where: { id } });

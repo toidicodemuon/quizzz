@@ -1,11 +1,7 @@
 <template>
   <div class="card mt-3">
-    <div
-      class="card-header py-2 d-flex justify-content-between align-items-center"
-    >
-      <span class="fw-semibold small">
-        Trạng thái làm bài của sinh viên
-      </span>
+    <div class="card-header py-2 d-flex justify-content-between">
+      <span class="fw-semibold small"> Trạng thái làm bài của sinh viên </span>
       <button
         type="button"
         class="btn btn-sm btn-outline-secondary"
@@ -27,10 +23,12 @@
               <th>#</th>
               <th>Sinh viên</th>
               <th>Trạng thái</th>
+              <th>Đúng/Tổng</th>
+              <th>Kết quả</th>
               <th>Bắt đầu</th>
               <th>Nộp bài</th>
               <th>Thời gian làm</th>
-              <th>Điểm</th>
+              <th class="text-end">Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -54,13 +52,29 @@
                   {{ statusBadge(a).label }}
                 </span>
               </td>
+              <td>{{ a.correctCount ?? 0 }}/{{ a.totalQuestions ?? 0 }}</td>
+              <td>
+                <span v-if="a.pass === true" class="badge bg-success">Đậu</span>
+                <span v-else-if="a.pass === false" class="badge bg-danger"
+                  >Rớt</span
+                >
+                <span v-else class="badge bg-secondary">-</span>
+              </td>
               <td>{{ fmtDate(a.startedAt) }}</td>
               <td>{{ fmtDate(a.submittedAt) }}</td>
               <td>{{ fmtDuration(a.timeTakenSec) }}</td>
-              <td>{{ a.score ?? "-" }}</td>
+              <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  @click="onView(a.id)"
+                >
+                  <i class="bi bi-eye"></i>
+                </button>
+              </td>
             </tr>
             <tr v-if="!loading && attempts.length === 0">
-              <td colspan="7" class="text-center text-muted small py-3">
+              <td colspan="9" class="text-center text-muted small py-3">
                 Chưa có sinh viên nào trong phòng này.
               </td>
             </tr>
@@ -86,10 +100,17 @@ type AttemptRow = {
   status: string;
   studentName?: string | null;
   studentCode?: string | null;
+  correctCount?: number | null;
+  totalQuestions?: number | null;
+  pass?: boolean | null;
 };
 
 const props = defineProps<{
   roomId: number | null;
+}>();
+
+const emit = defineEmits<{
+  (e: "view", id: number): void;
 }>();
 
 const attempts = ref<AttemptRow[]>([]);
@@ -167,6 +188,10 @@ function stopTimer() {
   }
 }
 
+function onView(id: number) {
+  emit("view", id);
+}
+
 onMounted(() => {
   reload();
   startTimer();
@@ -178,4 +203,3 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped></style>
-
