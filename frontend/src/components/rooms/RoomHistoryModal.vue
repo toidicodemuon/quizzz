@@ -26,12 +26,12 @@
               </select>
             </div>
             <div class="col-12 col-md-4">
-              <label class="form-label">Tìm phòng (ID hoặc mã)</label>
+              <label class="form-label">Tìm phòng (ID)</label>
               <input
-                v-model.trim="filters.code"
+                v-model.trim="filters.keyword"
                 type="search"
                 class="form-control"
-                placeholder="Nhập ID hoặc mã phòng..."
+                placeholder="Nhập ID phòng..."
               />
             </div>
             <div
@@ -191,7 +191,7 @@ const showDetail = ref(false);
 
 const filters = reactive({
   examId: 0,
-  code: "",
+  keyword: "",
   onlyActive: false,
 });
 
@@ -220,15 +220,9 @@ const filteredRooms = computed(() => {
   if (filters.examId) {
     list = list.filter((r) => r.examId === filters.examId);
   }
-  const keyword = filters.code.trim().toLowerCase();
+  const keyword = filters.keyword.trim().toLowerCase();
   if (keyword) {
-    list = list.filter((r) => {
-      const idMatch = String(r.id).toLowerCase().includes(keyword);
-      const codeMatch = String(r.code || "")
-        .toLowerCase()
-        .includes(keyword);
-      return idMatch || codeMatch;
-    });
+    list = list.filter((r) => String(r.id).toLowerCase().includes(keyword));
   }
   if (filters.onlyActive) {
     list = list.filter((r) => isRoomLive(r));

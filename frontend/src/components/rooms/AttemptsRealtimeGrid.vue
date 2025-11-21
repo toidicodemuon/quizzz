@@ -1,19 +1,42 @@
 <template>
-  <div class="card mt-3">
-    <div class="card-header py-2 d-flex justify-content-between">
-      <span class="fw-semibold small"> Trạng thái làm bài của sinh viên </span>
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary"
-        @click="reload"
-        :disabled="loading"
-      >
-        <span
-          v-if="loading"
-          class="spinner-border spinner-border-sm me-1"
-        ></span>
-        Làm mới
-      </button>
+  <div class="card mt-3 attempts-grid">
+    <div
+      class="card-header py-2 d-flex justify-content-between align-items-center"
+    >
+      <div class="d-flex flex-column">
+        <span class="fw-semibold small">Trạng thái làm bài của sinh viên</span>
+        <span class="text-muted small" v-if="!roomId">
+          Chọn phòng thi để xem danh sách.
+        </span>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <div class="form-check form-switch mb-0">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            role="switch"
+            id="autoRefreshAttempts"
+            :checked="autoRefreshEnabled"
+            :disabled="!roomId"
+            @change="toggleAutoRefresh"
+          />
+          <label class="form-check-label small" for="autoRefreshAttempts">
+            Tự làm mới
+          </label>
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          @click="reload"
+          :disabled="loading || !roomId"
+        >
+          <span
+            v-if="loading"
+            class="spinner-border spinner-border-sm me-1"
+          ></span>
+          Làm mới
+        </button>
+      </div>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -42,7 +65,7 @@
                   <div class="text-muted">
                     #{{ a.studentId }}
                     <span v-if="a.studentCode">
-                      · <code>{{ a.studentCode }}</code>
+                      - <code>{{ a.studentCode }}</code>
                     </span>
                   </div>
                 </div>
@@ -68,12 +91,18 @@
                   type="button"
                   class="btn btn-sm btn-outline-primary"
                   @click="onView(a.id)"
+                  :disabled="!roomId"
                 >
                   <i class="bi bi-eye"></i>
                 </button>
               </td>
             </tr>
-            <tr v-if="!loading && attempts.length === 0">
+            <tr v-if="!loading && !roomId">
+              <td colspan="9" class="text-center text-muted small py-3">
+                Chọn phòng thi để xem danh sách sinh viên.
+              </td>
+            </tr>
+            <tr v-else-if="!loading && attempts.length === 0">
               <td colspan="9" class="text-center text-muted small py-3">
                 Chưa có sinh viên nào trong phòng này.
               </td>
@@ -86,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import api, { type Paginated } from "../../api";
 
 type AttemptRow = {
@@ -107,15 +136,20 @@ type AttemptRow = {
 
 const props = defineProps<{
   roomId: number | null;
+  autoRefresh?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "view", id: number): void;
+  (e: "update:autoRefresh", value: boolean): void;
 }>();
 
 const attempts = ref<AttemptRow[]>([]);
 const loading = ref(false);
 let timer: number | null = null;
+const AUTO_REFRESH_MS = 5000;
+
+const autoRefreshEnabled = computed(() => props.autoRefresh !== false);
 
 function fmtDate(d: string | null | undefined): string {
   if (!d) return "-";
@@ -161,6 +195,7 @@ function statusBadge(a: AttemptRow): { label: string; class: string } {
 async function reload() {
   if (!props.roomId) {
     attempts.value = [];
+    loading.value = false;
     return;
   }
   loading.value = true;
@@ -176,9 +211,10 @@ async function reload() {
 
 function startTimer() {
   stopTimer();
+  if (!props.roomId || !autoRefreshEnabled.value) return;
   timer = window.setInterval(() => {
     reload();
-  }, 5000) as unknown as number;
+  }, AUTO_REFRESH_MS) as unknown as number;
 }
 
 function stopTimer() {
@@ -192,6 +228,33 @@ function onView(id: number) {
   emit("view", id);
 }
 
+function toggleAutoRefresh(event: Event) {
+  const target = event.target as HTMLInputElement | null;
+  const next = !!target?.checked;
+  emit("update:autoRefresh", next);
+  if (next) {
+    startTimer();
+  } else {
+    stopTimer();
+  }
+}
+
+watch(
+  () => props.roomId,
+  () => {
+    reload();
+    startTimer();
+  }
+);
+
+watch(autoRefreshEnabled, (enabled) => {
+  if (enabled) {
+    startTimer();
+  } else {
+    stopTimer();
+  }
+});
+
 onMounted(() => {
   reload();
   startTimer();
@@ -202,4 +265,8 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.attempts-grid .form-check-input {
+  cursor: pointer;
+}
+</style>

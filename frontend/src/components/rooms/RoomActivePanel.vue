@@ -92,7 +92,7 @@
     </div>
     <div class="card-body" v-else>
       <div class="small text-muted">
-        Chưa có phòng thi đang mở cho đề này. Hãy tạo phòng mới ở phía trên.
+        Chưa có phòng thi đang mở cho đề này. Hãy tạo phòng mới ở phần trên.
       </div>
     </div>
   </div>
@@ -105,7 +105,7 @@ import AttemptsRealtimeGrid from "./AttemptsRealtimeGrid.vue";
 type RoomSummary = {
   id: number;
   examId: number;
-  code: string;
+  code?: string | null;
   openAt: string | null;
   closeAt: string | null;
   durationSec: number | null;

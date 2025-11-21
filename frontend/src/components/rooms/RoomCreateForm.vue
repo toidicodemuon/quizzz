@@ -20,38 +20,38 @@
           v-model.number="localForm.maxAttempts"
         />
       </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label">Mã phòng (tùy chọn)</label>
-        <input
-          v-model.trim="localForm.code"
-          class="form-control form-control-sm"
-          placeholder="Để trống để tự tạo"
-        />
-      </div>
-      <div class="col-12 col-md-3">
+      <div class="col-12 col-md-6">
         <label class="form-label d-block">Xáo trộn</label>
-        <div class="form-check form-check-inline">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="shuffleQ"
-            v-model="localForm.shuffleQuestions"
-          />
-          <label class="form-check-label" for="shuffleQ">Câu hỏi</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="shuffleC"
-            v-model="localForm.shuffleChoices"
-          />
-          <label class="form-check-label" for="shuffleC">Đáp án</label>
+        <div class="d-flex flex-wrap gap-2">
+          <div class="form-check form-switch form-check-inline">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="shuffleQ"
+              v-model="localForm.shuffleQuestions"
+            />
+            <label class="form-check-label small" for="shuffleQ">
+              Câu hỏi
+            </label>
+          </div>
+          <div class="form-check form-switch form-check-inline">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="shuffleC"
+              v-model="localForm.shuffleChoices"
+            />
+            <label class="form-check-label small" for="shuffleC">
+              Đáp án
+            </label>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="row g-2 mt-1">
+    <div class="row g-2 mt-1 align-items-end">
       <div class="col-6 col-md-4">
         <label class="form-label">Mở lúc</label>
         <input
@@ -91,7 +91,6 @@
 import { reactive, watch } from "vue";
 
 type RoomFormPayload = {
-  code: string;
   openAt: string;
   closeAt: string;
   durationMinutes: number | null;
@@ -109,7 +108,6 @@ const emit = defineEmits<{
 }>();
 
 const defaultForm: RoomFormPayload = {
-  code: "",
   openAt: "",
   closeAt: "",
   durationMinutes: 30,
@@ -134,4 +132,8 @@ watch(
 );
 </script>
 
-<style scoped></style>
+<style scoped>
+.form-check-input {
+  cursor: pointer;
+}
+</style>

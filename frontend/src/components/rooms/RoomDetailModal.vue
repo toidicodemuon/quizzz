@@ -11,7 +11,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
-            Phòng #{{ room.id }} - Mã: <code>{{ room.code }}</code>
+            Phòng #{{ room.id }}
           </h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
@@ -254,3 +254,5 @@ watch(
   }
 );
 </script>
+
+<style scoped></style>
