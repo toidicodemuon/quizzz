@@ -132,6 +132,7 @@ type AttemptRow = {
   correctCount?: number | null;
   totalQuestions?: number | null;
   pass?: boolean | null;
+  answerCount?: number | null;
 };
 
 const props = defineProps<{
@@ -176,18 +177,14 @@ function fmtDuration(sec: number | null | undefined): string {
 function statusBadge(a: AttemptRow): { label: string; class: string } {
   const s = String(a.status || "").toUpperCase();
   if (s === "IN_PROGRESS") {
-    const started = new Date(a.startedAt).getTime();
-    const diffSec = (Date.now() - started) / 1000;
-    if (!Number.isNaN(diffSec) && diffSec <= 60) {
+    const hasAnswered = Number(a.answerCount || 0) > 0;
+    if (!hasAnswered) {
       return { label: "Đã vào phòng", class: "bg-info text-dark" };
     }
     return { label: "Đang làm bài", class: "bg-warning text-dark" };
   }
-  if (s === "SUBMITTED") {
-    return { label: "Đã nộp bài", class: "bg-primary" };
-  }
-  if (s === "GRADED") {
-    return { label: "Đã chấm điểm", class: "bg-success" };
+  if (s === "SUBMITTED" || s === "GRADED") {
+    return { label: "Đã nộp bài", class: "bg-success" };
   }
   return { label: s || "-", class: "bg-secondary" };
 }
@@ -203,7 +200,15 @@ async function reload() {
     const { data } = await api.get<Paginated<AttemptRow>>("/attempts", {
       params: { roomId: props.roomId, page: 1, pageSize: 100 },
     });
-    attempts.value = (data.items || []) as any;
+    const items = (data.items || []).map((item) => ({
+      ...item,
+      status: String(item.status || "").toUpperCase(),
+      answerCount:
+        typeof (item as any).answerCount === "number"
+          ? Number((item as any).answerCount)
+          : 0,
+    }));
+    attempts.value = items as any;
   } finally {
     loading.value = false;
   }

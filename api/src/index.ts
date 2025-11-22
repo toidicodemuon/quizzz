@@ -73,9 +73,11 @@ app.use(
   ) => {
     console.error(err);
     const status = typeof err?.status === "number" ? err.status : 500;
-    const body = err?.fields
+    const code = typeof err?.code === "string" ? err.code : undefined;
+    const baseBody = err?.fields
       ? { message: err.message ?? "Validation error", fields: err.fields }
       : { message: err?.message ?? "Internal Server Error" };
+    const body = code ? { ...baseBody, code } : baseBody;
     res.status(status).json(body);
   }
 );

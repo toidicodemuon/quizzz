@@ -178,6 +178,38 @@ const pass = computed(() => {
   return sc >= p;
 });
 
+const ATTEMPT_SUBMITTED_CODE = "ATTEMPT_ALREADY_SUBMITTED";
+
+function parseApiError(err: any): { message: string; code?: string } {
+  const message = err?.response?.data?.message || err?.message || "";
+  const code =
+    typeof err?.response?.data?.code === "string"
+      ? err.response.data.code
+      : undefined;
+  return { message, code };
+}
+
+async function ensureAttemptCanBegin(): Promise<boolean> {
+  try {
+    await api.post("/attempts/begin", { roomId });
+    return true;
+  } catch (e: any) {
+    const { message, code } = parseApiError(e);
+    const normalized = (message || "").toLowerCase();
+    const alreadySubmitted =
+      code === ATTEMPT_SUBMITTED_CODE ||
+      normalized.includes("attempt already submitted");
+    const friendly = alreadySubmitted
+      ? "Bạn đã làm bài thi này rồi, không thể vào phòng làm tiếp."
+      : message || "Không thể vào phòng thi.";
+    alert(friendly);
+    if (alreadySubmitted) {
+      router.replace({ name: "student-exams" });
+    }
+    return false;
+  }
+}
+
 async function loadRoom() {
   const { data: room } = await api.get<any>(`/rooms/${roomId}`);
   examId.value = room.examId;
@@ -228,15 +260,8 @@ async function beginExam() {
   if (started.value || startingExam.value) return;
   startingExam.value = true;
   try {
-    try {
-      await api.post("/attempts/begin", { roomId });
-    } catch (e: any) {
-      // Nếu backend báo đã làm rồi thì vẫn để user xem thông báo khi nộp
-      const msg = e?.message || "";
-      if (msg) {
-        console.warn("beginExam error:", msg);
-      }
-    }
+    const ok = await ensureAttemptCanBegin();
+    if (!ok) return;
     if (questions.value.length === 0) {
       await loadQuestions();
     }
@@ -286,8 +311,9 @@ async function submitAttempt(isAuto = false) {
     };
     await loadReview(data.id);
   } catch (e: any) {
+    const { message } = parseApiError(e);
     if (!isAuto) {
-      alert(e?.message || "Không thể nộp bài");
+      alert(message || "Không thể nộp bài thi");
     }
   } finally {
     submitting.value = false;
@@ -315,14 +341,12 @@ onMounted(async () => {
   }
   try {
     await loadRoom();
-    try {
-      await api.post("/attempts/begin", { roomId });
-    } catch (e: any) {
-      console.warn("begin attempt error", e?.message || e);
-    }
+    const ok = await ensureAttemptCanBegin();
     loaded.value = true;
+    if (!ok) return;
   } catch (e: any) {
-    alert(e?.message || "Không thể tải dữ liệu phòng thi");
+    const { message } = parseApiError(e);
+    alert(message || "Khong the tai du lieu phong thi");
     router.replace({ name: "student-rooms" });
   }
 });

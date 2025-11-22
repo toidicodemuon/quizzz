@@ -508,6 +508,11 @@
 			},
 			"AttemptSummary": {
 				"properties": {
+					"answerCount": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
 					"pass": {
 						"type": "boolean",
 						"nullable": true

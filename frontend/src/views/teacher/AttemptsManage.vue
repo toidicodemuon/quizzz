@@ -47,6 +47,7 @@
       />
 
       <Pagination
+        v-if="total >= 10"
         class="mt-2"
         :page="page"
         :page-size="pageSize"
@@ -258,4 +259,3 @@ onMounted(async () => {
 </script>
 
 <style scoped></style>
-

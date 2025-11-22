@@ -118,6 +118,7 @@
           </DataTable>
 
           <Pagination
+            v-if="total >= 10"
             class="mt-2"
             :page="page"
             :page-size="pageSize"

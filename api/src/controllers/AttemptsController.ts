@@ -22,6 +22,14 @@ type AttemptSummary = {
   totalQuestions?: number;
   passMarkPercent?: number | null;
   pass?: boolean | null;
+  answerCount?: number | null;
+};
+
+const attemptAlreadySubmittedError = () => {
+  const err: any = new Error("Attempt already submitted for this room");
+  err.status = 400;
+  err.code = "ATTEMPT_ALREADY_SUBMITTED";
+  return err;
 };
 
 @Route("attempts")
@@ -71,14 +79,17 @@ export class AttemptController extends Controller {
       // compute counts
       const attemptIds = raw.map((r) => r.id);
       const examIds = Array.from(new Set(raw.map((r) => r.examId)));
-      const [correctGroups, totalGroups] = await Promise.all([
+      const [correctGroups, totalGroups, answerGroups] = await Promise.all([
         prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds }, isCorrect: true }, _count: { _all: true } }),
         prisma.examQuestion.groupBy({ by: ["examId"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+        prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds } }, _count: { _all: true } }),
       ]);
       const correctMap = new Map<number, number>();
       for (const g of correctGroups as any) correctMap.set(g.attemptId, Number(g._count._all || 0));
       const totalMap = new Map<number, number>();
       for (const g of totalGroups as any) totalMap.set(g.examId, Number(g._count._all || 0));
+      const answerCountMap = new Map<number, number>();
+      for (const g of answerGroups as any) answerCountMap.set(g.attemptId, Number(g._count._all || 0));
 
       const items = raw.map((i) => ({
         ...i,
@@ -93,6 +104,7 @@ export class AttemptController extends Controller {
         correctCount: correctMap.get(i.id) || 0,
         totalQuestions: totalMap.get(i.examId) || 0,
         pass: typeof (i as any).exam?.passMarkPercent === "number" && i.score !== null ? (Number(i.score) >= Number((i as any).exam.passMarkPercent)) : null,
+        answerCount: answerCountMap.get(i.id) ?? 0,
       })) as any;
       return { items, total };
     }
@@ -125,14 +137,17 @@ export class AttemptController extends Controller {
       ]);
       const attemptIds = raw.map((r) => r.id);
       const examIds = Array.from(new Set(raw.map((r) => r.examId)));
-      const [correctGroups, totalGroups] = await Promise.all([
+      const [correctGroups, totalGroups, answerGroups] = await Promise.all([
         prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds }, isCorrect: true }, _count: { _all: true } }),
         prisma.examQuestion.groupBy({ by: ["examId"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+        prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds } }, _count: { _all: true } }),
       ]);
       const correctMap = new Map<number, number>();
       for (const g of correctGroups as any) correctMap.set(g.attemptId, Number(g._count._all || 0));
       const totalMap = new Map<number, number>();
       for (const g of totalGroups as any) totalMap.set(g.examId, Number(g._count._all || 0));
+      const answerCountMap = new Map<number, number>();
+      for (const g of answerGroups as any) answerCountMap.set(g.attemptId, Number(g._count._all || 0));
 
       const items = raw.map((i) => ({
         ...i,
@@ -147,6 +162,7 @@ export class AttemptController extends Controller {
         correctCount: correctMap.get(i.id) || 0,
         totalQuestions: totalMap.get(i.examId) || 0,
         pass: typeof (i as any).exam?.passMarkPercent === "number" && i.score !== null ? (Number(i.score) >= Number((i as any).exam.passMarkPercent)) : null,
+        answerCount: answerCountMap.get(i.id) ?? 0,
       })) as any;
       return { items, total };
     }
@@ -179,14 +195,17 @@ export class AttemptController extends Controller {
     ]);
     const attemptIds = raw.map((r) => r.id);
     const examIds = Array.from(new Set(raw.map((r) => r.examId)));
-    const [correctGroups, totalGroups] = await Promise.all([
+    const [correctGroups, totalGroups, answerGroups] = await Promise.all([
       prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds }, isCorrect: true }, _count: { _all: true } }),
       prisma.examQuestion.groupBy({ by: ["examId"], where: { examId: { in: examIds } }, _count: { _all: true } }),
+      prisma.attemptAnswer.groupBy({ by: ["attemptId"], where: { attemptId: { in: attemptIds } }, _count: { _all: true } }),
     ]);
     const correctMap = new Map<number, number>();
     for (const g of correctGroups as any) correctMap.set(g.attemptId, Number(g._count._all || 0));
     const totalMap = new Map<number, number>();
     for (const g of totalGroups as any) totalMap.set(g.examId, Number(g._count._all || 0));
+    const answerCountMap = new Map<number, number>();
+    for (const g of answerGroups as any) answerCountMap.set(g.attemptId, Number(g._count._all || 0));
 
     const items = raw.map((i) => ({
       ...i,
@@ -201,6 +220,7 @@ export class AttemptController extends Controller {
       correctCount: correctMap.get(i.id) || 0,
       totalQuestions: totalMap.get(i.examId) || 0,
       pass: typeof (i as any).exam?.passMarkPercent === "number" && i.score !== null ? (Number(i.score) >= Number((i as any).exam.passMarkPercent)) : null,
+      answerCount: answerCountMap.get(i.id) ?? 0,
     })) as any;
     return { items, total };
   }
@@ -441,8 +461,7 @@ export class AttemptController extends Controller {
     });
 
     if (attempt && attempt.status !== AttemptStatus.IN_PROGRESS) {
-      this.setStatus(400);
-      throw new Error("Attempt already submitted for this room");
+      throw attemptAlreadySubmittedError();
     }
 
     if (!attempt) {
@@ -489,7 +508,7 @@ export class AttemptController extends Controller {
   ): Promise<AttemptSummary> {
     const user = (req as any).user as { id: number; role: string };
 
-    const room = await prisma.room.findUnique({ where: { id: body.roomId }, select: { id: true, examId: true } });
+    const room = await prisma.room.findUnique({ where: { id: body.roomId }, select: { id: true, examId: true, durationSec: true } });
     if (!room) {
       this.setStatus(400);
       throw new Error("Invalid roomId");
@@ -526,12 +545,11 @@ export class AttemptController extends Controller {
 
     let attempt = await prisma.attempt.findUnique({
       where: { roomId_studentId: { roomId: room.id, studentId: user.id } },
-      select: { id: true, status: true },
+      select: { id: true, status: true, startedAt: true },
     });
 
     if (attempt && attempt.status !== AttemptStatus.IN_PROGRESS) {
-      this.setStatus(400);
-      throw new Error("Attempt already submitted for this room");
+      throw attemptAlreadySubmittedError();
     }
 
     if (!attempt) {
@@ -541,8 +559,9 @@ export class AttemptController extends Controller {
           examId: room.examId,
           studentId: user.id,
           status: AttemptStatus.IN_PROGRESS,
+          startedAt: new Date(),
         },
-        select: { id: true, status: true },
+        select: { id: true, status: true, startedAt: true },
       });
     }
 
@@ -569,12 +588,17 @@ export class AttemptController extends Controller {
     const total = Number(totalPoints._sum.points ?? 0) || body.answers.length;
     const percent = total > 0 ? (earnedTotal / total) * 100 : 0;
 
+    const startedAtMs = attempt.startedAt ? new Date(attempt.startedAt).getTime() : Date.now();
+    const diffSec = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+    const durationCap = room.durationSec ? Number(room.durationSec) : null;
+    const timeTakenSec = durationCap ? Math.min(diffSec, durationCap) : diffSec;
+
     const updated = await prisma.attempt.update({
       where: { id: attempt.id },
       data: {
         status: AttemptStatus.SUBMITTED,
         submittedAt: new Date(),
-        timeTakenSec: Math.floor(300 + Math.random() * 600),
+        timeTakenSec,
         score: Number(percent.toFixed(2)),
       },
       select: {
