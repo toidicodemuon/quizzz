@@ -245,7 +245,9 @@ export class RoomsController extends Controller {
     const attempts = await prisma.attempt.count({ where: { roomId: id } });
     if (attempts > 0) {
       this.setStatus(400);
-      throw new Error("Room has attempts and cannot be deleted");
+      const err: any = new Error("Phòng thi có bài thi thí sinh, không thể xóa");
+      err.code = "ROOM_HAS_ATTEMPTS";
+      throw err;
     }
 
     await prisma.room.delete({ where: { id } });

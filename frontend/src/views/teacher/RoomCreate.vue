@@ -43,7 +43,7 @@
               >
                 <div>
                   <div class="fw-semibold">Tạo phòng thi</div>
-                  <div class="text-muted small">
+                  <div class="text-muted small" v-if="false">
                     Có 2 switch xáo trộn câu hỏi và đáp án bên dưới.
                   </div>
                 </div>
@@ -128,7 +128,7 @@
                     <tr class="text-muted small">
                       <th>Phòng</th>
                       <th>Thời gian</th>
-                      <th>Thiết lập</th>
+                      <!-- <th>Thiết lập</th> -->
                       <th class="text-end">Trạng thái</th>
                     </tr>
                   </thead>
@@ -167,7 +167,7 @@
                           Đóng: {{ fmtDate(r.closeAt) }}
                         </div>
                       </td>
-                      <td class="small">
+                      <!-- <td class="small">
                         <div>
                           <span class="badge bg-light text-dark border me-1">
                             Q {{ r.shuffleQuestions ? "On" : "Off" }}
@@ -176,7 +176,7 @@
                             A {{ r.shuffleChoices ? "On" : "Off" }}
                           </span>
                         </div>
-                      </td>
+                      </td> -->
                       <td class="text-end">
                         <div class="mb-1">
                           <span class="badge" :class="statusClass(r)">
@@ -194,6 +194,13 @@
                           </button>
                           <button
                             type="button"
+                            class="btn btn-outline-secondary"
+                            @click="openRoomDetail(r.id)"
+                          >
+                            Xem
+                          </button>
+                          <button
+                            type="button"
                             class="btn btn-outline-danger"
                             @click="handleCloseRoom(r.id)"
                             :disabled="closingRoomId === r.id || !isRoomLive(r)"
@@ -203,6 +210,19 @@
                               class="spinner-border spinner-border-sm me-1"
                             ></span>
                             Đóng
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger"
+                            @click="handleDeleteRoom(r.id)"
+                            :disabled="deletingRoomId === r.id || isRoomLive(r)"
+                            title="Xóa phòng đã đóng"
+                          >
+                            <span
+                              v-if="deletingRoomId === r.id"
+                              class="spinner-border spinner-border-sm me-1"
+                            ></span>
+                            Xóa
                           </button>
                         </div>
                       </td>
@@ -229,6 +249,12 @@
       @close="showHistory = false"
     />
 
+    <RoomDetailModal
+      :show="showRoomDetail"
+      :room="roomDetail"
+      @close="closeRoomDetail"
+    />
+
     <AttemptDetailModal
       :show="showAttemptDetail"
       mode="teacher"
@@ -246,6 +272,7 @@ import AttemptsRealtimeGrid from "../../components/rooms/AttemptsRealtimeGrid.vu
 import RoomCreateForm from "../../components/rooms/RoomCreateForm.vue";
 import RoomHistoryModal from "../../components/rooms/RoomHistoryModal.vue";
 import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
+import RoomDetailModal from "../../components/rooms/RoomDetailModal.vue";
 
 type ExamSummary = {
   id: number;
@@ -290,11 +317,14 @@ const selectedExamId = ref<number>(0);
 const selectedRoomId = ref<number | null>(null);
 const creating = ref(false);
 const closingRoomId = ref<number | null>(null);
+const deletingRoomId = ref<number | null>(null);
 const autoRefreshAttempts = ref(true);
 const showHistory = ref(false);
 const showConfig = ref(true);
 const showAttemptDetail = ref(false);
 const attemptDetail = ref<AttemptDetail | null>(null);
+const showRoomDetail = ref(false);
+const roomDetail = ref<RoomSummary | null>(null);
 
 const publishedExams = computed(() =>
   exams.value.filter(
@@ -474,8 +504,52 @@ async function handleCloseRoom(roomId: number) {
   }
 }
 
+async function handleDeleteRoom(roomId: number) {
+  const room = rooms.value.find((r) => r.id === roomId);
+  if (!room) return;
+  if (isRoomLive(room)) {
+    alert("Chỉ xóa được phòng đã đóng.");
+    return;
+  }
+  if (
+    !window.confirm(
+      "Bạn chắc chắn muốn xóa phòng này? Phòng đã có bài thi của sinh viên sẽ không xóa được."
+    )
+  ) {
+    return;
+  }
+  deletingRoomId.value = roomId;
+  try {
+    await api.delete(`/rooms/${roomId}`);
+    if (selectedRoomId.value === roomId) {
+      selectedRoomId.value = null;
+    }
+    await loadRooms();
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || "";
+    if (msg) {
+      alert(msg);
+    } else {
+      alert("Không thể xóa phòng thi (có thể đã có bài thi).");
+    }
+  } finally {
+    deletingRoomId.value = null;
+  }
+}
+
 function selectRoom(id: number) {
   selectedRoomId.value = id;
+}
+
+function openRoomDetail(roomId: number) {
+  const found = rooms.value.find((r) => r.id === roomId) || null;
+  roomDetail.value = found ? { ...found } : null;
+  showRoomDetail.value = !!found;
+}
+
+function closeRoomDetail() {
+  showRoomDetail.value = false;
+  roomDetail.value = null;
 }
 
 function onExamChange() {

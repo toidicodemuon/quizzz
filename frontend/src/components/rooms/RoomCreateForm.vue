@@ -20,7 +20,7 @@
           v-model.number="localForm.maxAttempts"
         />
       </div>
-      <div class="col-12 col-md-6">
+      <div class="col-12 col-md-6" v-if="false">
         <label class="form-label d-block">Xáo trộn</label>
         <div class="d-flex flex-wrap gap-2">
           <div class="form-check form-switch form-check-inline">
