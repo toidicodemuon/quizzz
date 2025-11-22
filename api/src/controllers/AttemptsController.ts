@@ -492,7 +492,7 @@ export class AttemptController extends Controller {
         where: { id: attempt.id },
         data: {
           timeTakenSec: 0,
-          startedAt: attempt.startedAt ?? new Date(),
+          startedAt: new Date(),
         },
         select: {
           id: true,

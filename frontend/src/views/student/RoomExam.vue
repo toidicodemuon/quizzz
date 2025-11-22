@@ -141,6 +141,16 @@ type QuestionView = {
 const questions = ref<QuestionView[]>([]);
 const answers = reactive<Record<number, number | undefined>>({});
 
+type AttemptMeta = {
+  id: number;
+  roomId: number;
+  examId: number;
+  status: string;
+  startedAt: string | null;
+  timeTakenSec: number | null;
+};
+const attemptMeta = ref<AttemptMeta | null>(null);
+
 const loaded = ref(false);
 const submitting = ref(false);
 const submitted = ref(false);
@@ -189,10 +199,13 @@ function parseApiError(err: any): { message: string; code?: string } {
   return { message, code };
 }
 
-async function ensureAttemptCanBegin(opts?: { activate?: boolean }): Promise<boolean> {
+async function ensureAttemptCanBegin(opts?: { activate?: boolean }): Promise<AttemptMeta | null> {
   try {
-    await api.post("/attempts/begin", { roomId, activate: !!opts?.activate });
-    return true;
+    const { data } = await api.post<AttemptMeta>("/attempts/begin", {
+      roomId,
+      activate: !!opts?.activate,
+    });
+    return data;
   } catch (e: any) {
     const { message, code } = parseApiError(e);
     const normalized = (message || "").toLowerCase();
@@ -206,7 +219,7 @@ async function ensureAttemptCanBegin(opts?: { activate?: boolean }): Promise<boo
     if (alreadySubmitted) {
       router.replace({ name: "student-exams" });
     }
-    return false;
+    return null;
   }
 }
 
@@ -214,6 +227,30 @@ async function loadRoom() {
   const { data: room } = await api.get<any>(`/rooms/${roomId}`);
   examId.value = room.examId;
   durationSec.value = room.durationSec ?? null;
+  if (durationSec.value) {
+    timeLeft.value = durationSec.value;
+  }
+}
+
+async function fetchAttemptMeta(): Promise<AttemptMeta | null> {
+  try {
+    const { data } = await api.get<any>("/attempts", {
+      params: { roomId, page: 1, pageSize: 1 },
+    });
+    const first = Array.isArray(data?.items) ? data.items[0] : null;
+    if (!first) return null;
+    return {
+      id: first.id,
+      roomId: first.roomId,
+      examId: first.examId,
+      status: first.status,
+      startedAt: first.startedAt ?? null,
+      timeTakenSec:
+        typeof first.timeTakenSec === "number" ? Number(first.timeTakenSec) : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 async function loadQuestions() {
@@ -244,29 +281,42 @@ async function loadQuestions() {
     );
 }
 
-function startTimer() {
-  if (!durationSec.value) return;
-  timeLeft.value = durationSec.value;
-  timer = window.setInterval(() => {
-    timeLeft.value -= 1;
-    if (timeLeft.value <= 0) {
-      window.clearInterval(timer);
-      autoSubmit();
+function startTimerFromAttempt(startedAt: string | null) {
+  const duration = durationSec.value;
+  if (!duration || !startedAt) return;
+  stopTimer();
+  const startedMs = new Date(startedAt).getTime();
+  const tick = () => {
+    const elapsed = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
+    const left = Math.max(0, duration - elapsed);
+    timeLeft.value = left;
+    if (left <= 0) {
+      stopTimer();
+      autoSubmit(true);
     }
-  }, 1000) as unknown as number;
+  };
+  tick();
+  timer = window.setInterval(tick, 1000) as unknown as number;
 }
 
+function stopTimer() {
+  if (timer) {
+    window.clearInterval(timer);
+    timer = undefined;
+  }
+}
 async function beginExam() {
   if (started.value || startingExam.value) return;
   startingExam.value = true;
   try {
-    const ok = await ensureAttemptCanBegin({ activate: true });
-    if (!ok) return;
+    const attempt = await ensureAttemptCanBegin({ activate: true });
+    if (!attempt) return;
+    attemptMeta.value = attempt;
     if (questions.value.length === 0) {
       await loadQuestions();
     }
     started.value = true;
-    startTimer();
+    startTimerFromAttempt(attempt.startedAt ?? null);
   } finally {
     startingExam.value = false;
   }
@@ -341,10 +391,25 @@ onMounted(async () => {
   }
   try {
     await loadRoom();
-    const prefetched = String(route.query?.prefetched || "").toLowerCase() === "1";
-    const ok = prefetched ? true : await ensureAttemptCanBegin();
+    let attempt = await fetchAttemptMeta();
+    if (!attempt) {
+      attempt = await ensureAttemptCanBegin();
+    }
+    attemptMeta.value = attempt;
     loaded.value = true;
-    if (!ok) return;
+    if (attempt) {
+      const status = String(attempt.status || "").toUpperCase();
+      if (status === "SUBMITTED" || status === "GRADED") {
+        submitted.value = true;
+      }
+      if (status === "IN_PROGRESS" && attempt.timeTakenSec !== null) {
+        started.value = true;
+        if (questions.value.length === 0) {
+          await loadQuestions();
+        }
+        startTimerFromAttempt(attempt.startedAt ?? null);
+      }
+    }
   } catch (e: any) {
     const { message } = parseApiError(e);
     alert(message || "Khong the tai du lieu phong thi");
