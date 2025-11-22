@@ -5140,6 +5140,9 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"activate": {
+										"type": "boolean"
+									},
 									"roomId": {
 										"type": "number",
 										"format": "double"

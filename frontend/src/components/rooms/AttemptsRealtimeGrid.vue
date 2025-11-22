@@ -127,6 +127,8 @@ type AttemptRow = {
   studentId: number;
   roomId: number;
   status: string;
+  activityStatus?: string;
+  rawStatus?: string;
   studentName?: string | null;
   studentCode?: string | null;
   correctCount?: number | null;
@@ -175,14 +177,9 @@ function fmtDuration(sec: number | null | undefined): string {
 }
 
 function statusBadge(a: AttemptRow): { label: string; class: string } {
-  const s = String(a.status || "").toUpperCase();
-  if (s === "IN_PROGRESS") {
-    const hasAnswered = Number(a.answerCount || 0) > 0;
-    if (!hasAnswered) {
-      return { label: "Đã vào phòng", class: "bg-info text-dark" };
-    }
-    return { label: "Đang làm bài", class: "bg-warning text-dark" };
-  }
+  const s = String(a.activityStatus || a.status || "").toUpperCase();
+  if (s === "IN_ROOM") return { label: "Đã vào phòng", class: "bg-info text-dark" };
+  if (s === "IN_PROGRESS") return { label: "Đang làm bài", class: "bg-warning text-dark" };
   if (s === "SUBMITTED" || s === "GRADED") {
     return { label: "Đã nộp bài", class: "bg-success" };
   }
@@ -200,14 +197,25 @@ async function reload() {
     const { data } = await api.get<Paginated<AttemptRow>>("/attempts", {
       params: { roomId: props.roomId, page: 1, pageSize: 100 },
     });
-    const items = (data.items || []).map((item) => ({
-      ...item,
-      status: String(item.status || "").toUpperCase(),
-      answerCount:
+    const items = (data.items || []).map((item) => {
+      const rawStatus = String(item.status || "").toUpperCase();
+      const answerCount =
         typeof (item as any).answerCount === "number"
           ? Number((item as any).answerCount)
-          : 0,
-    }));
+          : 0;
+      const hasStarted = rawStatus !== "IN_PROGRESS" ? false : item.timeTakenSec !== null && typeof item.timeTakenSec !== "undefined";
+      const activityStatus =
+        rawStatus === "IN_PROGRESS" && !hasStarted
+          ? "IN_ROOM"
+          : rawStatus;
+      return {
+        ...item,
+        rawStatus,
+        activityStatus,
+        status: rawStatus,
+        answerCount,
+      };
+    });
     attempts.value = items as any;
   } finally {
     loading.value = false;

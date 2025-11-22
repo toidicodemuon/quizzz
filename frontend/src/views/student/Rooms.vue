@@ -137,7 +137,19 @@ async function reload() {
 }
 
 function enterRoom(r: RoomSummary) {
-  router.push({ name: "student-room-exam", params: { roomId: r.id } });
+  api
+    .post("/attempts/begin", { roomId: r.id, activate: false })
+    .then(() => {
+      router.push({
+        name: "student-room-exam",
+        params: { roomId: r.id },
+        query: { prefetched: "1" },
+      });
+    })
+    .catch(() => {
+      // Nếu lỗi, vẫn cho vào trang thi; RoomExam.vue sẽ xử lý
+      router.push({ name: "student-room-exam", params: { roomId: r.id } });
+    });
 }
 
 onMounted(() => {

@@ -431,6 +431,7 @@ export class AttemptController extends Controller {
     @Body()
     body: {
       roomId: number;
+      activate?: boolean;
     }
   ): Promise<AttemptSummary> {
     const user = (req as any).user as { id: number; role: string };
@@ -471,6 +472,27 @@ export class AttemptController extends Controller {
           examId: room.examId,
           studentId: user.id,
           status: AttemptStatus.IN_PROGRESS,
+        },
+        select: {
+          id: true,
+          score: true,
+          startedAt: true,
+          submittedAt: true,
+          timeTakenSec: true,
+          studentId: true,
+          examId: true,
+          roomId: true,
+          status: true,
+        },
+      });
+    }
+
+    if (body.activate === true && attempt.timeTakenSec === null) {
+      attempt = await prisma.attempt.update({
+        where: { id: attempt.id },
+        data: {
+          timeTakenSec: 0,
+          startedAt: attempt.startedAt ?? new Date(),
         },
         select: {
           id: true,

@@ -189,9 +189,9 @@ function parseApiError(err: any): { message: string; code?: string } {
   return { message, code };
 }
 
-async function ensureAttemptCanBegin(): Promise<boolean> {
+async function ensureAttemptCanBegin(opts?: { activate?: boolean }): Promise<boolean> {
   try {
-    await api.post("/attempts/begin", { roomId });
+    await api.post("/attempts/begin", { roomId, activate: !!opts?.activate });
     return true;
   } catch (e: any) {
     const { message, code } = parseApiError(e);
@@ -260,7 +260,7 @@ async function beginExam() {
   if (started.value || startingExam.value) return;
   startingExam.value = true;
   try {
-    const ok = await ensureAttemptCanBegin();
+    const ok = await ensureAttemptCanBegin({ activate: true });
     if (!ok) return;
     if (questions.value.length === 0) {
       await loadQuestions();
@@ -341,7 +341,8 @@ onMounted(async () => {
   }
   try {
     await loadRoom();
-    const ok = await ensureAttemptCanBegin();
+    const prefetched = String(route.query?.prefetched || "").toLowerCase() === "1";
+    const ok = prefetched ? true : await ensureAttemptCanBegin();
     loaded.value = true;
     if (!ok) return;
   } catch (e: any) {
