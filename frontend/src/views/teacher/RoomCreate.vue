@@ -251,7 +251,7 @@
 
     <RoomDetailModal
       :show="showRoomDetail"
-      :room="roomDetail"
+      :room="roomDetail ? { ...roomDetail, code: roomDetail.code ?? '' } : null"
       @close="closeRoomDetail"
     />
 

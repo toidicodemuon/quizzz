@@ -16,4 +16,3 @@ export default defineComponent({
   name: "teacher-room-create",
 });
 </script>
-
