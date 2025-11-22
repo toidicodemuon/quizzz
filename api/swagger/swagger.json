@@ -71,6 +71,11 @@
 					"role": {
 						"$ref": "#/components/schemas/Role"
 					},
+					"subjectId": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
 					"fullName": {
 						"type": "string",
 						"nullable": true
@@ -88,6 +93,7 @@
 					"updatedAt",
 					"createdAt",
 					"role",
+					"subjectId",
 					"fullName",
 					"email",
 					"id"
@@ -1264,6 +1270,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"in": "query",
+						"name": "subjectId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
 					}
 				]
 			},
@@ -1341,6 +1356,11 @@
 								"properties": {
 									"password": {
 										"type": "string"
+									},
+									"subjectId": {
+										"type": "number",
+										"format": "double",
+										"nullable": true
 									},
 									"email": {
 										"type": "string",
@@ -1462,6 +1482,11 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"subjectId": {
+										"type": "number",
+										"format": "double",
+										"nullable": true
+									},
 									"userCode": {
 										"type": "string"
 									},

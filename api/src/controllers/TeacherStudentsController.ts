@@ -20,6 +20,7 @@ type StudentResponse = {
   id: number;
   email: string | null;
   fullName: string | null;
+  subjectId: number | null;
   role: Role;
   createdAt: Date;
   updatedAt: Date;
@@ -33,6 +34,7 @@ export class TeacherStudentsController extends Controller {
     email: true,
     fullName: true,
     userCode: true,
+    subjectId: true,
     role: true,
     createdAt: true,
     updatedAt: true,
@@ -45,7 +47,8 @@ export class TeacherStudentsController extends Controller {
   public async getStudents(
     @Query() page?: number,
     @Query() pageSize?: number,
-    @Query() search?: string
+    @Query() search?: string,
+    @Query() subjectId?: number
   ): Promise<{ items: StudentResponse[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
@@ -57,6 +60,9 @@ export class TeacherStudentsController extends Controller {
         { fullName: { contains: q } },
         { userCode: { contains: q } },
       ];
+    }
+    if (typeof subjectId === "number") {
+      where.subjectId = subjectId;
     }
     const [items, total] = await Promise.all([
       prisma.user.findMany({
@@ -82,6 +88,7 @@ export class TeacherStudentsController extends Controller {
       fullName: string;
       userCode: string;
       email?: string | null;
+      subjectId?: number | null;
       password: string;
     }
   ): Promise<{ message: string; user: StudentResponse }> {
@@ -97,6 +104,10 @@ export class TeacherStudentsController extends Controller {
       userCode: body.userCode,
       password: passwordHash,
       role: Role.STUDENT,
+      subjectId:
+        typeof body.subjectId === "number" && !isNaN(body.subjectId)
+          ? body.subjectId
+          : null,
     };
     if (typeof body.email !== "undefined") data.email = body.email;
     const user = await prisma.user.create({
@@ -120,6 +131,7 @@ export class TeacherStudentsController extends Controller {
       email?: string | null;
       password?: string;
       userCode?: string;
+      subjectId?: number | null;
     }
   ): Promise<{ message: string; user: StudentResponse }> {
     const existing = await prisma.user.findUnique({ where: { id } });
@@ -132,6 +144,11 @@ export class TeacherStudentsController extends Controller {
     if (typeof body.fullName !== "undefined") data.fullName = body.fullName;
     if (typeof body.email !== "undefined") data.email = body.email;
     if (typeof body.userCode !== "undefined") data.userCode = body.userCode;
+    if (typeof body.subjectId !== "undefined")
+      data.subjectId =
+        typeof body.subjectId === "number" && !isNaN(body.subjectId)
+          ? body.subjectId
+          : null;
     if (typeof body.password !== "undefined") {
       const bcrypt = await import("bcryptjs");
       data.password = await bcrypt.hash(body.password, 10);
