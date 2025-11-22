@@ -34,6 +34,7 @@ export async function seedExamsWithQuestions(
     const count = perBase + (i < remainder ? 1 : 0);
     for (let k = 0; k < count; k++) {
       const status = randItem(statuses);
+      const passMarkPercent = 50 + Math.floor(Math.random() * 36); // 50 - 85
       const code = randomCode("EX");
       const exam = await prisma.exam.create({
         data: {
@@ -50,9 +51,8 @@ export async function seedExamsWithQuestions(
           showScoreImmediately: true,
           showCorrectAnswers: true,
           showExplanation: true,
-          // random optional fields
-          passMarkPercent:
-            Math.random() < 0.5 ? 50 + Math.floor(Math.random() * 31) : null,
+          // luôn có ngưỡng đậu/rớt để giao diện hiển thị
+          passMarkPercent,
           reviewWindowMin:
             Math.random() < 0.5
               ? 15 * (1 + Math.floor(Math.random() * 8))

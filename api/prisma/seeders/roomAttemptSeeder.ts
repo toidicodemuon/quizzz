@@ -40,10 +40,14 @@ export async function seedRoomsAndAttempts(
   // Map exam index to published status for selection
   const examsFull = await prisma.exam.findMany({
     where: { id: { in: exams.map((e) => e.id) } },
-    select: { id: true, status: true },
+    select: { id: true, status: true, passMarkPercent: true },
   });
   const isPublished = new Map<number, boolean>();
-  for (const e of examsFull) isPublished.set(e.id, e.status === "PUBLISHED");
+  const passMark = new Map<number, number | null>();
+  for (const e of examsFull) {
+    isPublished.set(e.id, e.status === "PUBLISHED");
+    passMark.set(e.id, (e as any).passMarkPercent ?? null);
+  }
 
   function shuffle<T>(arr: T[]): T[] {
     for (let j = arr.length - 1; j > 0; j--) {
@@ -133,7 +137,16 @@ export async function seedRoomsAndAttempts(
       const submitted = new Date(started.getTime() + duration * 1000);
       const totalPoints =
         eqs.reduce((sum, r) => sum + Number(r.points as any), 0) || 1;
-      const percent = (earnedTotal / totalPoints) * 100;
+      // Pha trộn đậu/rớt: dịch score quanh 60-90% hoặc 30-55%
+      const pm = passMark.get(ex.id) ?? 60;
+      const tiltPass = Math.random() < 0.6; // 60% đậu
+      const target = tiltPass
+        ? pm + Math.random() * (100 - pm)
+        : Math.max(0, pm - (5 + Math.random() * 25));
+      const percent = Math.min(
+        100,
+        Math.max(0, (target + (earnedTotal / totalPoints) * 100) / 2)
+      );
       await prisma.attempt.update({
         where: { id: attempt.id },
         data: {

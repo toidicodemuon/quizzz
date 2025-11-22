@@ -4,8 +4,12 @@ import bcrypt from "bcryptjs";
 /**
  * Tạo tài khoản mẫu phù hợp schema mới (User.email, User.password, Role enum).
  * Mặc định lưu password dạng hash vào trường `password`.
+ * Sinh 150 học viên, mỗi học viên gắn với một môn (subjectId), mã SV có prefix theo mã môn.
  */
-export async function seedUsers(prisma: PrismaClient) {
+export async function seedUsers(
+  prisma: PrismaClient,
+  subjects: Array<{ id: number; name: string; code: string | null }>
+) {
   const hash = (pwd: string) => bcrypt.hash(pwd, 10);
   const [teacherPassword, studentPassword, adminPassword] = await Promise.all([
     hash("123456"),
@@ -23,18 +27,28 @@ export async function seedUsers(prisma: PrismaClient) {
     },
   });
 
-  const prefixes = ["MSEX", "MSWO", "MOSPP", "PT", "THL10", "THCB"];
-  // Create 12 students (only keep id for downstream usage)
+  const normalize = (s: string) =>
+    s
+      .normalize("NFD")
+      .replace(/\p{Diacritic}/gu, "")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase();
+
+  // Tạo 150 học viên, phân bổ đều theo danh sách môn
   const students: Array<{ id: number }> = [];
-  for (let i = 1; i <= 12; i++) {
-    const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const totalStudents = 150;
+  for (let i = 1; i <= totalStudents; i++) {
+    const subject = subjects[(i - 1) % subjects.length];
+    const basePrefix = normalize(subject.code || subject.name || "SUBJ");
+    const prefix = basePrefix.slice(0, 6) || "SUBJ";
     const num = String(i).padStart(3, "0");
     const s = await prisma.user.create({
       data: {
         email: `student${i}@example.com`,
         password: studentPassword,
-        fullName: `Sinh viên ${i}`,
-        userCode: `${pfx}${num}`,
+        fullName: `Sinh viên ${subject.name} #${i}`,
+        userCode: `${prefix}${num}`,
+        subjectId: subject.id,
         role: Role.STUDENT,
       },
       select: { id: true },

@@ -11,11 +11,11 @@ const prisma = new PrismaClient();
 async function main() {
   await clearData(prisma);
 
-  const users = await seedUsers(prisma);
-  console.log("Seeded users:", users);
-
   const subjects = await seedSubjects(prisma);
   console.log(`Seeded ${subjects.length} subjects`);
+
+  const users = await seedUsers(prisma, subjects);
+  console.log("Seeded users:", users);
 
   await seedQuestionsBySubjects(
     prisma,
