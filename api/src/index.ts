@@ -2,6 +2,9 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
@@ -15,25 +18,29 @@ dotenv.config({ path: `.env.${env}` });
 
 const app = express();
 
+// Basic security middlewares
+app.use(helmet());
+app.use(morgan(env === "development" ? "dev" : "combined"));
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: Number(process.env.RATE_LIMIT_MAX || 300),
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+});
+app.use(limiter);
+
+// CORS config from env (comma separated), fallback to localhost
+const corsOrigins =
+  (process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+
 // Middleware
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: [
-      "http://192.168.1.3:5173",
-      "http://192.168.1.8:5173",
-      "http://192.168.1.11:5173",
-      "http://192.168.1.15:5173",
-      "http://192.168.1.18:5173",
-      "http://192.168.1.19:5173",
-      "http://192.168.1.20:5173",
-      "http://192.168.1.21:5173",
-      "http://192.168.1.23:5173",
-      "http://192.168.1.24:5173",
-      "http://192.168.1.25:5173",
-      "http://192.168.1.30:5173",
-      "http://localhost:5173",
-    ],
+    origin: corsOrigins.length ? corsOrigins : ["http://localhost:5173"],
   })
 );
 
@@ -46,6 +53,11 @@ app.use(
 //app.use("/api/quiz", authMiddleware);
 
 // Register TSOA routes (tạo ra /api/* theo cấu hình basePath)
+// Health check
+app.get("/healthz", (_req, res) => {
+  res.json({ status: "ok", env, uptime: process.uptime() });
+});
+
 RegisterRoutes(app);
 
 // Lightweight refresh endpoint (bypass TSOA generation)

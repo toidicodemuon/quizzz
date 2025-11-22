@@ -250,6 +250,12 @@ To regenerate routes and OpenAPI spec after changes:
 npx tsoa spec-and-routes
 ```
 
+## 6. Prod-readiness quick notes
+- Bật biến môi trường: `CORS_ORIGINS` (danh sách domain cách nhau dấu phẩy), `RATE_LIMIT_MAX` (mặc định 300 requests/15 phút), `JWT_SECRET`, `DATABASE_URL`.
+- Healthcheck: `GET /healthz` trả `{ status: "ok" }`.
+- Middleware bảo mật đã bật: `helmet`, rate-limit, logging (morgan). Dùng non-root DB user cho production.
+- Kiểm tra nhanh trước CI/CD: `npm run test` (tsc --noEmit) và `npm run build` để sinh swagger/routes + build dist.
+
 
 # TIPs
 - list and write struct folders and files :

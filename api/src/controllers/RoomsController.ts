@@ -23,13 +23,29 @@ export class RoomsController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Security("bearerAuth")
   public async list(
+    @Request() req: ExRequest,
     @Query() examId?: number,
     @Query() page?: number,
     @Query() pageSize?: number
   ): Promise<{ items: RoomSummary[]; total: number }> {
+    const user = (req as any).user as { id: number; role: string };
+    const role = String(user?.role || "").toUpperCase();
+    const now = new Date();
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
-    const where = typeof examId === "number" ? { examId } : {};
+    const where: any = {};
+    if (typeof examId === "number") where.examId = examId;
+
+    if (role === "TEACHER") {
+      where.exam = { authorId: user.id };
+    } else if (role === "STUDENT") {
+      where.exam = { status: "PUBLISHED" as any };
+      where.AND = [
+        { OR: [{ openAt: null }, { openAt: { lte: now } }] },
+        { OR: [{ closeAt: null }, { closeAt: { gte: now } }] },
+      ];
+    }
+
     const [items, total] = await Promise.all([
       prisma.room.findMany({
         where,
@@ -59,7 +75,13 @@ export class RoomsController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(404, "Room not found")
   @Security("bearerAuth")
-  public async getById(@Path() id: number): Promise<RoomSummary | null> {
+  public async getById(
+    @Request() req: ExRequest,
+    @Path() id: number
+  ): Promise<RoomSummary | null> {
+    const user = (req as any).user as { id: number; role: string };
+    const role = String(user?.role || "").toUpperCase();
+    const now = new Date();
     const room = await prisma.room.findUnique({
       where: { id },
       select: {
@@ -74,6 +96,7 @@ export class RoomsController extends Controller {
         maxAttempts: true,
         createdById: true,
         createdAt: true,
+        exam: { select: { authorId: true, status: true } },
       },
     });
     if (!room) {
@@ -81,7 +104,28 @@ export class RoomsController extends Controller {
       err.status = 404;
       throw err;
     }
-    return room;
+    if (role === "TEACHER" && (room as any).exam?.authorId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+    if (role === "STUDENT") {
+      if ((room as any).exam?.status !== "PUBLISHED") {
+        const err: any = new Error("Forbidden");
+        err.status = 403;
+        throw err;
+      }
+      const isNotOpen =
+        (room.openAt && now < room.openAt) || (room.closeAt && now > room.closeAt);
+      if (isNotOpen) {
+        const err: any = new Error("Room is closed");
+        err.status = 403;
+        err.code = "ROOM_CLOSED";
+        throw err;
+      }
+    }
+    const { exam, ...rest } = room as any;
+    return rest;
   }
 
   @Post("/")

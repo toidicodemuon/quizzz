@@ -80,6 +80,7 @@ export class ExamsController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Security("bearerAuth")
   public async list(
+    @Request() req: ExRequest,
     @Query() page?: number,
     @Query() pageSize?: number,
     @Query() subjectId?: number,
@@ -87,10 +88,22 @@ export class ExamsController extends Controller {
   ): Promise<{ items: ExamSummary[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
+    const user = (req as any).user as { id: number; role: string };
+    const role = String(user?.role || "").toUpperCase();
+
     const where: any = {};
 
-    if (typeof authorId === "number") where.authorId = authorId;
     if (typeof subjectId === "number") where.subjectId = subjectId;
+
+    if (role === "ADMIN") {
+      if (typeof authorId === "number") where.authorId = authorId;
+    } else if (role === "TEACHER") {
+      where.authorId = user.id;
+    } else {
+      // STUDENT: only see published exams
+      where.status = "PUBLISHED";
+    }
+
     const [items, total] = await Promise.all([
       prisma.exam.findMany({
         where,
@@ -131,7 +144,13 @@ export class ExamsController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(404, "Exam not found")
   @Security("bearerAuth")
-  public async get(@Path() id: number): Promise<ExamSummary | null> {
+  public async get(
+    @Request() req: ExRequest,
+    @Path() id: number
+  ): Promise<ExamSummary | null> {
+    const user = (req as any).user as { id: number; role: string };
+    const role = String(user?.role || "").toUpperCase();
+
     const exam = await prisma.exam.findUnique({
       where: { id },
       select: {
@@ -158,6 +177,20 @@ export class ExamsController extends Controller {
     if (!exam) {
       const err: any = new Error("Exam not found");
       err.status = 404;
+      throw err;
+    }
+    if (role === "STUDENT" && exam.status !== "PUBLISHED") {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+    if (
+      role === "TEACHER" &&
+      exam.status !== "PUBLISHED" &&
+      exam.authorId !== user.id
+    ) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
       throw err;
     }
     const mapped: ExamSummary = {

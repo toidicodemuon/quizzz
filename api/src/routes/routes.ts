@@ -612,6 +612,7 @@ export function RegisterRoutes(app: Router) {
 
             async function RoomsController_list(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
                     examId: {"in":"query","name":"examId","dataType":"double"},
                     page: {"in":"query","name":"page","dataType":"double"},
                     pageSize: {"in":"query","name":"pageSize","dataType":"double"},
@@ -645,6 +646,7 @@ export function RegisterRoutes(app: Router) {
 
             async function RoomsController_getById(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
                     id: {"in":"path","name":"id","required":true,"dataType":"double"},
             };
 
@@ -998,6 +1000,7 @@ export function RegisterRoutes(app: Router) {
 
             async function ExamsController_list(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
                     page: {"in":"query","name":"page","dataType":"double"},
                     pageSize: {"in":"query","name":"pageSize","dataType":"double"},
                     subjectId: {"in":"query","name":"subjectId","dataType":"double"},
@@ -1032,6 +1035,7 @@ export function RegisterRoutes(app: Router) {
 
             async function ExamsController_get(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    req: {"in":"request","name":"req","required":true,"dataType":"object"},
                     id: {"in":"path","name":"id","required":true,"dataType":"double"},
             };
 
