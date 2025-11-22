@@ -8,9 +8,27 @@
         </div>
       </div>
       <div class="text-end">
-        <div>Thời gian còn lại:</div>
-        <div class="fw-bold" :class="timeLeft <= 60 ? 'text-danger' : ''">
-          {{ countdownText }}
+        <div class="d-flex align-items-center gap-2 justify-content-end">
+          <div>
+            <div>Thời gian còn lại:</div>
+            <div class="fw-bold" :class="timeLeft <= 60 ? 'text-danger' : ''">
+              {{ countdownText }}
+            </div>
+          </div>
+          <button
+            v-if="started && !submitted"
+            class="btn btn-sm btn-primary"
+            type="button"
+            @click="confirmSubmit"
+            :disabled="submitting"
+            title="Nộp bài"
+          >
+            <span
+              v-if="submitting"
+              class="spinner-border spinner-border-sm me-1"
+            ></span>
+            Nộp bài
+          </button>
         </div>
       </div>
     </div>
@@ -115,6 +133,79 @@
       </div>
     </div>
   </div>
+
+  <div
+    v-if="showWarning30s && !submitted"
+    class="warning-toast shadow"
+    role="alert"
+    :style="{
+      left: warningPos.x + 'px',
+      top: warningPos.y + 'px',
+      cursor: 'move',
+    }"
+    @mousedown.stop="startDragWarning"
+  >
+    <div class="d-flex align-items-start">
+      <div class="me-3">
+        <div class="fw-semibold">Sắp hết giờ</div>
+        <div class="small text-muted">Hệ thống sẽ tự động nộp sau:</div>
+        <div class="display-5 lh-1 text-danger mt-1">
+          {{ warningSecondsLeft }}s
+        </div>
+      </div>
+      <div class="d-flex flex-column gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-danger"
+          @click="confirmSubmit"
+          :disabled="submitting"
+        >
+          Nộp ngay
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-light"
+          @click="closeWarning"
+        >
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div
+    v-if="showTimeUpModal"
+    class="modal fade show timeup-modal"
+    style="display: block"
+    aria-modal="true"
+    role="dialog"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Hết thời gian</h5>
+        </div>
+        <div class="modal-body">
+          <p class="mb-2">
+            Thời gian làm bài đã kết thúc. Hệ thống đã tự động nộp bài của bạn.
+          </p>
+          <p class="text-muted small mb-0">
+            Nếu thấy chưa được cập nhật, vui lòng kiểm tra lại lịch sử bài thi.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="showTimeUpModal = false"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="showTimeUpModal" class="modal-backdrop fade show"></div>
 </template>
 
 <script setup lang="ts">
@@ -167,6 +258,22 @@ const detail = ref<{
 const timeLeft = ref(0);
 const started = ref(false);
 const startingExam = ref(false);
+const autoSubmitting = ref(false);
+const warnedAt30s = ref(false);
+const showTimeUpModal = ref(false);
+const showWarning30s = ref(false);
+const warningSecondsLeft = ref(30);
+const warningDismissed = ref(false);
+const warningPos = ref<{ x: number; y: number }>(
+  typeof window !== "undefined"
+    ? {
+        x: Math.max(12, Math.floor(window.innerWidth / 2 - 180)),
+        y: Math.max(12, window.innerHeight - 220),
+      }
+    : { x: 12, y: 12 }
+);
+const warningDragging = ref(false);
+const warningOffset = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 let timer: number | undefined;
 
 const countdownText = computed(() => {
@@ -199,7 +306,9 @@ function parseApiError(err: any): { message: string; code?: string } {
   return { message, code };
 }
 
-async function ensureAttemptCanBegin(opts?: { activate?: boolean }): Promise<AttemptMeta | null> {
+async function ensureAttemptCanBegin(opts?: {
+  activate?: boolean;
+}): Promise<AttemptMeta | null> {
   try {
     const { data } = await api.post<AttemptMeta>("/attempts/begin", {
       roomId,
@@ -246,7 +355,9 @@ async function fetchAttemptMeta(): Promise<AttemptMeta | null> {
       status: first.status,
       startedAt: first.startedAt ?? null,
       timeTakenSec:
-        typeof first.timeTakenSec === "number" ? Number(first.timeTakenSec) : null,
+        typeof first.timeTakenSec === "number"
+          ? Number(first.timeTakenSec)
+          : null,
     };
   } catch {
     return null;
@@ -284,12 +395,26 @@ async function loadQuestions() {
 function startTimerFromAttempt(startedAt: string | null) {
   const duration = durationSec.value;
   if (!duration || !startedAt) return;
+  warnedAt30s.value = false;
+  showWarning30s.value = false;
   stopTimer();
   const startedMs = new Date(startedAt).getTime();
   const tick = () => {
     const elapsed = Math.max(0, Math.floor((Date.now() - startedMs) / 1000));
     const left = Math.max(0, duration - elapsed);
     timeLeft.value = left;
+    if (!warningDismissed.value) {
+      if (left <= 30) {
+        warnedAt30s.value = true;
+        showWarning30s.value = true;
+        warningSecondsLeft.value = Math.max(0, Math.floor(left));
+      } else if (warnedAt30s.value) {
+        warnedAt30s.value = false;
+        showWarning30s.value = false;
+      }
+    } else {
+      showWarning30s.value = false;
+    }
     if (left <= 0) {
       stopTimer();
       autoSubmit(true);
@@ -316,6 +441,7 @@ async function beginExam() {
       await loadQuestions();
     }
     started.value = true;
+    warningDismissed.value = false;
     startTimerFromAttempt(attempt.startedAt ?? null);
   } finally {
     startingExam.value = false;
@@ -327,9 +453,13 @@ function confirmSubmit() {
   submitAttempt();
 }
 
-function autoSubmit() {
-  if (submitted.value || submitting.value) return;
-  submitAttempt(true);
+function autoSubmit(isAuto = false) {
+  if (submitted.value || submitting.value || autoSubmitting.value) return;
+  autoSubmitting.value = true;
+  showTimeUpModal.value = true;
+  submitAttempt(isAuto).finally(() => {
+    autoSubmitting.value = false;
+  });
 }
 
 async function submitAttempt(isAuto = false) {
@@ -363,7 +493,9 @@ async function submitAttempt(isAuto = false) {
   } catch (e: any) {
     const { message } = parseApiError(e);
     if (!isAuto) {
-      alert(message || "Không thể nộp bài thi");
+      alert(message || "Khong the nop bai thi");
+    } else if (message) {
+      console.warn("Auto submit failed:", message);
     }
   } finally {
     submitting.value = false;
@@ -401,6 +533,9 @@ onMounted(async () => {
       const status = String(attempt.status || "").toUpperCase();
       if (status === "SUBMITTED" || status === "GRADED") {
         submitted.value = true;
+        alert("Bạn đã làm bài thi này rồi.");
+        router.replace({ name: "student-exams" });
+        return;
       }
       if (status === "IN_PROGRESS" && attempt.timeTakenSec !== null) {
         started.value = true;
@@ -422,4 +557,62 @@ onBeforeUnmount(() => {
     window.clearInterval(timer);
   }
 });
+
+function closeWarning() {
+  showWarning30s.value = false;
+  warningDismissed.value = true;
+}
+
+function startDragWarning(event: MouseEvent) {
+  warningDragging.value = true;
+  warningOffset.value = {
+    x: event.clientX - warningPos.value.x,
+    y: event.clientY - warningPos.value.y,
+  };
+  window.addEventListener("mousemove", onDragWarning);
+  window.addEventListener("mouseup", endDragWarning);
+}
+
+function onDragWarning(event: MouseEvent) {
+  if (!warningDragging.value) return;
+  warningPos.value = {
+    x: event.clientX - warningOffset.value.x,
+    y: event.clientY - warningOffset.value.y,
+  };
+}
+
+function endDragWarning() {
+  warningDragging.value = false;
+  window.removeEventListener("mousemove", onDragWarning);
+  window.removeEventListener("mouseup", endDragWarning);
+}
 </script>
+
+<style scoped>
+.card {
+  width: 100%;
+}
+
+.warning-toast {
+  position: fixed;
+  min-width: 320px;
+  padding: 14px 16px;
+  background: #fffaf5;
+  border: 1px solid #ffd7a8;
+  border-radius: 10px;
+  z-index: 1060;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.warning-toast .display-6 {
+  font-size: 2.4rem;
+}
+
+.warning-toast .display-5 {
+  font-size: 2.6rem;
+}
+
+.timeup-modal .modal-content {
+  border-radius: 12px;
+}
+</style>
