@@ -1,222 +1,158 @@
 <template>
-  <div class="card mb-3 dashboard-header-card rounded-0">
-    <div
-      class="card-body d-flex flex-wrap justify-content-between align-items-center py-2"
-    >
-      <div>
-        <h6 class="card-title mb-1">Dashboard sinh viên</h6>
-        <div class="text-muted small">
-          Tổng quan nhanh về bài thi và phòng thi.
-        </div>
-      </div>
-      <button
-        type="button"
-        class="btn btn-sm btn-outline-secondary mt-2 mt-sm-0"
-        @click="reload"
-        :disabled="loading"
+  <div class="student-dashboard">
+    <div class="card border-0 shadow-sm hero mb-4">
+      <div
+        class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3"
       >
-        <span
-          v-if="loading"
-          class="spinner-border spinner-border-sm me-1"
-        ></span>
-        <i v-else class="bi bi-arrow-clockwise me-1"></i>
-        Làm mới
-      </button>
-    </div>
-  </div>
-
-  <div class="row g-3 justify-content-center align-items-top p-1">
-    <!-- Last attempt card -->
-    <div class="col-12 col-md-6 col-lg-6">
-      <div class="card dashboard-card-small h-100">
-        <div
-          class="card-header py-2 d-flex justify-content-between align-items-center"
-        >
-          <span class="fw-semibold small">Bài thi gần nhất</span>
-          <span
-            v-if="lastAttempt"
-            class="badge bg-light text-muted border small"
-          >
-            Đề #{{ lastAttempt.examId }}
-          </span>
+        <div>
+          <p class="text-uppercase text-muted small mb-1">Xin chào, sinh viên</p>
+          <h3 class="fw-semibold mb-2">Theo dõi phòng thi và bài làm</h3>
+          <p class="mb-0 text-muted">
+            Vào phòng nhanh, xem bài đã làm và nắm trạng thái phòng đang mở.
+          </p>
         </div>
-        <div class="card-body" v-if="lastAttempt">
-          <div class="mb-1">
-            <div class="text-muted">Đề thi</div>
-            <div class="fw-semibold">
-              {{ lastAttempt.examTitle || "Không rõ tiêu đề" }}
-            </div>
-            <div class="text-muted">
-              Mã đề: <code>{{ lastAttempt.examCode || "-" }}</code>
-            </div>
-          </div>
-          <div class="mb-2">
-            <div class="text-muted">Trạng thái:</div>
-            <span class="badge" :class="statusBadgeClass">
-              {{ statusText }}
-            </span>
-            <span v-if="passState !== null" class="ms-2 small">
-              Kết quả:
-              <span
-                class="badge"
-                :class="passState ? 'bg-success' : 'bg-danger'"
-              >
-                {{ passState ? "Đạt" : "Trượt" }}
-              </span>
-            </span>
-          </div>
-          <div class="row mb-2 small">
-            <div class="col-6 mb-1">
-              <div class="text-muted">Điểm</div>
-              <div class="fw-semibold">
-                {{ lastAttempt.score ?? "-" }}
-              </div>
-            </div>
-            <div class="col-6 mb-1">
-              <div class="text-muted">Đúng / Tổng</div>
-              <div class="fw-semibold">
-                {{ lastAttempt.correctCount ?? 0 }}/{{
-                  lastAttempt.totalQuestions ?? 0
-                }}
-              </div>
-            </div>
-            <div class="col-6 mb-1">
-              <div class="text-muted">Bắt đầu</div>
-              <div>{{ fmtDate(lastAttempt.startedAt) }}</div>
-            </div>
-            <div class="col-6 mb-1">
-              <div class="text-muted">Nộp</div>
-              <div>{{ fmtDate(lastAttempt.submittedAt) }}</div>
-            </div>
-            <div class="col-6 mb-1">
-              <div class="text-muted">Thời gian làm</div>
-              <div>{{ fmtDuration(lastAttempt.timeTakenSec) }}</div>
-            </div>
-          </div>
-          <div class="text-end">
-            <button
-              type="button"
-              class="btn btn-sm btn-outline-primary"
-              @click="goToExams"
-            >
-              <i class="bi bi-ui-checks-grid me-1"></i>
-              Xem tất cả bài thi
-            </button>
-          </div>
-        </div>
-        <div class="card-body" v-else-if="loadingLastAttempt">
-          <div class="d-flex align-items-center">
-            <span
-              class="spinner-border spinner-border-sm me-2 text-primary"
-            ></span>
-            <span class="small text-muted">Đang tải thông tin bài thi...</span>
-          </div>
-        </div>
-        <div class="card-body" v-else>
-          <div class="text-muted small mb-2">Bạn chưa có bài thi nào.</div>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-primary"
-            @click="goToRooms"
-          >
-            <i class="bi bi-door-open me-1"></i>
-            Vào phòng thi đầu tiên
-          </button>
+        <div class="d-flex flex-wrap gap-2">
+          <router-link to="/student/rooms" class="btn btn-primary">
+            <i class="bi bi-door-open me-1"></i> Vào phòng thi
+          </router-link>
+          <router-link to="/student/exams" class="btn btn-outline-light text-dark">
+            <i class="bi bi-ui-checks-grid me-1"></i> Xem bài thi
+          </router-link>
         </div>
       </div>
     </div>
 
-    <!-- Nearest open room card -->
-    <div class="col-12 col-md-6 col-lg-6">
-      <div class="card dashboard-card-small h-100">
-        <div
-          class="card-header py-2 d-flex justify-content-between align-items-center"
-        >
-          <div class="d-flex align-items-center gap-2">
-            <span class="fw-semibold small"> Phòng thi đang mở gần nhất </span>
-            <span v-if="nearestRoom" class="live-pill ms-1">
-              <span class="dot"></span>
-              <span>LIVE</span>
+    <div class="row g-3 mb-4">
+      <div v-for="card in statCards" :key="card.title" class="col-12 col-md-4">
+        <div class="card h-100 shadow-sm border-0">
+          <div class="card-body d-flex align-items-center gap-3">
+            <span :class="['stat-icon', card.bg]">
+              <i :class="card.icon"></i>
             </span>
+            <div>
+              <p class="text-muted text-uppercase small mb-1">{{ card.title }}</p>
+              <h4 class="fw-semibold mb-0">{{ card.value }}</h4>
+              <small class="text-muted">{{ card.sub }}</small>
+            </div>
           </div>
-          <span
-            v-if="nearestRoom"
-            class="badge bg-light text-muted border small"
-          >
-            Phòng #{{ nearestRoom.id }}
-          </span>
         </div>
-        <div class="card-body" v-if="nearestRoom">
-          <div
-            class="mb-1 d-flex justify-content-between align-items-center small"
-          >
-            <div class="fw-semibold">
-              Mã phòng: <code>{{ nearestRoom.code }}</code>
-            </div>
-            <div class="text-muted">Đề #{{ nearestRoom.examId }}</div>
-          </div>
-          <div class="mb-2 small">
-            <div>
-              <span class="text-muted">Mở:</span>
-              <span class="ms-1">{{ fmtDate(nearestRoom.openAt) }}</span>
-            </div>
-            <div>
-              <span class="text-muted">Đóng:</span>
-              <span class="ms-1">{{ fmtDate(nearestRoom.closeAt) }}</span>
-            </div>
-            <div>
-              <span class="text-muted">Thời gian:</span>
-              <span class="ms-1">
-                {{
-                  nearestRoom.durationSec
-                    ? Math.round(nearestRoom.durationSec / 60) + " phút"
-                    : "Không giới hạn"
-                }}
-              </span>
-            </div>
-            <div v-if="timeLeftText" class="mt-1">
-              <span class="text-muted">Còn lại:</span>
-              <span
-                class="ms-1 fw-semibold"
-                :class="isClosingSoon ? 'text-danger' : ''"
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12 col-lg-7">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h6 class="mb-0">Bài thi gần nhất</h6>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                @click="reload"
+                :disabled="loading || loadingLastAttempt"
               >
-                {{ timeLeftText }}
-              </span>
+                <span
+                  v-if="loading || loadingLastAttempt"
+                  class="spinner-border spinner-border-sm me-1"
+                ></span>
+                <i v-else class="bi bi-arrow-clockwise me-1"></i>
+                Làm mới
+              </button>
+            </div>
+            <div v-if="lastAttempt">
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <span class="badge bg-light text-muted border">Đề #{{ lastAttempt.examId }}</span>
+                <span :class="['badge', statusBadgeClass]">{{ statusText }}</span>
+                <span v-if="passState !== null" :class="['badge', passState ? 'bg-success' : 'bg-danger']">
+                  {{ passState ? "Đậu" : "Trượt" }}
+                </span>
+              </div>
+              <div class="fw-semibold mb-1">{{ lastAttempt.examTitle || "Chưa có tiêu đề" }}</div>
+              <div class="text-muted small mb-2">
+                Mã đề: <code>{{ lastAttempt.examCode || "-" }}</code>
+              </div>
+              <div class="row gy-2 small">
+                <div class="col-6">
+                  <div class="text-muted">Điểm</div>
+                  <div class="fw-semibold">{{ lastAttempt.score ?? "-" }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted">Đúng / Tổng</div>
+                  <div class="fw-semibold">
+                    {{ lastAttempt.correctCount ?? 0 }}/{{ lastAttempt.totalQuestions ?? 0 }}
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted">Bắt đầu</div>
+                  <div>{{ fmtDate(lastAttempt.startedAt) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted">Nộp</div>
+                  <div>{{ fmtDate(lastAttempt.submittedAt) }}</div>
+                </div>
+                <div class="col-6">
+                  <div class="text-muted">Thời gian làm</div>
+                  <div>{{ fmtDuration(lastAttempt.timeTakenSec) }}</div>
+                </div>
+              </div>
+              <div class="mt-3 text-end">
+                <router-link to="/student/exams" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-ui-checks-grid me-1"></i> Xem tất cả bài thi
+                </router-link>
+              </div>
+            </div>
+            <div v-else-if="loadingLastAttempt" class="text-muted small">
+              <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+              Đang tải thông tin bài thi...
+            </div>
+            <div v-else class="text-muted small">
+              Bạn chưa có bài thi nào. Hãy vào phòng thi đầu tiên ngay!
             </div>
           </div>
-          <div class="text-end">
-            <button
-              type="button"
-              class="btn btn-sm btn-primary"
-              @click="enterNearestRoom"
-            >
-              <i class="bi bi-play-fill me-1"></i>
-              Vào phòng thi
-            </button>
-          </div>
         </div>
-        <div class="card-body" v-else-if="loadingRooms">
-          <div class="d-flex align-items-center">
-            <span
-              class="spinner-border spinner-border-sm me-2 text-primary"
-            ></span>
-            <span class="small text-muted"
-              >Đang tải danh sách phòng thi...</span
-            >
+      </div>
+
+      <div class="col-12 col-lg-5">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h6 class="mb-0">Phòng đang mở</h6>
+              <router-link to="/student/rooms" class="small">Xem tất cả</router-link>
+            </div>
+            <div v-if="nearestRoom">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-light text-muted border">Phòng #{{ nearestRoom.id }}</span>
+                <span class="live-pill" v-if="isRoomLive(nearestRoom)">
+                  <span class="dot"></span>
+                  <span>LIVE</span>
+                </span>
+              </div>
+              <div class="fw-semibold">{{ nearestRoom.code }}</div>
+              <div class="text-muted small">Đề #{{ nearestRoom.examId }}</div>
+              <div class="d-flex flex-wrap gap-3 text-muted small mt-2">
+                <span><i class="bi bi-clock-history me-1"></i>{{ fmtDate(nearestRoom.openAt) }}</span>
+                <span><i class="bi bi-hourglass-split me-1"></i>{{ fmtDate(nearestRoom.closeAt) }}</span>
+              </div>
+              <div class="text-muted small mt-2">
+                Còn lại:
+                <span :class="['fw-semibold', isClosingSoon ? 'text-danger' : '']">
+                  {{ timeLeftText || '-' }}
+                </span>
+              </div>
+              <div class="mt-3 text-end">
+                <button class="btn btn-sm btn-primary" @click="enterNearestRoom">
+                  <i class="bi bi-play-fill me-1"></i> Vào phòng thi
+                </button>
+              </div>
+            </div>
+            <div v-else-if="loadingRooms" class="text-muted small">
+              <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+              Đang tải danh sách phòng thi...
+            </div>
+            <div v-else class="text-muted small">
+              Hiện không có phòng thi nào đang mở.
+            </div>
           </div>
-        </div>
-        <div class="card-body" v-else>
-          <div class="text-muted small mb-2">
-            Hiện không có phòng thi nào đang mở.
-          </div>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline-secondary"
-            @click="goToRooms"
-          >
-            <i class="bi bi-list-ul me-1"></i>
-            Xem danh sách phòng thi
-          </button>
         </div>
       </div>
     </div>
@@ -266,6 +202,32 @@ const loadingRooms = ref(false);
 
 const lastAttempt = ref<AttemptRow | null>(null);
 const nearestRoom = ref<RoomSummary | null>(null);
+const attemptsTotal = ref(0);
+const openRooms = ref<RoomSummary[]>([]);
+
+const statCards = computed(() => [
+  {
+    title: "Bài đã làm",
+    value: attemptsTotal.value,
+    sub: lastAttempt.value ? `Điểm gần nhất: ${lastAttempt.value.score ?? "-"}` : "Chưa có bài",
+    icon: "bi bi-clipboard-check",
+    bg: "bg-primary-soft",
+  },
+  {
+    title: "Phòng đang mở",
+    value: openRooms.value.length,
+    sub: nearestRoom.value ? `Phòng #${nearestRoom.value.id}` : "Không có phòng",
+    icon: "bi bi-door-open",
+    bg: "bg-success-soft",
+  },
+  {
+    title: "Thời gian còn lại",
+    value: timeLeftText.value || "-",
+    sub: nearestRoom.value ? fmtDate(nearestRoom.value.closeAt) : "Chưa vào phòng",
+    icon: "bi bi-hourglass-split",
+    bg: "bg-warning-soft",
+  },
+]);
 
 function fmtDate(d: string | null | undefined): string {
   if (!d) return "-";
@@ -336,8 +298,17 @@ const isClosingSoon = computed(() => {
   const now = Date.now();
   const close = new Date(nearestRoom.value.closeAt).getTime();
   const diffSec = Math.floor((close - now) / 1000);
-  return diffSec > 0 && diffSec <= 15 * 60; // 15 phút
+  return diffSec > 0 && diffSec <= 15 * 60;
 });
+
+function isRoomLive(r: RoomSummary): boolean {
+  const now = new Date();
+  const openAt = r.openAt ? new Date(r.openAt) : null;
+  const closeAt = r.closeAt ? new Date(r.closeAt) : null;
+  const openOk = !openAt || openAt <= now;
+  const closeOk = !closeAt || closeAt >= now;
+  return openOk && closeOk;
+}
 
 async function loadLastAttempt() {
   loadingLastAttempt.value = true;
@@ -345,17 +316,14 @@ async function loadLastAttempt() {
     const { data: first } = await api.get<Paginated<AttemptRow>>("/attempts", {
       params: { page: 1, pageSize: 1 },
     });
-    const total = Number(first.total || 0);
-    if (!total) {
+    attemptsTotal.value = Number(first.total || 0);
+    if (!attemptsTotal.value) {
       lastAttempt.value = null;
       return;
     }
-    const { data: lastPage } = await api.get<Paginated<AttemptRow>>(
-      "/attempts",
-      {
-        params: { page: total, pageSize: 1 },
-      }
-    );
+    const { data: lastPage } = await api.get<Paginated<AttemptRow>>("/attempts", {
+      params: { page: attemptsTotal.value, pageSize: 1 },
+    });
     lastAttempt.value = lastPage.items[0] || null;
   } catch {
     lastAttempt.value = null;
@@ -370,46 +338,27 @@ async function loadNearestRoom() {
     const { data } = await api.get<Paginated<RoomSummary>>("/rooms", {
       params: { page: 1, pageSize: 100 },
     });
-    const items = (data.items || []) as any[];
+    const items = (data.items || []) as RoomSummary[];
     const now = new Date();
-    const openRooms = items
-      .map((r) => ({
-        id: r.id as number,
-        examId: r.examId as number,
-        code: String(r.code),
-        openAt: (r.openAt as string | null) ?? null,
-        closeAt: (r.closeAt as string | null) ?? null,
-        durationSec:
-          typeof r.durationSec === "number" ? (r.durationSec as number) : null,
-        shuffleQuestions: !!r.shuffleQuestions,
-        shuffleChoices: !!r.shuffleChoices,
-        maxAttempts: Number(r.maxAttempts || 0),
-        createdAt: String(r.createdAt),
-      }))
-      .filter((r) => {
-        const openOk = !r.openAt || new Date(r.openAt) <= now;
-        const closeOk = !r.closeAt || new Date(r.closeAt) >= now;
-        return openOk && closeOk;
-      });
-
-    if (openRooms.length === 0) {
+    const openList = items.filter((r) => {
+      const openOk = !r.openAt || new Date(r.openAt) <= now;
+      const closeOk = !r.closeAt || new Date(r.closeAt) >= now;
+      return openOk && closeOk;
+    });
+    openRooms.value = openList;
+    if (openList.length === 0) {
       nearestRoom.value = null;
       return;
     }
-
-    openRooms.sort((a, b) => {
-      const closeA = a.closeAt
-        ? new Date(a.closeAt).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      const closeB = b.closeAt
-        ? new Date(b.closeAt).getTime()
-        : Number.MAX_SAFE_INTEGER;
+    openList.sort((a, b) => {
+      const closeA = a.closeAt ? new Date(a.closeAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const closeB = b.closeAt ? new Date(b.closeAt).getTime() : Number.MAX_SAFE_INTEGER;
       return closeA - closeB;
     });
-
-    nearestRoom.value = openRooms[0];
+    nearestRoom.value = openList[0];
   } catch {
     nearestRoom.value = null;
+    openRooms.value = [];
   } finally {
     loadingRooms.value = false;
   }
@@ -422,10 +371,6 @@ async function reload() {
   } finally {
     loading.value = false;
   }
-}
-
-function goToExams() {
-  router.push({ name: "student-exams" });
 }
 
 function goToRooms() {
@@ -446,36 +391,53 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dashboard-header-card {
-  font-size: 0.9rem;
+.student-dashboard .hero {
+  background: linear-gradient(120deg, #f0f7ff 0%, #f9fdf6 100%);
 }
-
-.dashboard-card-small .card-body {
-  padding: 0.75rem 1rem;
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
 }
-
-.dashboard-card-small .card-header {
-  padding-left: 1rem;
-  padding-right: 1rem;
+.bg-primary-soft {
+  background: rgba(13, 110, 253, 0.12);
+  color: #0d6efd;
 }
-
+.bg-success-soft {
+  background: rgba(25, 135, 84, 0.12);
+  color: #198754;
+}
+.bg-warning-soft {
+  background: rgba(255, 193, 7, 0.16);
+  color: #b58100;
+}
+.bullet {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  display: inline-block;
+}
 .live-pill {
-  width: 38px;
-  height: 14px;
+  width: 42px;
+  height: 16px;
   background: #ff1f1f;
   color: #fff;
-  border-radius: 6px;
-  font: 600 8px / 10px system-ui, -apple-system, "Segoe UI", Roboto, Arial,
+  border-radius: 8px;
+  font: 600 9px / 12px system-ui, -apple-system, "Segoe UI", Roboto, Arial,
     sans-serif;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 0 4px;
+  padding: 0 6px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
   animation: bgBlink 1s infinite steps(1);
 }
-
 .live-pill .dot {
   width: 6px;
   height: 6px;
@@ -483,7 +445,6 @@ onMounted(() => {
   background: #fff;
   position: relative;
 }
-
 .live-pill .dot::after {
   content: "";
   position: absolute;
@@ -493,7 +454,6 @@ onMounted(() => {
   opacity: 0.6;
   animation: pulse 1s infinite;
 }
-
 @keyframes pulse {
   0% {
     transform: scale(0.6);
@@ -508,7 +468,6 @@ onMounted(() => {
     opacity: 0;
   }
 }
-
 @keyframes bgBlink {
   0%,
   50% {
