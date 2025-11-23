@@ -35,7 +35,7 @@
               />
             </div>
             <div
-              class="col-12 col-md-4 d-flex align-items-end justify-content-between"
+              class="col-12 col-md-4 d-flex align-items-end justify-content-between flex-wrap gap-2"
             >
               <div class="form-check">
                 <input
@@ -48,18 +48,32 @@
                   Chỉ hiển thị phòng đang mở
                 </label>
               </div>
-              <button
-                type="button"
-                class="btn btn-outline-secondary btn-sm ms-2"
-                @click="reload"
-                :disabled="loading"
-              >
-                <span
-                  v-if="loading"
-                  class="spinner-border spinner-border-sm me-1"
-                ></span>
-                Tải lại
-              </button>
+              <div class="d-flex align-items-center gap-2 ms-auto">
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  @click="deleteSelected"
+                  :disabled="selectedCount === 0 || loading || deleting"
+                >
+                  <span
+                    v-if="deleting"
+                    class="spinner-border spinner-border-sm me-1"
+                  ></span>
+                  Xóa đã chọn ({{ selectedCount }})
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  @click="reload"
+                  :disabled="loading || deleting"
+                >
+                  <span
+                    v-if="loading"
+                    class="spinner-border spinner-border-sm me-1"
+                  ></span>
+                  Tải lại
+                </button>
+              </div>
             </div>
           </div>
 
@@ -68,6 +82,8 @@
             :items="pageItems"
             row-key="id"
             :loading="loading"
+            :show-checkbox="true"
+            :selected-ids="selectedIds"
           >
             <template #cell-examId="{ value }">
               <div class="small">
@@ -189,6 +205,8 @@ const loading = ref(false);
 const rooms = ref<RoomRow[]>([]);
 const selectedRoom = ref<RoomRow | null>(null);
 const showDetail = ref(false);
+const deleting = ref(false);
+const selectedIds = reactive(new Set<number>());
 
 const filters = reactive({
   examId: 0,
@@ -237,6 +255,8 @@ const pageItems = computed(() => {
   const start = (page.value - 1) * pageSize.value;
   return filteredRooms.value.slice(start, start + pageSize.value);
 });
+
+const selectedCount = computed(() => selectedIds.size);
 
 function fmtDate(d: string | null): string {
   if (!d) return "-";
@@ -293,6 +313,7 @@ async function reload() {
       params: { page: 1, pageSize: 200 },
     });
     rooms.value = (data.items || []) as any;
+    pruneSelection();
     page.value = 1;
   } finally {
     loading.value = false;
@@ -327,11 +348,53 @@ async function deleteRoom(room: RoomRow) {
   }
 }
 
+function pruneSelection() {
+  const validIds = new Set(rooms.value.map((r) => r.id));
+  Array.from(selectedIds).forEach((id) => {
+    if (!validIds.has(id)) selectedIds.delete(id);
+  });
+}
+
+async function deleteSelected() {
+  if (!selectedCount.value) return;
+  if (
+    !window.confirm(
+      `Xóa ${selectedCount.value} phòng thi đã chọn? Hành động này không thể hoàn tác.`
+    )
+  )
+    return;
+  deleting.value = true;
+  try {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      await api.delete(`/rooms/${id}`);
+      selectedIds.delete(id);
+    }
+    await reload();
+  } catch (e: any) {
+    const msgCandidates = [
+      e?.response?.data?.message,
+      e?.response?.data?.error,
+      e?.message,
+    ].filter((x) => typeof x === "string" && x.trim()) as string[];
+    alert(msgCandidates[0] || "Không thể xóa phòng thi");
+  } finally {
+    deleting.value = false;
+  }
+}
+
+function clearSelection() {
+  selectedIds.clear();
+}
+
 watch(
   () => props.show,
   (v) => {
     if (v) {
+      clearSelection();
       reload();
+    } else {
+      clearSelection();
     }
   }
 );

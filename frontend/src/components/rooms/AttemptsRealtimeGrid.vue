@@ -4,7 +4,10 @@
       class="card-header py-2 d-flex justify-content-between align-items-center"
     >
       <div class="d-flex flex-column">
-        <span class="fw-semibold small">Trạng thái làm bài của sinh viên</span>
+        <span class="fw-semibold small">
+          Trạng thái làm bài của sinh viên
+          <span v-if="roomId">phòng #{{ roomId }}</span>
+        </span>
         <span class="text-muted small" v-if="!roomId">
           Chọn phòng thi để xem danh sách.
         </span>

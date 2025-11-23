@@ -2,6 +2,32 @@
   <div class="card rounded-0">
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Quản lý bài thi sinh viên</h5>
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-danger btn-sm"
+          @click="deleteSelected"
+          :disabled="selectedCount === 0 || loading || deleting"
+        >
+          <span
+            v-if="deleting"
+            class="spinner-border spinner-border-sm me-1"
+          ></span>
+          Xóa đã chọn ({{ selectedCount }})
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm"
+          @click="reload"
+          :disabled="loading || deleting"
+        >
+          <span
+            v-if="loading"
+            class="spinner-border spinner-border-sm me-1"
+          ></span>
+          Tải lại
+        </button>
+      </div>
     </div>
     <div class="card-body">
       <div class="position-relative" style="max-width: 400px">
@@ -42,6 +68,8 @@
         mode="teacher"
         :items="items"
         :loading="loading"
+        :show-checkbox="true"
+        :selected-ids="selectedIds"
         @view="openDetail"
         @delete="delAttempt"
       />
@@ -80,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, reactive } from "vue";
 import Pagination from "../../components/common/Pagination.vue";
 import AttemptList from "../../components/attempts/AttemptList.vue";
 import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
@@ -159,6 +187,9 @@ let page = ref(1);
 let pageSize = ref(10);
 const total = ref(0);
 const loading = ref(false);
+const deleting = ref(false);
+const selectedIds = reactive(new Set<number>());
+const selectedCount = computed(() => selectedIds.size);
 
 const showDetail = ref(false);
 const detail = ref<AttemptDetail | null>(null);
@@ -197,6 +228,7 @@ function onExamInputChange() {
   }
   showExamDropdown.value = false;
   page.value = 1;
+  clearSelection();
   reload();
 }
 
@@ -205,6 +237,7 @@ function onExamPick(e: ExamSummary) {
   examInput.value = `${e.code ? e.code + " - " : ""}${e.title} (#${e.id})`;
   showExamDropdown.value = false;
   page.value = 1;
+  clearSelection();
   reload();
 }
 
@@ -224,6 +257,7 @@ async function reload() {
     });
     items.value = data.items as any;
     total.value = data.total;
+    pruneSelection();
   } finally {
     loading.value = false;
   }
@@ -246,9 +280,44 @@ async function delAttempt(id: number) {
   if (!confirm(`Xóa bài thi #${id}?`)) return;
   try {
     await api.delete(`/attempts/${id}`);
+    selectedIds.delete(id);
     reload();
   } catch (e: any) {
     alert(e?.message || "Không thể xóa bài thi");
+  }
+}
+
+function pruneSelection() {
+  const valid = new Set(items.value.map((i) => i.id));
+  Array.from(selectedIds).forEach((id) => {
+    if (!valid.has(id)) selectedIds.delete(id);
+  });
+}
+
+function clearSelection() {
+  selectedIds.clear();
+}
+
+async function deleteSelected() {
+  if (!selectedCount.value) return;
+  if (
+    !window.confirm(
+      `Xóa ${selectedCount.value} bài thi đã chọn? Hành động này không thể hoàn tác.`
+    )
+  )
+    return;
+  deleting.value = true;
+  try {
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      await api.delete(`/attempts/${id}`);
+      selectedIds.delete(id);
+    }
+    await reload();
+  } catch (e: any) {
+    alert(e?.message || "Không thể xóa bài thi");
+  } finally {
+    deleting.value = false;
   }
 }
 

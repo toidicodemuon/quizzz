@@ -3,6 +3,14 @@
     <table class="table table-sm align-middle">
       <thead>
         <tr class="text-muted small">
+          <th v-if="showCheckbox" style="width: 36px">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :checked="allPageSelected"
+              @change="toggleSelectAll"
+            />
+          </th>
           <th>#</th>
           <th>Mã đề</th>
           <th>Tiêu đề</th>
@@ -18,6 +26,14 @@
       </thead>
       <tbody>
         <tr v-for="a in items" :key="a.id">
+          <td v-if="showCheckbox">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :checked="isSelected(a)"
+              @change="(e) => onToggle(a, e)"
+            />
+          </td>
           <td>{{ a.id }}</td>
           <td>
             <code>{{ a.examCode ?? "-" }}</code>
@@ -62,7 +78,10 @@
           </td>
         </tr>
         <tr v-if="!loading && items.length === 0">
-          <td :colspan="isTeacher ? 11 : 8" class="text-center text-muted">
+          <td
+            :colspan="(isTeacher ? 11 : 8) + (showCheckbox ? 1 : 0)"
+            class="text-center text-muted"
+          >
             Không có dữ liệu
           </td>
         </tr>
@@ -94,6 +113,8 @@ const props = defineProps<{
   mode?: "student" | "teacher";
   items: AttemptListItem[];
   loading?: boolean;
+  showCheckbox?: boolean;
+  selectedIds?: Set<number>;
 }>();
 
 const emit = defineEmits<{
@@ -103,6 +124,34 @@ const emit = defineEmits<{
 
 const isTeacher = computed(() => (props.mode ?? "student") === "teacher");
 const loading = computed(() => !!props.loading);
+const showCheckbox = computed(() => !!props.showCheckbox);
+const allPageSelected = computed(
+  () =>
+    !!props.showCheckbox &&
+    (props.items?.length || 0) > 0 &&
+    props.items.every((a) =>
+      props.selectedIds ? props.selectedIds.has(a.id) : false
+    )
+);
+
+function isSelected(a: AttemptListItem) {
+  if (!props.selectedIds) return false;
+  return props.selectedIds.has(a.id);
+}
+
+function onToggle(a: AttemptListItem, ev: Event) {
+  if (!props.selectedIds) return;
+  const checked = (ev.target as HTMLInputElement).checked;
+  checked ? props.selectedIds.add(a.id) : props.selectedIds.delete(a.id);
+}
+
+function toggleSelectAll(ev: Event) {
+  if (!props.selectedIds) return;
+  const checked = (ev.target as HTMLInputElement).checked;
+  props.items.forEach((a) =>
+    checked ? props.selectedIds!.add(a.id) : props.selectedIds!.delete(a.id)
+  );
+}
 
 function fmtDate(d: any) {
   if (!d) return "-";

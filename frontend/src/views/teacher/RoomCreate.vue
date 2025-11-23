@@ -155,8 +155,9 @@
                       <td>
                         <div class="fw-semibold">#{{ r.id }}</div>
                         <div class="text-muted small">
-                          {{ durationText(r) }} | tối đa
-                          {{ r.maxAttempts }} lượt
+                          {{ durationText(r) }}
+                          <!--| tối đa
+                          {{ r.maxAttempts }} lượt-->
                         </div>
                       </td>
                       <td class="small">

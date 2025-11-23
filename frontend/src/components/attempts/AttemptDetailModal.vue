@@ -181,14 +181,8 @@ const detailPass = computed(() => {
 });
 
 const canReviewNow = computed(() => {
-  if (mode.value === "teacher") return true;
-  if (!detail.value) return false;
-  if (!props.examConfig) return true;
-  const limitMin = props.examConfig.reviewWindowMin;
-  if (!limitMin || !detail.value.submittedAt) return true;
-  const submittedAt = new Date(detail.value.submittedAt).getTime();
-  const until = submittedAt + limitMin * 60 * 1000;
-  return Date.now() <= until;
+  // Always allow reviewing attempts; ignore any time-based review window
+  return !!detail.value;
 });
 
 const showScore = computed(() => {
