@@ -46,7 +46,7 @@
         <table class="table table-sm align-middle mb-0">
           <thead>
             <tr class="text-muted small">
-              <th>#</th>
+              <th>STT</th>
               <th>Sinh viên</th>
               <th>Trạng thái</th>
               <th>Đúng/Tổng</th>
@@ -54,12 +54,12 @@
               <th>Bắt đầu</th>
               <th>Nộp bài</th>
               <th>Thời gian làm</th>
-              <th class="text-end">Thao tác</th>
+              <th class="text-end">Xem</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in attempts" :key="a.id">
-              <td>{{ a.id }}</td>
+            <tr v-for="(a, idx) in attempts" :key="a.id">
+              <td>{{ idx + 1 }}</td>
               <td>
                 <div class="small">
                   <div v-if="a.studentName">
@@ -181,8 +181,10 @@ function fmtDuration(sec: number | null | undefined): string {
 
 function statusBadge(a: AttemptRow): { label: string; class: string } {
   const s = String(a.activityStatus || a.status || "").toUpperCase();
-  if (s === "IN_ROOM") return { label: "Đã vào phòng", class: "bg-info text-dark" };
-  if (s === "IN_PROGRESS") return { label: "Đang làm bài", class: "bg-warning text-dark" };
+  if (s === "IN_ROOM")
+    return { label: "Đã vào phòng", class: "bg-info text-dark" };
+  if (s === "IN_PROGRESS")
+    return { label: "Đang làm bài", class: "bg-warning text-dark" };
   if (s === "SUBMITTED" || s === "GRADED") {
     return { label: "Đã nộp bài", class: "bg-success" };
   }
@@ -206,11 +208,13 @@ async function reload() {
         typeof (item as any).answerCount === "number"
           ? Number((item as any).answerCount)
           : 0;
-      const hasStarted = rawStatus !== "IN_PROGRESS" ? false : item.timeTakenSec !== null && typeof item.timeTakenSec !== "undefined";
+      const hasStarted =
+        rawStatus !== "IN_PROGRESS"
+          ? false
+          : item.timeTakenSec !== null &&
+            typeof item.timeTakenSec !== "undefined";
       const activityStatus =
-        rawStatus === "IN_PROGRESS" && !hasStarted
-          ? "IN_ROOM"
-          : rawStatus;
+        rawStatus === "IN_PROGRESS" && !hasStarted ? "IN_ROOM" : rawStatus;
       return {
         ...item,
         rawStatus,
