@@ -106,69 +106,183 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import api, { type Paginated } from "../../api";
+
 defineOptions({
   name: "TeacherDashboard",
 });
 
-const statCards = [
+type ExamSummary = {
+  id: number;
+  title: string;
+  status: string;
+  code?: string | null;
+};
+
+type RoomRow = {
+  id: number;
+  examId: number;
+  examTitle?: string;
+  openAt: string | null;
+  closeAt: string | null;
+  createdAt: string;
+};
+
+type AttemptRow = {
+  id: number;
+  studentName?: string | null;
+  studentId: number;
+  roomId: number;
+  examTitle?: string | null;
+  submittedAt: string | null;
+  status: string;
+};
+
+const loading = ref(false);
+const stats = ref({
+  examsTotal: 0,
+  roomsTotal: 0,
+  roomsLive: 0,
+  activeStudents: 0,
+  attemptsToday: 0,
+});
+const recentAttempts = ref<AttemptRow[]>([]);
+const rooms = ref<RoomRow[]>([]);
+
+const statCards = computed(() => [
   {
     title: "Đề thi",
-    value: "12",
-    sub: "4 đang mở",
+    value: stats.value.examsTotal,
+    sub: `${stats.value.roomsLive} phòng đang mở`,
     icon: "bi bi-file-earmark-text",
     bg: "bg-primary-soft",
   },
   {
     title: "Phòng thi",
-    value: "6",
-    sub: "2 phòng trực tuyến",
+    value: stats.value.roomsTotal,
+    sub: `${stats.value.roomsLive} trực tuyến`,
     icon: "bi bi-door-open",
     bg: "bg-success-soft",
   },
   {
     title: "Học viên đang thi",
-    value: "38",
-    sub: "Trong 3 phòng",
+    value: stats.value.activeStudents,
+    sub: "Trạng thái live",
     icon: "bi bi-people",
     bg: "bg-warning-soft",
   },
   {
     title: "Bài nộp hôm nay",
-    value: "54",
-    sub: "Chấm tự động 100%",
+    value: stats.value.attemptsToday,
+    sub: "Tự động chấm",
     icon: "bi bi-clipboard-check",
     bg: "bg-info-soft",
   },
-];
+]);
 
-const recent = [
-  {
-    title: "Phòng #241 vừa mở",
-    desc: "Đề: Giải tích 1 - ca sáng",
-    time: "2 phút trước",
-  },
-  {
-    title: "18 sinh viên bắt đầu làm bài",
-    desc: "Phòng #238",
-    time: "12 phút trước",
-  },
-  {
-    title: "Bài thi #5521 đã nộp",
-    desc: "Sinh viên: Lê Minh Khoa",
-    time: "30 phút trước",
-  },
-  {
-    title: "Thêm 10 câu hỏi mới",
-    desc: "Chủ đề: OOP cơ bản",
-    time: "1 giờ trước",
-  },
-];
+const recent = computed(() =>
+  recentAttempts.value.slice(0, 4).map((a) => ({
+    title: `Bài #${a.id} ${statusLabel(a.status)}`,
+    desc: a.examTitle || `Phòng #${a.roomId}`,
+    time: a.submittedAt ? fmtTimeAgo(a.submittedAt) : "Vừa xảy ra",
+  }))
+);
 
-const quickRooms = [
-  { id: 241, exam: "Giải tích 1 - ca sáng", attendees: 23, time: "08:30 - 10:00", live: true },
-  { id: 238, exam: "Lập trình C++", attendees: 12, time: "09:00 - 10:30", live: true },
-  { id: 235, exam: "CSDL nâng cao", attendees: 0, time: "Chiều nay", live: false },
-];
+const quickRooms = computed(() =>
+  rooms.value.slice(0, 3).map((r) => ({
+    id: r.id,
+    exam: r.examTitle || `Đề #${r.examId}`,
+    attendees: stats.value.activeStudents, // placeholder until backend provides per-room count
+    time: fmtRange(r.openAt, r.closeAt),
+    live: isRoomLive(r),
+  }))
+);
+
+function isRoomLive(r: RoomRow): boolean {
+  const now = new Date();
+  const openAt = r.openAt ? new Date(r.openAt) : null;
+  const closeAt = r.closeAt ? new Date(r.closeAt) : null;
+  const openOk = !openAt || openAt <= now;
+  const closeOk = !closeAt || closeAt >= now;
+  return openOk && closeOk;
+}
+
+function fmtRange(openAt: string | null, closeAt: string | null): string {
+  const fmt = (d: string | null) => {
+    if (!d) return "-";
+    const dt = new Date(d);
+    if (Number.isNaN(dt.getTime())) return "-";
+    const hh = String(dt.getHours()).padStart(2, "0");
+    const mi = String(dt.getMinutes()).padStart(2, "0");
+    const dd = String(dt.getDate()).padStart(2, "0");
+    const mm = String(dt.getMonth() + 1).padStart(2, "0");
+    const yyyy = dt.getFullYear();
+    return `${dd}/${mm} ${hh}:${mi}`;
+  };
+  return `${fmt(openAt)} - ${fmt(closeAt)}`;
+}
+
+function fmtTimeAgo(d: string): string {
+  const dt = new Date(d);
+  const diff = Date.now() - dt.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Vừa xong";
+  if (mins < 60) return `${mins} phút trước`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} giờ trước`;
+  const days = Math.floor(hrs / 24);
+  return `${days} ngày trước`;
+}
+
+function statusLabel(s: string): string {
+  const up = String(s || "").toUpperCase();
+  if (up === "SUBMITTED" || up === "GRADED") return "đã nộp";
+  if (up === "IN_PROGRESS") return "đang làm";
+  return "vừa cập nhật";
+}
+
+async function loadDashboard() {
+  loading.value = true;
+  try {
+    const [examsRes, roomsRes, attemptsRes] = await Promise.all([
+      api.get<Paginated<ExamSummary>>("/exams", { params: { page: 1, pageSize: 50 } }),
+      api.get<Paginated<RoomRow>>("/rooms", { params: { page: 1, pageSize: 20 } }),
+      api.get<Paginated<AttemptRow>>("/attempts", { params: { page: 1, pageSize: 20 } }),
+    ]);
+
+    const examItems = (examsRes.data.items || []) as ExamSummary[];
+    const roomItems = (roomsRes.data.items || []) as RoomRow[];
+    const attemptItems = (attemptsRes.data.items || []) as AttemptRow[];
+
+    rooms.value = roomItems;
+    recentAttempts.value = attemptItems;
+
+    const liveRooms = roomItems.filter(isRoomLive).length;
+    const activeStudents = attemptItems.filter(
+      (a) => String(a.status || "").toUpperCase() === "IN_PROGRESS"
+    ).length;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const attemptsToday = attemptItems.filter((a) => {
+      if (!a.submittedAt) return false;
+      const dt = new Date(a.submittedAt);
+      return dt >= today;
+    }).length;
+
+    stats.value = {
+      examsTotal: examItems.length,
+      roomsTotal: roomItems.length,
+      roomsLive: liveRooms,
+      activeStudents,
+      attemptsToday,
+    };
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(loadDashboard);
 </script>
 
 <style scoped>
