@@ -6,6 +6,7 @@ export type RoomSummary = {
   id: number;
   examId: number;
   code: string;
+  isProtected: boolean;
   openAt: Date | null;
   closeAt: Date | null;
   durationSec: number | null;
@@ -24,12 +25,17 @@ export class RoomsController extends Controller {
   @Security("bearerAuth")
   public async list(
     @Query() examId?: number,
+    @Query() subjectId?: number,
     @Query() page?: number,
     @Query() pageSize?: number
   ): Promise<{ items: RoomSummary[]; total: number }> {
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
-    const where = typeof examId === "number" ? { examId } : {};
+    const where: any = {};
+    if (typeof examId === "number") where.examId = examId;
+    if (typeof subjectId === "number") {
+      where.exam = { subjectId };
+    }
     const [items, total] = await Promise.all([
       prisma.room.findMany({
         where,
@@ -37,6 +43,7 @@ export class RoomsController extends Controller {
           id: true,
           examId: true,
           code: true,
+          isProtected: true,
           openAt: true,
           closeAt: true,
           durationSec: true,
@@ -62,14 +69,15 @@ export class RoomsController extends Controller {
   public async getById(@Path() id: number): Promise<RoomSummary | null> {
     const room = await prisma.room.findUnique({
       where: { id },
-      select: {
-        id: true,
-        examId: true,
-        code: true,
-        openAt: true,
-        closeAt: true,
-        durationSec: true,
-        shuffleQuestions: true,
+        select: {
+          id: true,
+          examId: true,
+          code: true,
+          isProtected: true,
+          openAt: true,
+          closeAt: true,
+          durationSec: true,
+          shuffleQuestions: true,
         shuffleChoices: true,
         maxAttempts: true,
         createdById: true,
@@ -95,6 +103,8 @@ export class RoomsController extends Controller {
     body: {
       examId: number;
       code?: string;
+      isProtected?: boolean;
+      password?: string;
       openAt?: Date | null;
       closeAt?: Date | null;
       durationSec?: number | null;
@@ -115,12 +125,22 @@ export class RoomsController extends Controller {
       throw err;
     }
 
+    const isProtected = !!body.isProtected;
+    const password =
+      isProtected && typeof body.password === "string" ? body.password.trim() : "";
+    if (isProtected && !password) {
+      this.setStatus(400);
+      throw new Error("Password is required when isProtected is true");
+    }
+
     const code = body.code && body.code.trim().length > 0 ? body.code.trim() : `R-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
     const created = await prisma.room.create({
       data: {
         examId: exam.id,
         code,
+        isProtected,
+        password: isProtected ? password : null,
         openAt: body.openAt ?? null,
         closeAt: body.closeAt ?? null,
         durationSec: typeof body.durationSec === "number" ? body.durationSec : null,
@@ -133,6 +153,7 @@ export class RoomsController extends Controller {
         id: true,
         examId: true,
         code: true,
+        isProtected: true,
         openAt: true,
         closeAt: true,
         durationSec: true,
@@ -207,6 +228,78 @@ export class RoomsController extends Controller {
     });
 
     return updated as RoomSummary;
+  }
+
+  @Post("{id}/protection")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Response<null>(404, "Room not found")
+  @Security("bearerAuth", ["TEACHER", "ADMIN"])
+  public async updateProtection(
+    @Request() req: ExRequest,
+    @Path() id: number,
+    @Body()
+    body: {
+      isProtected?: boolean;
+      password?: string;
+      close?: boolean;
+    }
+  ): Promise<RoomSummary> {
+    const user = (req as any).user as { id: number; role: string };
+    const role = user.role?.toUpperCase();
+
+    const existing = await prisma.room.findUnique({
+      where: { id },
+      select: { id: true, exam: { select: { authorId: true } } },
+    });
+    if (!existing) {
+      const err: any = new Error("Room not found");
+      err.status = 404;
+      throw err;
+    }
+    if (role === "TEACHER" && (existing as any).exam?.authorId !== user.id) {
+      const err: any = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+
+    const data: any = {};
+    if (typeof body.isProtected === "boolean") {
+      data.isProtected = body.isProtected;
+      if (body.isProtected) {
+        const pass = typeof body.password === "string" ? body.password.trim() : "";
+        if (!pass) {
+          this.setStatus(400);
+          throw new Error("Password is required when isProtected is true");
+        }
+        data.password = pass;
+      } else {
+        data.password = null;
+      }
+    }
+    if (typeof body.close === "boolean") {
+      data.closeAt = body.close ? new Date() : null;
+    }
+
+    const updated = await prisma.room.update({
+      where: { id },
+      data,
+      select: {
+        id: true,
+        examId: true,
+        code: true,
+        isProtected: true,
+        openAt: true,
+        closeAt: true,
+        durationSec: true,
+        shuffleQuestions: true,
+        shuffleChoices: true,
+        maxAttempts: true,
+        createdById: true,
+        createdAt: true,
+      },
+    });
+    return updated;
   }
 
   @Delete("{id}")

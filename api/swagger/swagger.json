@@ -157,6 +157,9 @@
 						"format": "date-time",
 						"nullable": true
 					},
+					"isProtected": {
+						"type": "boolean"
+					},
 					"code": {
 						"type": "string"
 					},
@@ -178,6 +181,7 @@
 					"durationSec",
 					"closeAt",
 					"openAt",
+					"isProtected",
 					"code",
 					"examId",
 					"id"
@@ -205,6 +209,11 @@
 						"type": "string",
 						"format": "date-time"
 					},
+					"subjectId": {
+						"type": "number",
+						"format": "double",
+						"nullable": true
+					},
 					"userCode": {
 						"type": "string",
 						"nullable": true
@@ -228,6 +237,7 @@
 				"required": [
 					"updatedAt",
 					"createdAt",
+					"subjectId",
 					"userCode",
 					"role",
 					"email",
@@ -2002,6 +2012,15 @@
 					},
 					{
 						"in": "query",
+						"name": "subjectId",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
 						"name": "page",
 						"required": false,
 						"schema": {
@@ -2118,6 +2137,12 @@
 										"type": "string",
 										"format": "date-time",
 										"nullable": true
+									},
+									"password": {
+										"type": "string"
+									},
+									"isProtected": {
+										"type": "boolean"
 									},
 									"code": {
 										"type": "string"
@@ -2393,6 +2418,108 @@
 				]
 			}
 		},
+		"/rooms/{id}/protection": {
+			"post": {
+				"operationId": "UpdateProtection",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/RoomSummary"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Room not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Room"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"close": {
+										"type": "boolean"
+									},
+									"password": {
+										"type": "string"
+									},
+									"isProtected": {
+										"type": "boolean"
+									}
+								},
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
 		"/questions": {
 			"get": {
 				"operationId": "ListQuestions",
@@ -2410,6 +2537,33 @@
 										"items": {
 											"items": {
 												"properties": {
+													"choices": {
+														"items": {
+															"properties": {
+																"order": {
+																	"type": "number",
+																	"format": "double"
+																},
+																"isCorrect": {
+																	"type": "boolean"
+																},
+																"content": {
+																	"type": "string"
+																},
+																"id": {
+																	"type": "number",
+																	"format": "double"
+																}
+															},
+															"required": [
+																"order",
+																"content",
+																"id"
+															],
+															"type": "object"
+														},
+														"type": "array"
+													},
 													"locked": {
 														"type": "boolean"
 													},
@@ -2514,6 +2668,14 @@
 								"asc",
 								"desc"
 							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "includeChoices",
+						"required": false,
+						"schema": {
+							"type": "boolean"
 						}
 					}
 				]
@@ -5165,6 +5327,9 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"password": {
+										"type": "string"
+									},
 									"activate": {
 										"type": "boolean"
 									},

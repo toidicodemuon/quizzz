@@ -71,6 +71,26 @@
           />
         </div>
       </div>
+      <div class="col-12 col-md-6">
+        <label class="form-label">Bảo vệ phòng bằng mật khẩu</label>
+        <div class="input-group input-group-sm">
+          <div class="input-group-text">
+            <input
+              class="form-check-input mt-0"
+              type="checkbox"
+              v-model="localForm.requirePassword"
+              aria-label="Toggle password protection"
+            />
+          </div>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Nhập mật khẩu phòng (tùy chọn)"
+            v-model="localForm.password"
+            :disabled="!localForm.requirePassword"
+          />
+        </div>
+      </div>
       <div class="col-12 col-md-3">
         <label class="form-label">&nbsp;</label>
         <br />
@@ -127,6 +147,8 @@ type RoomFormPayload = {
   shuffleQuestions: boolean;
   shuffleChoices: boolean;
   maxAttempts: number;
+  requirePassword: boolean;
+  password: string;
 };
 
 function calcCloseFrom(open: string): string {
@@ -151,6 +173,8 @@ const defaultForm: RoomFormPayload = {
   shuffleQuestions: true,
   shuffleChoices: true,
   maxAttempts: 1,
+  requirePassword: false,
+  password: "",
 };
 
 const localForm = reactive<RoomFormPayload>({ ...defaultForm });

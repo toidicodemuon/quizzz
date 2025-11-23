@@ -241,6 +241,8 @@ type AttemptMeta = {
   timeTakenSec: number | null;
 };
 const attemptMeta = ref<AttemptMeta | null>(null);
+const roomMeta = ref<{ isProtected?: boolean } | null>(null);
+const roomPassword = ref<string>("");
 
 const loaded = ref(false);
 const submitting = ref(false);
@@ -309,10 +311,16 @@ function parseApiError(err: any): { message: string; code?: string } {
 async function ensureAttemptCanBegin(opts?: {
   activate?: boolean;
 }): Promise<AttemptMeta | null> {
+  if (roomMeta.value?.isProtected && !roomPassword.value) {
+    const pw = window.prompt("Phòng này yêu cầu mật khẩu. Nhập mật khẩu để vào:");
+    if (!pw) return null;
+    roomPassword.value = pw;
+  }
   try {
     const { data } = await api.post<AttemptMeta>("/attempts/begin", {
       roomId,
       activate: !!opts?.activate,
+      password: roomPassword.value || undefined,
     });
     return data;
   } catch (e: any) {
@@ -325,6 +333,9 @@ async function ensureAttemptCanBegin(opts?: {
       ? "Bạn đã làm bài thi này rồi, không thể vào phòng làm tiếp."
       : message || "Không thể vào phòng thi.";
     alert(friendly);
+    if (e?.response?.status === 403) {
+      roomPassword.value = "";
+    }
     if (alreadySubmitted) {
       router.replace({ name: "student-exams" });
     }
@@ -334,6 +345,7 @@ async function ensureAttemptCanBegin(opts?: {
 
 async function loadRoom() {
   const { data: room } = await api.get<any>(`/rooms/${roomId}`);
+  roomMeta.value = { isProtected: !!room.isProtected };
   examId.value = room.examId;
   durationSec.value = room.durationSec ?? null;
   if (durationSec.value) {
@@ -367,17 +379,9 @@ async function fetchAttemptMeta(): Promise<AttemptMeta | null> {
 async function loadQuestions() {
   if (!examId.value) return;
   const { data } = await api.get<any>(`/questions`, {
-    params: { examId: examId.value, page: 1, pageSize: 200 },
+    params: { examId: examId.value, page: 1, pageSize: 500, includeChoices: true },
   });
-  const baseItems = Array.isArray(data?.items) ? data.items : [];
-  const full = await Promise.all(
-    baseItems.map((q: any) =>
-      api
-        .get<any>(`/questions/${q.id}`)
-        .then((res) => res.data)
-        .catch(() => null)
-    )
-  );
+  const full = Array.isArray(data?.items) ? data.items : [];
   questions.value = full
     .filter((q: any) => q && Array.isArray(q.choices))
     .map(

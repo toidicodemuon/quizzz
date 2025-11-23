@@ -5,7 +5,7 @@
     >
       <div class="d-flex flex-column">
         <span class="fw-semibold small">
-          Trạng thái làm bài của sinh viên
+          Danh sách sinh viên thi trong
           <span v-if="roomId">phòng #{{ roomId }}</span>
         </span>
         <span class="text-muted small" v-if="!roomId">
@@ -13,6 +13,17 @@
         </span>
       </div>
       <div class="d-flex align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <input
+            type="number"
+            min="1"
+            class="form-control form-control-sm"
+            style="width: 90px"
+            v-model.number="autoRefreshSec"
+            :disabled="!roomId"
+          />
+          <span class="small text-muted">giây</span>
+        </div>
         <div class="form-check form-switch mb-0">
           <input
             class="form-check-input"
@@ -24,7 +35,7 @@
             @change="toggleAutoRefresh"
           />
           <label class="form-check-label small" for="autoRefreshAttempts">
-            Tự làm mới
+            Tự động cập nhật
           </label>
         </div>
         <button
@@ -37,7 +48,7 @@
             v-if="loading"
             class="spinner-border spinner-border-sm me-1"
           ></span>
-          Làm mới
+          Cập nhật
         </button>
       </div>
     </div>
@@ -153,7 +164,7 @@ const emit = defineEmits<{
 const attempts = ref<AttemptRow[]>([]);
 const loading = ref(false);
 let timer: number | null = null;
-const AUTO_REFRESH_MS = 5000;
+const autoRefreshSec = ref(5);
 
 const autoRefreshEnabled = computed(() => props.autoRefresh !== false);
 
@@ -232,9 +243,10 @@ async function reload() {
 function startTimer() {
   stopTimer();
   if (!props.roomId || !autoRefreshEnabled.value) return;
+  const ms = Math.max(1000, Number(autoRefreshSec.value || 0) * 1000);
   timer = window.setInterval(() => {
     reload();
-  }, AUTO_REFRESH_MS) as unknown as number;
+  }, ms) as unknown as number;
 }
 
 function stopTimer() {
@@ -273,6 +285,10 @@ watch(autoRefreshEnabled, (enabled) => {
   } else {
     stopTimer();
   }
+});
+
+watch(autoRefreshSec, () => {
+  startTimer();
 });
 
 onMounted(() => {

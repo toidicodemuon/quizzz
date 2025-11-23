@@ -24,23 +24,70 @@ export class QuestionController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Security("bearerAuth")
   public async listQuestions(
+    @Request() req: ExRequest,
     @Query() examId?: number,
     @Query() page?: number,
     @Query() pageSize?: number,
     @Query() subjectId?: number,
-    @Query() sort?: "asc" | "desc"
+    @Query() sort?: "asc" | "desc",
+    @Query() includeChoices?: boolean
   ): Promise<{
     items: Array<{
       id: number;
       text: string;
       explanation: string | null;
       locked?: boolean;
+      choices?: Array<{ id: number; content: string; isCorrect?: boolean; order: number }>;
     }>;
     total: number;
   }> {
-    const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
+    const take = Math.max(1, Math.min(500, Number(pageSize) || 100));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
     const order = sort === "asc" ? "asc" : "desc";
+    const role = String((req as any)?.user?.role || "").toUpperCase();
+    const selectBase: any = {
+      id: true,
+      text: true,
+      explanation: true,
+      type: true,
+      examLinks: {
+        where: {
+          exam: { status: "PUBLISHED" as any, attempts: { some: {} } },
+        },
+        select: { examId: true },
+        take: 1,
+      },
+    };
+    if (includeChoices) {
+      selectBase.choices = {
+        select: { id: true, content: true, isCorrect: true, order: true },
+        orderBy: { order: "asc" },
+      };
+    }
+
+    const mapFn = (rows: any[]) =>
+      rows.map((r: any) => {
+        const locked = (r.examLinks || []).length > 0;
+        const base: any = {
+          id: r.id,
+          text: r.text,
+          explanation: r.explanation,
+          locked,
+        };
+        if (includeChoices && Array.isArray(r.choices)) {
+          base.choices = r.choices.map((c: any) => ({
+            id: c.id,
+            content: c.content,
+            order: c.order,
+            ...(role === "STUDENT" ? {} : { isCorrect: c.isCorrect }),
+          }));
+          if (role === "STUDENT") {
+            base.explanation = null;
+          }
+        }
+        return base;
+      });
+
     if (typeof examId === "number") {
       const [items, total] = await Promise.all([
         prisma.question
@@ -49,30 +96,12 @@ export class QuestionController extends Controller {
               examLinks: { some: { examId } },
               ...(typeof subjectId === "number" ? { subjectId } : {}),
             },
-            select: {
-              id: true,
-              text: true,
-              explanation: true,
-              examLinks: {
-                where: {
-                  exam: { status: "PUBLISHED" as any, attempts: { some: {} } },
-                },
-                select: { examId: true },
-                take: 1,
-              },
-            },
+            select: selectBase,
             orderBy: { id: order as any },
             skip,
             take,
           })
-          .then((rows) =>
-            rows.map((r: any) => ({
-              id: r.id,
-              text: r.text,
-              explanation: r.explanation,
-              locked: (r.examLinks || []).length > 0,
-            }))
-          ),
+          .then((rows) => mapFn(rows)),
         prisma.examQuestion.count({ where: { examId } }),
       ]);
       return { items, total };
@@ -80,31 +109,13 @@ export class QuestionController extends Controller {
     const [items, total] = await Promise.all([
       prisma.question
         .findMany({
-          select: {
-            id: true,
-            text: true,
-            explanation: true,
-            examLinks: {
-              where: {
-                exam: { status: "PUBLISHED" as any, attempts: { some: {} } },
-              },
-              select: { examId: true },
-              take: 1,
-            },
-          },
+          select: selectBase,
           where: typeof subjectId === "number" ? { subjectId } : undefined,
           orderBy: { id: order as any },
           skip,
           take,
         })
-        .then((rows) =>
-          rows.map((r: any) => ({
-            id: r.id,
-            text: r.text,
-            explanation: r.explanation,
-            locked: (r.examLinks || []).length > 0,
-          }))
-        ),
+        .then((rows) => mapFn(rows)),
       prisma.question.count({
         where: typeof subjectId === "number" ? { subjectId } : undefined,
       }),
@@ -116,7 +127,10 @@ export class QuestionController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(404, "Question not found")
   @Security("bearerAuth")
-  public async getQuestionById(@Path() id: number): Promise<{
+  public async getQuestionById(
+    @Request() req: ExRequest,
+    @Path() id: number
+  ): Promise<{
     id: number;
     text: string;
     explanation: string | null;
@@ -155,7 +169,20 @@ export class QuestionController extends Controller {
       throw err;
     }
     const { examLinks, ...rest } = q as any;
-    return { ...rest, locked: (examLinks || []).length > 0 } as any;
+    const role = String((req as any)?.user?.role || "").toUpperCase();
+    const base = { ...rest, locked: (examLinks || []).length > 0 };
+    if (role === "STUDENT") {
+      return {
+        ...base,
+        explanation: null,
+        choices: (base as any).choices.map((c: any) => ({
+          id: c.id,
+          content: c.content,
+          order: c.order,
+        })),
+      } as any;
+    }
+    return base as any;
   }
 
   @Post("/")

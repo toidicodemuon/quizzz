@@ -13,6 +13,7 @@ export type AuthUser = {
   email?: string;
   role?: string;
   avatarUrl?: string | null;
+  subjectId?: number | null;
 };
 
 export function getUser(): AuthUser | null {

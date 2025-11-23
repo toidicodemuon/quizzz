@@ -67,6 +67,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "../../api";
+import { getUser } from "../../utils/auth";
 
 type RoomSummary = {
   id: number;
@@ -80,11 +81,13 @@ type RoomSummary = {
   maxAttempts: number;
   createdAt: string;
   examTitle?: string | null;
+  isProtected?: boolean;
 };
 
 const rooms = ref<RoomSummary[]>([]);
 const loading = ref(false);
 const router = useRouter();
+const subjectId = ref<number | null>(null);
 
 function fmtDate(d: string | null): string {
   if (!d) return "-";
@@ -119,10 +122,15 @@ const openRooms = computed(() => {
 async function reload() {
   loading.value = true;
   try {
+    await ensureSubject();
     const { data } = await api.get<{ items: RoomSummary[]; total: number }>(
       "/rooms",
       {
-        params: { page: 1, pageSize: 100 },
+        params: {
+          page: 1,
+          pageSize: 100,
+          subjectId: subjectId.value ?? undefined,
+        },
       }
     );
     // TODO: backend could be extended to include exam title; for now keep as-is
@@ -130,15 +138,41 @@ async function reload() {
       ...r,
       openAt: (r as any).openAt ?? null,
       closeAt: (r as any).closeAt ?? null,
+      isProtected: !!(r as any).isProtected,
     }));
   } finally {
     loading.value = false;
   }
 }
 
+async function ensureSubject() {
+  if (subjectId.value !== null) return;
+  const cached = getUser();
+  if (cached && typeof cached.subjectId === "number") {
+    subjectId.value = cached.subjectId;
+    return;
+  }
+  try {
+    const { data } = await api.get<any>("/me");
+    if (typeof data?.subjectId === "number") {
+      subjectId.value = data.subjectId;
+    }
+  } catch {
+    subjectId.value = null;
+  }
+}
+
 function enterRoom(r: RoomSummary) {
+  const password =
+    r.isProtected && r.isProtected === true
+      ? window.prompt("Phòng này yêu cầu mật khẩu. Nhập mật khẩu để vào:")
+      : "";
   api
-    .post("/attempts/begin", { roomId: r.id, activate: false })
+    .post("/attempts/begin", {
+      roomId: r.id,
+      activate: false,
+      password: password || undefined,
+    })
     .then(() => {
       router.push({
         name: "student-room-exam",
@@ -146,9 +180,12 @@ function enterRoom(r: RoomSummary) {
         query: { prefetched: "1" },
       });
     })
-    .catch(() => {
-      // Nếu lỗi, vẫn cho vào trang thi; RoomExam.vue sẽ xử lý
-      router.push({ name: "student-room-exam", params: { roomId: r.id } });
+    .catch((e: any) => {
+      const msg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "Không thể vào phòng. Kiểm tra lại mật khẩu.";
+      alert(msg);
     });
 }
 

@@ -167,6 +167,8 @@ model Room {
   exam             Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
   examId           Int
   code             String    @unique // dùng làm link: /r/{code}
+  isProtected      Boolean   @default(false)
+  password         String?
   openAt           DateTime?
   closeAt          DateTime?
   durationSec      Int? // thời lượng mỗi thí sinh (giống nhau)

@@ -113,6 +113,15 @@
             <template #cell-createdAt="{ value }">
               {{ fmtDate(value) }}
             </template>
+            <template #cell-isProtected="{ value }">
+              <span
+                class="badge"
+                :class="value ? 'bg-warning text-dark' : 'bg-light text-muted border'"
+              >
+                <i class="bi" :class="value ? 'bi-lock-fill' : 'bi-unlock'"></i>
+                {{ value ? "Có mật khẩu" : "Mở" }}
+              </span>
+            </template>
             <template #row-actions="{ row }">
               <div class="btn-group btn-group-sm">
                 <button
@@ -121,6 +130,13 @@
                   @click="openDetail(row)"
                 >
                   <i class="bi bi-eye"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-warning"
+                  @click="openEdit(row)"
+                >
+                  <i class="bi bi-pencil"></i>
                 </button>
                 <button
                   type="button"
@@ -163,6 +179,71 @@
     :room="selectedRoom"
     @close="closeDetail"
   />
+  <div
+    class="modal fade show"
+    v-if="showEdit"
+    style="display: block"
+    aria-modal="true"
+    role="dialog"
+    @click.self="showEdit = false"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Cập nhật bảo vệ phòng</h5>
+          <button type="button" class="btn-close" @click="showEdit = false"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-check form-switch mb-2">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="editProtected"
+              v-model="editProtected"
+            />
+            <label class="form-check-label" for="editProtected">
+              Bảo vệ bằng mật khẩu
+            </label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="editClose"
+              v-model="editClose"
+            />
+            <label class="form-check-label" for="editClose">
+              Đóng phòng ngay
+            </label>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Mật khẩu mới</label>
+            <input
+              type="text"
+              class="form-control"
+              v-model="editPassword"
+              :disabled="!editProtected"
+              placeholder="Nhập mật khẩu"
+            />
+            <div class="form-text" v-if="editProtected">
+              Sinh viên sẽ cần mật khẩu này để vào phòng.
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-light" @click="showEdit = false">Hủy</button>
+          <button class="btn btn-primary" @click="saveEdit" :disabled="deleting">
+            <span
+              v-if="deleting"
+              class="spinner-border spinner-border-sm me-1"
+            ></span>
+            Lưu
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show" v-if="showEdit"></div>
 </template>
 
 <script setup lang="ts">
@@ -183,6 +264,7 @@ type RoomRow = {
   id: number;
   examId: number;
   code: string;
+  isProtected?: boolean;
   openAt: string | null;
   closeAt: string | null;
   durationSec: number | null;
@@ -206,6 +288,11 @@ const rooms = ref<RoomRow[]>([]);
 const selectedRoom = ref<RoomRow | null>(null);
 const showDetail = ref(false);
 const deleting = ref(false);
+const showEdit = ref(false);
+const editingId = ref<number | null>(null);
+const editProtected = ref(false);
+const editPassword = ref("");
+const editClose = ref(false);
 const selectedIds = reactive(new Set<number>());
 
 const filters = reactive({
@@ -232,6 +319,7 @@ const columns = [
   { key: "durationSec", title: "Thời lượng" },
   { key: "maxAttempts", title: "Lượt tối đa" },
   { key: "createdAt", title: "Tạo lúc" },
+  { key: "isProtected", title: "Bảo vệ", thClass: "text-center", tdClass: "text-center" },
 ];
 
 const filteredRooms = computed(() => {
@@ -329,6 +417,14 @@ function openDetail(room: RoomRow) {
   showDetail.value = true;
 }
 
+function openEdit(room: RoomRow) {
+  editingId.value = room.id;
+  editProtected.value = !!room.isProtected;
+  editPassword.value = "";
+  editClose.value = !isRoomLive(room);
+  showEdit.value = true;
+}
+
 function closeDetail() {
   showDetail.value = false;
 }
@@ -385,6 +481,32 @@ async function deleteSelected() {
 
 function clearSelection() {
   selectedIds.clear();
+}
+
+async function saveEdit() {
+  if (!editingId.value) return;
+  if (editProtected.value && !editPassword.value.trim()) {
+    alert("Nhập mật khẩu khi bật bảo vệ.");
+    return;
+  }
+  deleting.value = true;
+  try {
+    await api.post(`/rooms/${editingId.value}/protection`, {
+      isProtected: editProtected.value,
+      password: editProtected.value ? editPassword.value.trim() : undefined,
+      close: editClose.value ? true : undefined,
+    });
+    await reload();
+    showEdit.value = false;
+  } catch (e: any) {
+    alert(
+      e?.response?.data?.message ||
+        e?.message ||
+        "Không thể cập nhật bảo vệ phòng."
+    );
+  } finally {
+    deleting.value = false;
+  }
 }
 
 watch(

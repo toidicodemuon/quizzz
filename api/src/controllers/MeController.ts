@@ -7,6 +7,7 @@ type MeResponse = {
   email: string | null;
   role: string;
   userCode: string | null;
+  subjectId: number | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -20,6 +21,7 @@ export class MeController extends Controller {
     email: true,
     role: true,
     userCode: true,
+    subjectId: true,
     createdAt: true,
     updatedAt: true,
   } as const;
@@ -82,4 +84,3 @@ export class MeController extends Controller {
     }
   }
 }
-

@@ -26,7 +26,7 @@ type AttemptSummary = {
 };
 
 const attemptAlreadySubmittedError = () => {
-  const err: any = new Error("Attempt already submitted for this room");
+  const err: any = new Error("Bạn đã nộp bài cho phòng thi này rồi");
   err.status = 400;
   err.code = "ATTEMPT_ALREADY_SUBMITTED";
   return err;
@@ -432,17 +432,26 @@ export class AttemptController extends Controller {
     body: {
       roomId: number;
       activate?: boolean;
+      password?: string;
     }
   ): Promise<AttemptSummary> {
     const user = (req as any).user as { id: number; role: string };
 
     const room = await prisma.room.findUnique({
       where: { id: body.roomId },
-      select: { id: true, examId: true },
+      select: { id: true, examId: true, isProtected: true, password: true },
     });
     if (!room) {
       this.setStatus(400);
       throw new Error("Invalid roomId");
+    }
+
+    if (room.isProtected) {
+      const pass = typeof body.password === "string" ? body.password : "";
+      if (!pass || pass !== (room.password || "")) {
+        this.setStatus(403);
+        throw new Error("Sai mật khẩu phòng thi");
+      }
     }
 
     // Reuse existing attempt if still in progress, otherwise create a new one

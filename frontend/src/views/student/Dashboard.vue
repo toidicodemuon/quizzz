@@ -163,6 +163,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import api, { type Paginated } from "../../api";
+import { getUser } from "../../utils/auth";
 
 type AttemptRow = {
   id: number;
@@ -199,6 +200,7 @@ const router = useRouter();
 const loading = ref(false);
 const loadingLastAttempt = ref(false);
 const loadingRooms = ref(false);
+const subjectId = ref<number | null>(null);
 
 const lastAttempt = ref<AttemptRow | null>(null);
 const nearestRoom = ref<RoomSummary | null>(null);
@@ -336,7 +338,11 @@ async function loadNearestRoom() {
   loadingRooms.value = true;
   try {
     const { data } = await api.get<Paginated<RoomSummary>>("/rooms", {
-      params: { page: 1, pageSize: 100 },
+      params: {
+        page: 1,
+        pageSize: 100,
+        subjectId: subjectId.value ?? undefined,
+      },
     });
     const items = (data.items || []) as RoomSummary[];
     const now = new Date();
@@ -367,9 +373,27 @@ async function loadNearestRoom() {
 async function reload() {
   loading.value = true;
   try {
+    await ensureSubject();
     await Promise.all([loadLastAttempt(), loadNearestRoom()]);
   } finally {
     loading.value = false;
+  }
+}
+
+async function ensureSubject() {
+  if (subjectId.value !== null) return;
+  const cached = getUser();
+  if (cached && typeof cached.subjectId === "number") {
+    subjectId.value = cached.subjectId;
+    return;
+  }
+  try {
+    const { data } = await api.get<any>("/me");
+    if (typeof data?.subjectId === "number") {
+      subjectId.value = data.subjectId;
+    }
+  } catch {
+    subjectId.value = null;
   }
 }
 

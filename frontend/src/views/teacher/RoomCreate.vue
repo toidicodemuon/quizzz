@@ -128,13 +128,14 @@
                     <tr class="text-muted small">
                       <th>Phòng</th>
                       <th>Thời gian</th>
+                      <th>Bảo vệ</th>
                       <!-- <th>Thiết lập</th> -->
                       <th class="text-end">Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-if="loadingRooms">
-                      <td colspan="4" class="text-center text-muted py-3">
+                      <td colspan="5" class="text-center text-muted py-3">
                         <span
                           class="spinner-border spinner-border-sm me-2"
                         ></span>
@@ -142,7 +143,7 @@
                       </td>
                     </tr>
                     <tr v-else-if="rooms.length === 0">
-                      <td colspan="4" class="text-center text-muted py-3">
+                      <td colspan="5" class="text-center text-muted py-3">
                         Chưa có phòng nào cho đề thi này.
                       </td>
                     </tr>
@@ -156,6 +157,7 @@
                         <div class="fw-semibold">#{{ r.id }}</div>
                         <div class="text-muted small">
                           {{ durationText(r) }}
+
                           <!--| tối đa
                           {{ r.maxAttempts }} lượt-->
                         </div>
@@ -167,6 +169,24 @@
                         <div class="text-muted">
                           Đóng: {{ fmtDate(r.closeAt) }}
                         </div>
+                      </td>
+                      <td class="small">
+                        <span
+                          class="badge"
+                          :class="
+                            r.isProtected
+                              ? 'bg-warning text-dark'
+                              : 'bg-light text-muted border'
+                          "
+                        >
+                          <i
+                            class="bi"
+                            :class="
+                              r.isProtected ? 'bi-lock-fill' : 'bi-unlock'
+                            "
+                          ></i>
+                          {{ r.isProtected ? "Có mật khẩu" : "Mở" }}
+                        </span>
                       </td>
                       <!-- <td class="small">
                         <div>
@@ -199,6 +219,25 @@
                             @click="openRoomDetail(r.id)"
                           >
                             Xem
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-outline-warning"
+                            @click="handleProtection(r)"
+                            :disabled="loadingProtectId === r.id"
+                            title="Đặt/bỏ mật khẩu phòng"
+                          >
+                            <span
+                              v-if="loadingProtectId === r.id"
+                              class="spinner-border spinner-border-sm me-1"
+                            ></span>
+                            <i
+                              v-else
+                              class="bi"
+                              :class="
+                                r.isProtected ? 'bi-lock-fill' : 'bi-unlock'
+                              "
+                            ></i>
                           </button>
                           <button
                             type="button"
@@ -293,6 +332,7 @@ type RoomSummary = {
   shuffleChoices: boolean;
   maxAttempts: number;
   createdAt: string;
+  isProtected?: boolean;
 };
 
 type AttemptDetail = {
@@ -319,9 +359,11 @@ const selectedRoomId = ref<number | null>(null);
 const creating = ref(false);
 const closingRoomId = ref<number | null>(null);
 const deletingRoomId = ref<number | null>(null);
-const autoRefreshAttempts = ref(true);
+const autoRefreshAttempts = ref(false);
+let autoRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 const showHistory = ref(false);
 const showConfig = ref(true);
+const loadingProtectId = ref<number | null>(null);
 const showAttemptDetail = ref(false);
 const attemptDetail = ref<AttemptDetail | null>(null);
 const showRoomDetail = ref(false);
@@ -377,6 +419,7 @@ function normalizeRoom(r: any): RoomSummary {
     shuffleChoices: !!r.shuffleChoices,
     maxAttempts: Number(r.maxAttempts || 0),
     createdAt: String(r.createdAt),
+    isProtected: !!(r as any).isProtected,
   };
 }
 
@@ -455,6 +498,8 @@ async function handleCreateRoom(payload: {
   shuffleQuestions: boolean;
   shuffleChoices: boolean;
   maxAttempts: number;
+  requirePassword: boolean;
+  password: string;
 }) {
   if (!selectedExamId.value) return;
   creating.value = true;
@@ -469,6 +514,8 @@ async function handleCreateRoom(payload: {
       shuffleQuestions: !!payload.shuffleQuestions,
       shuffleChoices: !!payload.shuffleChoices,
       maxAttempts: payload.maxAttempts || 1,
+      isProtected: !!payload.requirePassword,
+      password: payload.requirePassword ? payload.password : undefined,
     };
     const { data } = await api.post("/rooms", body);
     const createdId =
@@ -476,6 +523,11 @@ async function handleCreateRoom(payload: {
         ? Number((data as any).id)
         : null;
     await loadRooms(createdId ?? undefined);
+    autoRefreshAttempts.value = true;
+    if (autoRefreshTimer) clearTimeout(autoRefreshTimer);
+    autoRefreshTimer = setTimeout(() => {
+      autoRefreshAttempts.value = false;
+    }, 60_000);
     showConfig.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể tạo phòng thi");
@@ -535,6 +587,35 @@ async function handleDeleteRoom(roomId: number) {
     }
   } finally {
     deletingRoomId.value = null;
+  }
+}
+
+async function handleProtection(room: RoomSummary) {
+  const current = !!room.isProtected;
+  const enable = !current;
+  let password: string | undefined;
+  if (enable) {
+    const pw = window.prompt("Nhập mật khẩu mới cho phòng này:");
+    if (!pw) return;
+    password = pw;
+  } else {
+    if (!window.confirm("Bỏ mật khẩu và mở phòng không bảo vệ?")) return;
+  }
+  loadingProtectId.value = room.id;
+  try {
+    await api.post(`/rooms/${room.id}/protection`, {
+      isProtected: enable,
+      password,
+    });
+    await loadRooms(room.id);
+  } catch (e: any) {
+    alert(
+      e?.response?.data?.message ||
+        e?.message ||
+        "Không thể cập nhật bảo vệ phòng"
+    );
+  } finally {
+    loadingProtectId.value = null;
   }
 }
 

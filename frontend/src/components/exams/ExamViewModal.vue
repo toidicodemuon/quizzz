@@ -170,32 +170,29 @@ async function loadData() {
   try {
     const [{ data: ex }, { data: qres }] = await Promise.all([
       api.get(`/exams/${props.examId}`),
-      api.get<Paginated<QuestionLite>>(`/questions`, {
-        params: { examId: props.examId, pageSize: 100 },
+      api.get<any>(`/questions`, {
+        params: { examId: props.examId, pageSize: 500, includeChoices: true },
       }),
     ]);
     exam.value = ex;
-    questions.value = qres.items || [];
-
-    const full = await Promise.all(
-      questions.value.map((q) =>
-        api
-          .get<any>(`/questions/${q.id}`)
-          .then((res) => res.data)
-          .catch(() => null)
-      )
-    );
+    const items = Array.isArray(qres?.items) ? qres.items : [];
     const map: Record<
       number,
       { id: number; content: string; isCorrect: boolean }[]
     > = {};
-    full.forEach((fq: any) => {
-      if (!fq || !Array.isArray(fq.choices)) return;
-      map[fq.id] = fq.choices.map((c: any) => ({
-        id: c.id,
-        content: c.content,
-        isCorrect: !!c.isCorrect,
-      }));
+    questions.value = items.map((q: any) => {
+      if (Array.isArray(q.choices)) {
+        map[q.id] = q.choices.map((c: any) => ({
+          id: c.id,
+          content: c.content,
+          isCorrect: !!c.isCorrect,
+        }));
+      }
+      return {
+        id: q.id,
+        text: q.text,
+        explanation: q.explanation ?? null,
+      };
     });
     choices.value = map;
   } catch (err: any) {
