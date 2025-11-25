@@ -111,6 +111,12 @@ const routes: Array<RouteRecordRaw> = [
     name: "login",
     component: () => import("../views/Login.vue"),
   },
+  {
+    path: "/mini-web-cloud",
+    name: "mini-web-cloud",
+    component: () => import("../views/MiniWebCloudLanding.vue"),
+    meta: { pageTitle: "Mini Web Cloud" },
+  },
   { path: "/:pathMatch(.*)*", redirect: "/" },
 ];
 

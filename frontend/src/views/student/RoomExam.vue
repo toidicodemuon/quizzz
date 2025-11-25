@@ -1,51 +1,47 @@
 <template>
   <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div
+      class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
       <div>
         <h5 class="mb-0">Làm bài thi</h5>
         <div class="small text-muted">
           Phòng #{{ roomId }} - Đề thi #{{ examId }}
         </div>
       </div>
-      <div class="text-end">
-        <div class="d-flex align-items-center gap-2 justify-content-end">
-          <div>
-            <div>Thời gian còn lại:</div>
-            <div class="fw-bold" :class="timeLeft <= 60 ? 'text-danger' : ''">
-              {{ countdownText }}
-            </div>
+      <div
+        class="d-flex align-items-center gap-3 justify-content-end flex-wrap countdown-wrap"
+      >
+        <div class="countdown-pill" :class="countdownVariant">
+          <div class="countdown-icon">
+            <i class="bi bi-stopwatch-fill"></i>
           </div>
-          <button
-            v-if="started && !submitted"
-            class="btn btn-sm btn-primary"
-            type="button"
-            @click="confirmSubmit"
-            :disabled="submitting"
-            title="Nộp bài"
-          >
-            <span
-              v-if="submitting"
-              class="spinner-border spinner-border-sm me-1"
-            ></span>
-            Nộp bài
-          </button>
+          <div class="d-flex flex-column">
+            <small class="fw-semibold text-uppercase text-white-50">
+              Thời gian còn lại
+            </small>
+            <span class="countdown-text">{{ countdownText }}</span>
+          </div>
         </div>
+        <button
+          v-if="started && !submitted"
+          class="btn btn-sm btn-primary"
+          type="button"
+          @click="confirmSubmit"
+          :disabled="submitting"
+          title="Nộp bài"
+        >
+          <span
+            v-if="submitting"
+            class="spinner-border spinner-border-sm me-1"
+          ></span>
+          Nộp bài
+        </button>
       </div>
-    </div>
+      </div>
 
-    <div class="card-body" v-if="loaded && !submitting && !submitted">
-      <template v-if="!started">
-        <div class="mb-3 alert alert-info">
-          <div><strong>Thông tin phòng thi</strong></div>
-          <div v-if="durationSec">
-            Tổng thời gian làm bài: {{ Math.round(durationSec / 60) }} phút.
-          </div>
-          <div v-else>Thời gian làm bài: không giới hạn.</div>
-          <div class="small mt-1">
-            Bấm <strong>Bắt đầu làm bài</strong> để hiện câu hỏi và bắt đầu đếm
-            giờ.
-          </div>
-        </div>
+      <div class="card-body" v-if="loaded && !submitting && !submitted">
+        <template v-if="!started">
         <div class="text-center mt-4">
           <button
             class="btn btn-primary"
@@ -63,9 +59,6 @@
         </div>
       </template>
       <template v-else>
-        <div class="mb-3 alert alert-info" v-if="durationSec">
-          Tổng thời gian: {{ Math.round(durationSec / 60) }} phút.
-        </div>
         <div v-for="(q, idx) in questions" :key="q.questionId" class="mb-3">
           <div class="fw-semibold mb-1">
             Câu {{ idx + 1 }}: {{ q.questionText }}
@@ -289,6 +282,13 @@ const countdownText = computed(() => {
   return `${mm}:${ss}`;
 });
 
+const countdownVariant = computed(() => {
+  const s = timeLeft.value;
+  if (s <= 60) return "danger";
+  if (s <= 300) return "warning";
+  return "normal";
+});
+
 const pass = computed(() => {
   if (!result.value) return null;
   const p = result.value.passMarkPercent;
@@ -473,10 +473,8 @@ async function submitAttempt(isAuto = false) {
     const entries = Object.entries(answers).filter(
       ([, choiceId]) => typeof choiceId === "number"
     );
-    if (!entries.length) {
-      if (!isAuto) {
-        alert("Bạn chưa chọn câu trả lời nào.");
-      }
+    if (!entries.length && !isAuto) {
+      alert("Bạn chưa chọn câu trả lời nào.");
       submitting.value = false;
       return;
     }
@@ -595,6 +593,63 @@ function endDragWarning() {
 <style scoped>
 .card {
   width: 100%;
+}
+
+.countdown-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.22);
+  backdrop-filter: blur(3px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  min-width: 170px;
+}
+
+.countdown-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 1.05rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.countdown-text {
+  font-size: 1rem;
+  letter-spacing: 0.2px;
+}
+
+.countdown-pill.warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 12px 26px rgba(217, 119, 6, 0.32);
+}
+
+.countdown-pill.danger {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 12px 28px rgba(185, 28, 28, 0.42);
+  animation: pulse-glow 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 12px 28px rgba(185, 28, 28, 0.4);
+  }
+  50% {
+    transform: scale(1.015);
+    box-shadow: 0 14px 32px rgba(185, 28, 28, 0.5);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 12px 28px rgba(185, 28, 28, 0.4);
+  }
 }
 
 .warning-toast {
