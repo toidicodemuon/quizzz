@@ -5,6 +5,9 @@
     >
       <div>
         <h5 class="mb-0">Làm bài thi</h5>
+        <div v-if="examTitle" class="exam-title text-primary fw-semibold">
+          {{ examTitle }}
+        </div>
         <div class="small text-muted">
           Phòng #{{ roomId }} - Đề thi #{{ examId }}
         </div>
@@ -16,16 +19,15 @@
           <div class="countdown-icon">
             <i class="bi bi-stopwatch-fill"></i>
           </div>
-          <div class="d-flex flex-column">
-            <small class="fw-semibold text-uppercase text-white-50">
-              Thời gian còn lại
-            </small>
-            <span class="countdown-text">{{ countdownText }}</span>
+          <div class="countdown-body">
+            <div class="countdown-screen" aria-label="Dong ho dem nguoc">
+              <span class="countdown-text">{{ countdownText }}</span>
+            </div>
           </div>
         </div>
         <button
           v-if="started && !submitted"
-          class="btn btn-sm btn-primary"
+          class="btn btn-primary submit-btn"
           type="button"
           @click="confirmSubmit"
           :disabled="submitting"
@@ -35,13 +37,14 @@
             v-if="submitting"
             class="spinner-border spinner-border-sm me-1"
           ></span>
+          <i v-else class="bi bi-send-check me-1"></i>
           Nộp bài
         </button>
       </div>
-      </div>
+    </div>
 
-      <div class="card-body" v-if="loaded && !submitting && !submitted">
-        <template v-if="!started">
+    <div class="card-body" v-if="loaded && !submitting && !submitted">
+      <template v-if="!started">
         <div class="text-center mt-4">
           <button
             class="btn btn-primary"
@@ -83,7 +86,11 @@
           </div>
         </div>
         <div class="text-end mt-4">
-          <button class="btn btn-outline-secondary me-2" @click="confirmSubmit">
+          <button
+            class="btn btn-outline-secondary submit-btn"
+            @click="confirmSubmit"
+          >
+            <i class="bi bi-send-check me-1"></i>
             Nộp bài
           </button>
         </div>
@@ -214,6 +221,7 @@ const router = useRouter();
 
 const roomId = Number(route.params.roomId);
 const examId = ref<number | null>(null);
+const examTitle = ref<string | null>(null);
 const durationSec = ref<number | null>(null);
 
 type QuestionView = {
@@ -273,13 +281,20 @@ let timer: number | undefined;
 
 const countdownText = computed(() => {
   const s = Math.max(0, timeLeft.value);
-  const mm = Math.floor(s / 60)
+  const totalMinutes = Math.floor(s / 60);
+  const showHours = totalMinutes >= 60;
+  const hh = Math.floor(s / 3600)
+    .toString()
+    .padStart(2, "0");
+  const mm = Math.floor((s % 3600) / 60)
     .toString()
     .padStart(2, "0");
   const ss = Math.floor(s % 60)
     .toString()
     .padStart(2, "0");
-  return `${mm}:${ss}`;
+  return showHours
+    ? `${hh}:${mm}:${ss}`
+    : `${totalMinutes.toString().padStart(2, "0")}:${ss}`;
 });
 
 const countdownVariant = computed(() => {
@@ -311,8 +326,12 @@ function parseApiError(err: any): { message: string; code?: string } {
 async function ensureAttemptCanBegin(opts?: {
   activate?: boolean;
 }): Promise<AttemptMeta | null> {
-  if (roomMeta.value?.isProtected && !roomPassword.value) {
-    const pw = window.prompt("Phòng này yêu cầu mật khẩu. Nhập mật khẩu để vào:");
+  const shouldPromptPassword =
+    !!opts?.activate && roomMeta.value?.isProtected && !roomPassword.value;
+  if (shouldPromptPassword) {
+    const pw = window.prompt(
+      "Phòng này yêu cầu mật khẩu. Nhập mật khẩu để vào:"
+    );
     if (!pw) return null;
     roomPassword.value = pw;
   }
@@ -347,9 +366,24 @@ async function loadRoom() {
   const { data: room } = await api.get<any>(`/rooms/${roomId}`);
   roomMeta.value = { isProtected: !!room.isProtected };
   examId.value = room.examId;
+  examTitle.value =
+    room.examTitle ?? room.title ?? room?.exam?.title ?? examTitle.value;
   durationSec.value = room.durationSec ?? null;
   if (durationSec.value) {
     timeLeft.value = durationSec.value;
+  }
+  await ensureExamTitle();
+}
+
+async function ensureExamTitle() {
+  if (examTitle.value || !examId.value) return;
+  try {
+    const { data } = await api.get<any>(`/exams/${examId.value}`);
+    if (data?.title) {
+      examTitle.value = data.title;
+    }
+  } catch {
+    // ignore missing title; not critical for exam flow
   }
 }
 
@@ -379,7 +413,12 @@ async function fetchAttemptMeta(): Promise<AttemptMeta | null> {
 async function loadQuestions() {
   if (!examId.value) return;
   const { data } = await api.get<any>(`/questions`, {
-    params: { examId: examId.value, page: 1, pageSize: 500, includeChoices: true },
+    params: {
+      examId: examId.value,
+      page: 1,
+      pageSize: 500,
+      includeChoices: true,
+    },
   });
   const full = Array.isArray(data?.items) ? data.items : [];
   questions.value = full
@@ -433,6 +472,7 @@ function stopTimer() {
     window.clearInterval(timer);
     timer = undefined;
   }
+  showWarning30s.value = false;
 }
 async function beginExam() {
   if (started.value || startingExam.value) return;
@@ -459,6 +499,7 @@ function confirmSubmit() {
 
 function autoSubmit(isAuto = false) {
   if (submitted.value || submitting.value || autoSubmitting.value) return;
+  stopTimer();
   autoSubmitting.value = true;
   showTimeUpModal.value = true;
   submitAttempt(isAuto).finally(() => {
@@ -468,22 +509,27 @@ function autoSubmit(isAuto = false) {
 
 async function submitAttempt(isAuto = false) {
   if (!examId.value) return;
+  stopTimer();
   submitting.value = true;
   try {
-    const entries = Object.entries(answers).filter(
-      ([, choiceId]) => typeof choiceId === "number"
-    );
-    if (!entries.length && !isAuto) {
-      alert("Bạn chưa chọn câu trả lời nào.");
-      submitting.value = false;
-      return;
-    }
+    const payloadAnswers =
+      questions.value.length > 0
+        ? questions.value.map((q) => ({
+            questionId: q.questionId,
+            selectedChoiceId:
+              typeof answers[q.questionId] === "number"
+                ? Number(answers[q.questionId])
+                : undefined,
+          }))
+        : Object.entries(answers)
+            .filter(([, choiceId]) => typeof choiceId === "number")
+            .map(([qId, choiceId]) => ({
+              questionId: Number(qId),
+              selectedChoiceId: Number(choiceId),
+            }));
     const payload = {
       roomId,
-      answers: entries.map(([qId, choiceId]) => ({
-        questionId: Number(qId),
-        selectedChoiceId: Number(choiceId),
-      })),
+      answers: payloadAnswers,
     };
     const { data } = await api.post<any>("/attempts", payload);
     submitted.value = true;
@@ -495,7 +541,14 @@ async function submitAttempt(isAuto = false) {
   } catch (e: any) {
     const { message } = parseApiError(e);
     if (!isAuto) {
-      alert(message || "Khong the nop bai thi");
+      const normalized = (message || "").toLowerCase();
+      if (normalized.includes("answers must be a non-empty array")) {
+        alert(
+          "B\u1ea1n kh\u00f4ng ch\u1ecdn c\u00e2u n\u00e0o, h\u1ec7 th\u1ed1ng n\u1ed9p tr\u1eafng cho t\u1ea5t c\u1ea3 c\u00e2u."
+        );
+      } else {
+        alert(message || "Khong the nop bai thi");
+      }
     } else if (message) {
       console.warn("Auto submit failed:", message);
     }
@@ -526,9 +579,9 @@ onMounted(async () => {
   try {
     await loadRoom();
     let attempt = await fetchAttemptMeta();
-    if (!attempt) {
-      attempt = await ensureAttemptCanBegin();
-    }
+    // if (!attempt) {
+    //   attempt = await ensureAttemptCanBegin();
+    // }
     attemptMeta.value = attempt;
     loaded.value = true;
     if (attempt) {
@@ -595,61 +648,119 @@ function endDragWarning() {
   width: 100%;
 }
 
+.countdown-wrap {
+  align-items: stretch;
+}
+
+.exam-title {
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
 .countdown-pill {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0ea5e9, #2563eb);
-  color: #fff;
-  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.22);
-  backdrop-filter: blur(3px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  min-width: 170px;
+  gap: 14px;
+  padding: 0;
+  border-radius: 14px;
+  background: #0f172a;
+  color: #eaf9ff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 210px;
+  overflow: hidden;
+  min-height: 56px;
+}
+
+.countdown-pill > * {
+  position: relative;
+  z-index: 1;
 }
 
 .countdown-icon {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.12);
-  font-size: 1.05rem;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  font-size: 1.1rem;
+  color: #d4f7ff;
+}
+
+.countdown-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+}
+
+.countdown-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #cbe7ff;
+  font-weight: 600;
+}
+
+.countdown-screen {
+  position: relative;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    rgba(2, 10, 22, 0.86),
+    rgba(7, 21, 35, 0.8)
+  );
+  border: 1px solid rgba(148, 233, 255, 0.35);
+  box-shadow: none;
+  min-width: 150px;
 }
 
 .countdown-text {
-  font-size: 1rem;
-  letter-spacing: 0.2px;
+  display: block;
+  font-size: 1.35rem;
+  font-family: "Share Tech Mono", "Orbitron", "DS-Digital", "Digital-7",
+    monospace;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: #32ff85;
+  text-shadow: none;
 }
 
 .countdown-pill.warning {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  box-shadow: 0 12px 26px rgba(217, 119, 6, 0.32);
+  background: #2a1600;
 }
 
 .countdown-pill.danger {
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
-  box-shadow: 0 12px 28px rgba(185, 28, 28, 0.42);
-  animation: pulse-glow 1.2s ease-in-out infinite;
+  background: #2a0b0b;
 }
 
-@keyframes pulse-glow {
-  0% {
-    transform: scale(1);
-    box-shadow: 0 12px 28px rgba(185, 28, 28, 0.4);
-  }
-  50% {
-    transform: scale(1.015);
-    box-shadow: 0 14px 32px rgba(185, 28, 28, 0.5);
-  }
-  100% {
-    transform: scale(1);
-    box-shadow: 0 12px 28px rgba(185, 28, 28, 0.4);
-  }
+.countdown-pill.warning .countdown-screen {
+  border-color: rgba(251, 191, 36, 0.4);
+  box-shadow: none;
+}
+
+.countdown-pill.danger .countdown-screen {
+  border-color: rgba(248, 113, 113, 0.45);
+  box-shadow: none;
+}
+
+.countdown-pill.warning .countdown-text {
+  color: #ffbd45;
+  text-shadow: none;
+}
+
+.countdown-pill.danger .countdown-text {
+  color: #ff8080;
+  text-shadow: none;
+}
+
+.submit-btn {
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .warning-toast {

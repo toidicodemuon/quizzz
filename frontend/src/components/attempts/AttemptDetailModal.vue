@@ -51,7 +51,7 @@
                 v-else-if="detailPass === false"
                 class="badge bg-danger ms-1"
               >
-                Rớt
+                Trượt
               </span>
               <span v-else class="badge bg-secondary ms-1">-</span>
             </span>

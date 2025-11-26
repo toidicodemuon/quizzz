@@ -152,7 +152,16 @@
                 </span>
               </div>
               <!-- <div class="fw-semibold">{{ nearestRoom.code }}</div> -->
-              <div class="text-muted small">Đề #{{ nearestRoom.examId }}</div>
+              <div class="text-muted small">
+                Đề #{{ nearestRoom.examId }}
+                <span class="fw-semibold text-body ms-1">
+                  {{ nearestRoom.examTitle || "Chưa có tiêu đề" }}
+                </span>
+              </div>
+              <div class="text-muted small">
+                Mã đề:
+                <code>{{ nearestRoom.examCode || "—" }}</code>
+              </div>
               <div class="d-flex flex-wrap gap-3 text-muted small mt-2">
                 <span
                   ><i class="bi bi-clock-history me-1"></i
@@ -197,7 +206,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
@@ -230,6 +239,8 @@ type RoomSummary = {
   shuffleChoices: boolean;
   maxAttempts: number;
   createdAt: string;
+  examTitle?: string | null;
+  examCode?: string | null;
 };
 
 const router = useRouter();
@@ -238,6 +249,7 @@ const loading = ref(false);
 const loadingLastAttempt = ref(false);
 const loadingRooms = ref(false);
 const subjectId = ref<number | null>(null);
+const examMetaMap = reactive<Record<number, { title?: string | null; code?: string | null }>>({});
 
 const lastAttempt = ref<AttemptRow | null>(null);
 const nearestRoom = ref<RoomSummary | null>(null);
@@ -380,6 +392,23 @@ async function loadLastAttempt() {
   }
 }
 
+async function fetchExamMeta(id: number) {
+  if (examMetaMap[id]?.title || examMetaMap[id]?.code) return examMetaMap[id];
+  try {
+    const { data } = await api.get<any>(`/exams/${id}`);
+    if (data) {
+      examMetaMap[id] = {
+        title: data.title ?? examMetaMap[id]?.title ?? null,
+        code: data.code ?? examMetaMap[id]?.code ?? null,
+      };
+      return examMetaMap[id];
+    }
+  } catch {
+    // ignore missing meta
+  }
+  return null;
+}
+
 async function loadNearestRoom() {
   loadingRooms.value = true;
   try {
@@ -391,15 +420,20 @@ async function loadNearestRoom() {
       },
     });
     const items = (data.items || []) as RoomSummary[];
+    const enriched = items.map((r) => ({
+      ...r,
+      examTitle: r.examTitle ?? examMetaMap[r.examId]?.title ?? null,
+      examCode: r.examCode ?? examMetaMap[r.examId]?.code ?? null,
+    }));
     const now = new Date();
-    const openList = items.filter((r) => {
+    const openList = enriched.filter((r) => {
       const openOk = !r.openAt || new Date(r.openAt) <= now;
       const closeOk = !r.closeAt || new Date(r.closeAt) >= now;
       return openOk && closeOk;
     });
-    openRooms.value = openList;
     if (openList.length === 0) {
       nearestRoom.value = null;
+      openRooms.value = [];
       return;
     }
     openList.sort((a, b) => {
@@ -411,7 +445,23 @@ async function loadNearestRoom() {
         : Number.MAX_SAFE_INTEGER;
       return closeA - closeB;
     });
-    nearestRoom.value = openList[0];
+    const missingExamIds = Array.from(
+      new Set(
+        openList
+          .filter((r) => !r.examTitle || !r.examCode)
+          .map((r) => r.examId)
+      )
+    );
+    if (missingExamIds.length) {
+      await Promise.all(missingExamIds.map((id) => fetchExamMeta(id)));
+    }
+    const hydrated = openList.map((r) => ({
+      ...r,
+      examTitle: r.examTitle || examMetaMap[r.examId]?.title || null,
+      examCode: r.examCode || examMetaMap[r.examId]?.code || null,
+    }));
+    openRooms.value = hydrated;
+    nearestRoom.value = hydrated[0];
   } catch {
     nearestRoom.value = null;
     openRooms.value = [];

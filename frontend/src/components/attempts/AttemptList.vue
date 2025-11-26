@@ -13,6 +13,7 @@
           </th>
           <th>#</th>
           <th>Mã đề</th>
+          <th>Phòng</th>
           <th>Tiêu đề</th>
           <th v-if="isTeacher">Mã SV</th>
           <th v-if="isTeacher">Tên học viên</th>
@@ -38,6 +39,9 @@
           <td>
             <code>{{ a.examCode ?? "-" }}</code>
           </td>
+          <td>
+            <code>{{ a.roomId ?? "-" }}</code>
+          </td>
           <td>{{ a.examTitle ?? "-" }}</td>
           <td v-if="isTeacher" class="small">
             <code>{{ a.studentCode ?? "-" }}</code>
@@ -49,7 +53,7 @@
           <td>
             <span v-if="a.pass === true" class="badge bg-success">Đậu</span>
             <span v-else-if="a.pass === false" class="badge bg-danger"
-              >Rớt</span
+              >Trượt</span
             >
             <span v-else class="badge bg-secondary">-</span>
           </td>
@@ -79,7 +83,7 @@
         </tr>
         <tr v-if="!loading && items.length === 0">
           <td
-            :colspan="(isTeacher ? 11 : 8) + (showCheckbox ? 1 : 0)"
+            :colspan="(isTeacher ? 12 : 10) + (showCheckbox ? 1 : 0)"
             class="text-center text-muted"
           >
             Không có dữ liệu
@@ -96,6 +100,7 @@ import { computed } from "vue";
 type AttemptListItem = {
   id: number;
   examCode?: string | null;
+  roomId?: number | null;
   examTitle?: string | null;
   score?: number | null;
   startedAt?: string | null;

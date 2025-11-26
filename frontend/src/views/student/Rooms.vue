@@ -24,11 +24,16 @@
                 class="d-flex justify-content-between align-items-center mb-1"
               >
                 <strong>Phòng #{{ r.id }}</strong>
-                <span class="badge bg-success">Đang mở</span>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-success">Đang mở</span>
+                  <span v-if="r.isProtected" class="badge bg-secondary">
+                    Bảo vệ
+                  </span>
+                </div>
               </div>
-              <div class="small text-muted mb-1">
+              <!-- <div class="small text-muted mb-1">
                 Mã phòng: <code>{{ r.code }}</code>
-              </div>
+              </div> -->
               <div class="small text-muted mb-1">
                 Đề thi:
                 <span class="fw-semibold">{{ r.examTitle || "-" }}</span>
@@ -64,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "../../api";
 import { getUser } from "../../utils/auth";
@@ -88,6 +93,7 @@ const rooms = ref<RoomSummary[]>([]);
 const loading = ref(false);
 const router = useRouter();
 const subjectId = ref<number | null>(null);
+const examTitleMap = reactive<Record<number, string>>({});
 
 function fmtDate(d: string | null): string {
   if (!d) return "-";
@@ -139,10 +145,40 @@ async function reload() {
       openAt: (r as any).openAt ?? null,
       closeAt: (r as any).closeAt ?? null,
       isProtected: !!(r as any).isProtected,
+      examTitle:
+        (r as any).examTitle ?? examTitleMap[(r as any).examId] ?? null,
     }));
+    const missingExamIds = rooms.value
+      .filter((r) => !r.examTitle && !examTitleMap[r.examId])
+      .map((r) => r.examId);
+    if (missingExamIds.length) {
+      await fetchExamTitles(missingExamIds);
+      rooms.value = rooms.value.map((r) => ({
+        ...r,
+        examTitle: r.examTitle || examTitleMap[r.examId] || null,
+      }));
+    }
   } finally {
     loading.value = false;
   }
+}
+
+async function fetchExamTitles(ids: number[]) {
+  const unique = Array.from(
+    new Set(ids.filter((id) => typeof id === "number" && !Number.isNaN(id)))
+  );
+  await Promise.all(
+    unique.map(async (id) => {
+      try {
+        const { data } = await api.get<any>(`/exams/${id}`);
+        if (data?.title) {
+          examTitleMap[id] = data.title;
+        }
+      } catch {
+        // ignore missing exam title
+      }
+    })
+  );
 }
 
 async function ensureSubject() {
@@ -163,30 +199,11 @@ async function ensureSubject() {
 }
 
 function enterRoom(r: RoomSummary) {
-  const password =
-    r.isProtected && r.isProtected === true
-      ? window.prompt("Phòng này yêu cầu mật khẩu. Nhập mật khẩu để vào:")
-      : "";
-  api
-    .post("/attempts/begin", {
-      roomId: r.id,
-      activate: false,
-      password: password || undefined,
-    })
-    .then(() => {
-      router.push({
-        name: "student-room-exam",
-        params: { roomId: r.id },
-        query: { prefetched: "1" },
-      });
-    })
-    .catch((e: any) => {
-      const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "Không thể vào phòng. Kiểm tra lại mật khẩu.";
-      alert(msg);
-    });
+  router.push({
+    name: "student-room-exam",
+    params: { roomId: r.id },
+    query: { prefetched: "1" },
+  });
 }
 
 onMounted(() => {
