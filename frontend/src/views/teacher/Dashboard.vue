@@ -5,20 +5,26 @@
         class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3"
       >
         <div>
-          <p class="text-uppercase text-muted small mb-1">Xin chào, giáo viên</p>
           <h3 class="fw-semibold mb-2">Bảng điều khiển giám sát lớp thi</h3>
           <p class="mb-0 text-muted">
-            Theo dõi nhanh đề thi, phòng đang mở và hoạt động làm bài theo thời gian thực.
+            Theo dõi nhanh đề thi, phòng đang mở và hoạt động làm bài theo thời
+            gian thực.
           </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
           <router-link to="/teacher/quiz/create" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i> Tạo đề thi
           </router-link>
-          <router-link to="/teacher/room/create" class="btn btn-outline-light text-dark">
+          <router-link
+            to="/teacher/room/create"
+            class="btn btn-outline-light text-dark"
+          >
             <i class="bi bi-door-open me-1"></i> Mở phòng thi
           </router-link>
-          <router-link to="/teacher/question-bank" class="btn btn-outline-light text-dark">
+          <router-link
+            to="/teacher/question-bank"
+            class="btn btn-outline-light text-dark"
+          >
             <i class="bi bi-journal-text me-1"></i> Ngân hàng câu hỏi
           </router-link>
         </div>
@@ -26,14 +32,20 @@
     </div>
 
     <div class="row g-3 mb-4">
-      <div v-for="card in statCards" :key="card.title" class="col-12 col-md-6 col-lg-3">
+      <div
+        v-for="card in statCards"
+        :key="card.title"
+        class="col-12 col-md-6 col-lg-3"
+      >
         <div class="card h-100 shadow-sm border-0">
           <div class="card-body d-flex align-items-center gap-3">
             <span :class="['stat-icon', card.bg]">
               <i :class="card.icon"></i>
             </span>
             <div>
-              <p class="text-muted text-uppercase small mb-1">{{ card.title }}</p>
+              <p class="text-muted text-uppercase small mb-1">
+                {{ card.title }}
+              </p>
               <h4 class="fw-semibold mb-0">{{ card.value }}</h4>
               <small class="text-muted">{{ card.sub }}</small>
             </div>
@@ -48,7 +60,6 @@
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h6 class="mb-0">Hoạt động gần đây</h6>
-              <span class="badge bg-light text-muted">Live</span>
             </div>
             <ul class="list-group list-group-flush">
               <li
@@ -75,7 +86,9 @@
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h6 class="mb-0">Phòng thi nhanh</h6>
-              <router-link to="/teacher/room/create" class="small">Xem tất cả</router-link>
+              <router-link to="/teacher/room/create" class="small"
+                >Xem tất cả</router-link
+              >
             </div>
             <div class="d-flex flex-column gap-3">
               <div
@@ -88,13 +101,19 @@
                     <div class="fw-semibold">Phòng #{{ room.id }}</div>
                     <small class="text-muted">{{ room.exam }}</small>
                   </div>
-                  <span :class="['badge', room.live ? 'bg-success' : 'bg-secondary']">
-                    {{ room.live ? "Đang mở" : "Chưa mở" }}
+                  <span :class="['badge', room.badgeClass]">
+                    {{ room.statusLabel }}
                   </span>
                 </div>
                 <div class="d-flex gap-3 mt-2 text-muted small">
-                  <span><i class="bi bi-people me-1"></i>{{ room.attendees }} SV</span>
-                  <span><i class="bi bi-clock-history me-1"></i>{{ room.time }}</span>
+                  <span
+                    ><i class="bi bi-people me-1"></i
+                    >{{ room.attendees }} SV</span
+                  >
+                  <span
+                    ><i class="bi bi-clock-history me-1"></i
+                    >{{ room.time }}</span
+                  >
                 </div>
               </div>
             </div>
@@ -189,15 +208,45 @@ const recent = computed(() =>
   }))
 );
 
-const quickRooms = computed(() =>
-  rooms.value.slice(0, 3).map((r) => ({
-    id: r.id,
-    exam: r.examTitle || `Đề #${r.examId}`,
-    attendees: stats.value.activeStudents, // placeholder until backend provides per-room count
-    time: fmtRange(r.openAt, r.closeAt),
-    live: isRoomLive(r),
-  }))
-);
+const quickRooms = computed(() => {
+  const toMs = (d: string | null) => {
+    const dt = d ? new Date(d) : null;
+    const ms = dt?.getTime();
+    return typeof ms === "number" && !Number.isNaN(ms) ? ms : Infinity;
+  };
+
+  const live = rooms.value
+    .filter((r) => roomStatus(r) === "LIVE")
+    .sort((a, b) => toMs(a.closeAt) - toMs(b.closeAt));
+  const upcoming = rooms.value
+    .filter((r) => roomStatus(r) === "UPCOMING")
+    .sort((a, b) => toMs(a.openAt) - toMs(b.openAt));
+  const pick = live.length ? live.slice(0, 3) : upcoming.slice(0, 3);
+
+  return pick.map((r) => {
+    const status = roomStatus(r);
+    const statusLabel =
+      status === "LIVE"
+        ? "Đang mở"
+        : status === "CLOSED"
+        ? "Đã đóng"
+        : "Chưa mở";
+    const badgeClass =
+      status === "LIVE"
+        ? "bg-success"
+        : status === "CLOSED"
+        ? "bg-secondary"
+        : "bg-warning text-dark";
+    return {
+      id: r.id,
+      exam: r.examTitle || `Đề #${r.examId}`,
+      attendees: stats.value.activeStudents, // placeholder until backend provides per-room count
+      time: fmtRange(r.openAt, r.closeAt),
+      statusLabel,
+      badgeClass,
+    };
+  });
+});
 
 function isRoomLive(r: RoomRow): boolean {
   const now = new Date();
@@ -206,6 +255,18 @@ function isRoomLive(r: RoomRow): boolean {
   const openOk = !openAt || openAt <= now;
   const closeOk = !closeAt || closeAt >= now;
   return openOk && closeOk;
+}
+
+function roomStatus(r: RoomRow): "LIVE" | "UPCOMING" | "CLOSED" {
+  const now = new Date();
+  const openAt = r.openAt ? new Date(r.openAt) : null;
+  const closeAt = r.closeAt ? new Date(r.closeAt) : null;
+  const openOk = !openAt || openAt <= now;
+  const closeOk = !closeAt || closeAt >= now;
+  if (openOk && closeOk) return "LIVE";
+  if (openAt && openAt > now) return "UPCOMING";
+  if (closeAt && closeAt < now) return "CLOSED";
+  return "CLOSED";
 }
 
 function fmtRange(openAt: string | null, closeAt: string | null): string {
@@ -246,9 +307,15 @@ async function loadDashboard() {
   loading.value = true;
   try {
     const [examsRes, roomsRes, attemptsRes] = await Promise.all([
-      api.get<Paginated<ExamSummary>>("/exams", { params: { page: 1, pageSize: 50 } }),
-      api.get<Paginated<RoomRow>>("/rooms", { params: { page: 1, pageSize: 20 } }),
-      api.get<Paginated<AttemptRow>>("/attempts", { params: { page: 1, pageSize: 20 } }),
+      api.get<Paginated<ExamSummary>>("/exams", {
+        params: { page: 1, pageSize: 50 },
+      }),
+      api.get<Paginated<RoomRow>>("/rooms", {
+        params: { page: 1, pageSize: 20 },
+      }),
+      api.get<Paginated<AttemptRow>>("/attempts", {
+        params: { page: 1, pageSize: 20 },
+      }),
     ]);
 
     const examItems = (examsRes.data.items || []) as ExamSummary[];

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="card rounded-0">
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Quản lý bài thi sinh viên</h5>
@@ -216,9 +216,7 @@ function onExamInputChange() {
     }
   }
   if (!found) {
-    found = publishedExams.value.find((e) =>
-      e.title.toLowerCase().includes(v)
-    );
+    found = publishedExams.value.find((e) => e.title.toLowerCase().includes(v));
   }
   examId.value = found ? found.id : 0;
   if (found) {

@@ -5,7 +5,6 @@
         class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3"
       >
         <div>
-          <p class="text-uppercase text-muted small mb-1">Xin chào, sinh viên</p>
           <h3 class="fw-semibold mb-2">Theo dõi phòng thi và bài làm</h3>
           <p class="mb-0 text-muted">
             Vào phòng nhanh, xem bài đã làm và nắm trạng thái phòng đang mở.
@@ -15,7 +14,10 @@
           <router-link to="/student/rooms" class="btn btn-primary">
             <i class="bi bi-door-open me-1"></i> Vào phòng thi
           </router-link>
-          <router-link to="/student/exams" class="btn btn-outline-light text-dark">
+          <router-link
+            to="/student/exams"
+            class="btn btn-outline-light text-dark"
+          >
             <i class="bi bi-ui-checks-grid me-1"></i> Xem bài thi
           </router-link>
         </div>
@@ -30,7 +32,9 @@
               <i :class="card.icon"></i>
             </span>
             <div>
-              <p class="text-muted text-uppercase small mb-1">{{ card.title }}</p>
+              <p class="text-muted text-uppercase small mb-1">
+                {{ card.title }}
+              </p>
               <h4 class="fw-semibold mb-0">{{ card.value }}</h4>
               <small class="text-muted">{{ card.sub }}</small>
             </div>
@@ -61,13 +65,22 @@
             </div>
             <div v-if="lastAttempt">
               <div class="d-flex align-items-center gap-3 mb-2">
-                <span class="badge bg-light text-muted border">Đề #{{ lastAttempt.examId }}</span>
-                <span :class="['badge', statusBadgeClass]">{{ statusText }}</span>
-                <span v-if="passState !== null" :class="['badge', passState ? 'bg-success' : 'bg-danger']">
+                <span class="badge bg-light text-muted border"
+                  >Đề #{{ lastAttempt.examId }}</span
+                >
+                <span :class="['badge', statusBadgeClass]">{{
+                  statusText
+                }}</span>
+                <span
+                  v-if="passState !== null"
+                  :class="['badge', passState ? 'bg-success' : 'bg-danger']"
+                >
                   {{ passState ? "Đậu" : "Trượt" }}
                 </span>
               </div>
-              <div class="fw-semibold mb-1">{{ lastAttempt.examTitle || "Chưa có tiêu đề" }}</div>
+              <div class="fw-semibold mb-1">
+                {{ lastAttempt.examTitle || "Chưa có tiêu đề" }}
+              </div>
               <div class="text-muted small mb-2">
                 Mã đề: <code>{{ lastAttempt.examCode || "-" }}</code>
               </div>
@@ -79,7 +92,9 @@
                 <div class="col-6">
                   <div class="text-muted">Đúng / Tổng</div>
                   <div class="fw-semibold">
-                    {{ lastAttempt.correctCount ?? 0 }}/{{ lastAttempt.totalQuestions ?? 0 }}
+                    {{ lastAttempt.correctCount ?? 0 }}/{{
+                      lastAttempt.totalQuestions ?? 0
+                    }}
                   </div>
                 </div>
                 <div class="col-6">
@@ -96,13 +111,18 @@
                 </div>
               </div>
               <div class="mt-3 text-end">
-                <router-link to="/student/exams" class="btn btn-sm btn-outline-primary">
+                <router-link
+                  to="/student/exams"
+                  class="btn btn-sm btn-outline-primary"
+                >
                   <i class="bi bi-ui-checks-grid me-1"></i> Xem tất cả bài thi
                 </router-link>
               </div>
             </div>
             <div v-else-if="loadingLastAttempt" class="text-muted small">
-              <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+              <span
+                class="spinner-border spinner-border-sm text-primary me-2"
+              ></span>
               Đang tải thông tin bài thi...
             </div>
             <div v-else class="text-muted small">
@@ -117,36 +137,53 @@
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h6 class="mb-0">Phòng đang mở</h6>
-              <router-link to="/student/rooms" class="small">Xem tất cả</router-link>
+              <router-link to="/student/rooms" class="small"
+                >Xem tất cả</router-link
+              >
             </div>
             <div v-if="nearestRoom">
               <div class="d-flex align-items-center gap-2 mb-2">
-                <span class="badge bg-light text-muted border">Phòng #{{ nearestRoom.id }}</span>
+                <span class="badge bg-light text-muted border"
+                  >Phòng #{{ nearestRoom.id }}</span
+                >
                 <span class="live-pill" v-if="isRoomLive(nearestRoom)">
                   <span class="dot"></span>
                   <span>LIVE</span>
                 </span>
               </div>
-              <div class="fw-semibold">{{ nearestRoom.code }}</div>
+              <!-- <div class="fw-semibold">{{ nearestRoom.code }}</div> -->
               <div class="text-muted small">Đề #{{ nearestRoom.examId }}</div>
               <div class="d-flex flex-wrap gap-3 text-muted small mt-2">
-                <span><i class="bi bi-clock-history me-1"></i>{{ fmtDate(nearestRoom.openAt) }}</span>
-                <span><i class="bi bi-hourglass-split me-1"></i>{{ fmtDate(nearestRoom.closeAt) }}</span>
+                <span
+                  ><i class="bi bi-clock-history me-1"></i
+                  >{{ fmtDate(nearestRoom.openAt) }}</span
+                >
+                <span
+                  ><i class="bi bi-hourglass-split me-1"></i
+                  >{{ fmtDate(nearestRoom.closeAt) }}</span
+                >
               </div>
               <div class="text-muted small mt-2">
                 Còn lại:
-                <span :class="['fw-semibold', isClosingSoon ? 'text-danger' : '']">
-                  {{ timeLeftText || '-' }}
+                <span
+                  :class="['fw-semibold', isClosingSoon ? 'text-danger' : '']"
+                >
+                  {{ timeLeftText || "-" }}
                 </span>
               </div>
               <div class="mt-3 text-end">
-                <button class="btn btn-sm btn-primary" @click="enterNearestRoom">
+                <button
+                  class="btn btn-sm btn-primary"
+                  @click="enterNearestRoom"
+                >
                   <i class="bi bi-play-fill me-1"></i> Vào phòng thi
                 </button>
               </div>
             </div>
             <div v-else-if="loadingRooms" class="text-muted small">
-              <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+              <span
+                class="spinner-border spinner-border-sm text-primary me-2"
+              ></span>
               Đang tải danh sách phòng thi...
             </div>
             <div v-else class="text-muted small">
@@ -211,21 +248,27 @@ const statCards = computed(() => [
   {
     title: "Bài đã làm",
     value: attemptsTotal.value,
-    sub: lastAttempt.value ? `Điểm gần nhất: ${lastAttempt.value.score ?? "-"}` : "Chưa có bài",
+    sub: lastAttempt.value
+      ? `Điểm gần nhất: ${lastAttempt.value.score ?? "-"}`
+      : "Chưa có bài",
     icon: "bi bi-clipboard-check",
     bg: "bg-primary-soft",
   },
   {
     title: "Phòng đang mở",
     value: openRooms.value.length,
-    sub: nearestRoom.value ? `Phòng #${nearestRoom.value.id}` : "Không có phòng",
+    sub: nearestRoom.value
+      ? `Phòng #${nearestRoom.value.id}`
+      : "Không có phòng",
     icon: "bi bi-door-open",
     bg: "bg-success-soft",
   },
   {
     title: "Thời gian còn lại",
     value: timeLeftText.value || "-",
-    sub: nearestRoom.value ? fmtDate(nearestRoom.value.closeAt) : "Chưa vào phòng",
+    sub: nearestRoom.value
+      ? fmtDate(nearestRoom.value.closeAt)
+      : "Chưa vào phòng",
     icon: "bi bi-hourglass-split",
     bg: "bg-warning-soft",
   },
@@ -323,9 +366,12 @@ async function loadLastAttempt() {
       lastAttempt.value = null;
       return;
     }
-    const { data: lastPage } = await api.get<Paginated<AttemptRow>>("/attempts", {
-      params: { page: attemptsTotal.value, pageSize: 1 },
-    });
+    const { data: lastPage } = await api.get<Paginated<AttemptRow>>(
+      "/attempts",
+      {
+        params: { page: attemptsTotal.value, pageSize: 1 },
+      }
+    );
     lastAttempt.value = lastPage.items[0] || null;
   } catch {
     lastAttempt.value = null;
@@ -357,8 +403,12 @@ async function loadNearestRoom() {
       return;
     }
     openList.sort((a, b) => {
-      const closeA = a.closeAt ? new Date(a.closeAt).getTime() : Number.MAX_SAFE_INTEGER;
-      const closeB = b.closeAt ? new Date(b.closeAt).getTime() : Number.MAX_SAFE_INTEGER;
+      const closeA = a.closeAt
+        ? new Date(a.closeAt).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      const closeB = b.closeAt
+        ? new Date(b.closeAt).getTime()
+        : Number.MAX_SAFE_INTEGER;
       return closeA - closeB;
     });
     nearestRoom.value = openList[0];
@@ -395,10 +445,6 @@ async function ensureSubject() {
   } catch {
     subjectId.value = null;
   }
-}
-
-function goToRooms() {
-  router.push({ name: "student-rooms" });
 }
 
 function enterNearestRoom() {
