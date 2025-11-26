@@ -639,7 +639,10 @@ export class AttemptController extends Controller {
     @Body()
     body: {
       roomId: number;
-      answers: Array<{ questionId: number; selectedChoiceId: number }>;
+      answers?: Array<{
+        questionId: number;
+        selectedChoiceId?: number | null;
+      }>;
     }
   ): Promise<AttemptSummary> {
     const user = (req as any).user as { id: number; role: string };
@@ -653,13 +656,21 @@ export class AttemptController extends Controller {
       throw new Error("Invalid roomId");
     }
 
-    if (!Array.isArray(body.answers) || body.answers.length === 0) {
+    if (!Array.isArray(body.answers)) {
       this.setStatus(400);
-      throw new Error("answers must be a non-empty array");
+      throw new Error("answers must be an array");
     }
 
     // Validate choices belong to the question and that question belongs to the exam
-    const questionIds = body.answers.map((a) => a.questionId);
+    const submittedAnswers = body.answers.filter(
+      (a) =>
+        a &&
+        typeof a.questionId === "number" &&
+        typeof a.selectedChoiceId === "number"
+    ) as Array<{ questionId: number; selectedChoiceId: number }>;
+    const questionIds = Array.from(
+      new Set(submittedAnswers.map((a) => a.questionId))
+    );
     const choicesFromDb = await prisma.choice.findMany({
       where: {
         questionId: { in: questionIds },
@@ -707,7 +718,7 @@ export class AttemptController extends Controller {
     // Clear any previous answers (if any) before saving new ones
     await prisma.attemptAnswer.deleteMany({ where: { attemptId: attempt.id } });
 
-    for (const sel of body.answers) {
+    for (const sel of submittedAnswers) {
       const options = byQuestion.get(sel.questionId) || [];
       const found = options.find((o) => o.id === sel.selectedChoiceId);
       if (!found) {
@@ -736,7 +747,8 @@ export class AttemptController extends Controller {
       _sum: { points: true },
       where: { examId: room.examId },
     });
-    const total = Number(totalPoints._sum.points ?? 0) || body.answers.length;
+    const total =
+      Number(totalPoints._sum.points ?? 0) || submittedAnswers.length;
     const percent = total > 0 ? (earnedTotal / total) * 100 : 0;
 
     const startedAtMs = attempt.startedAt

@@ -4854,7 +4854,8 @@
 											"properties": {
 												"selectedChoiceId": {
 													"type": "number",
-													"format": "double"
+													"format": "double",
+													"nullable": true
 												},
 												"questionId": {
 													"type": "number",
@@ -4862,7 +4863,6 @@
 												}
 											},
 											"required": [
-												"selectedChoiceId",
 												"questionId"
 											],
 											"type": "object"
@@ -4875,7 +4875,6 @@
 									}
 								},
 								"required": [
-									"answers",
 									"roomId"
 								],
 								"type": "object"

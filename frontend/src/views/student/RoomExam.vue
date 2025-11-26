@@ -229,6 +229,7 @@ type QuestionView = {
   questionText: string;
   choices: { id: number; content: string }[];
 };
+type AnswerPayload = { questionId: number; selectedChoiceId: number };
 
 const questions = ref<QuestionView[]>([]);
 const answers = reactive<Record<number, number | undefined>>({});
@@ -492,8 +493,36 @@ async function beginExam() {
   }
 }
 
+function collectAnsweredChoices(): AnswerPayload[] {
+  if (questions.value.length > 0) {
+    return questions.value
+      .map((q): AnswerPayload | null => {
+        const choiceId = answers[q.questionId];
+        return typeof choiceId === "number"
+          ? { questionId: q.questionId, selectedChoiceId: Number(choiceId) }
+          : null;
+      })
+      .filter((a): a is AnswerPayload => !!a);
+  }
+  return Object.entries(answers)
+    .filter(([, choiceId]) => typeof choiceId === "number")
+    .map(([qId, choiceId]) => ({
+      questionId: Number(qId),
+      selectedChoiceId: Number(choiceId),
+    }));
+}
+
 function confirmSubmit() {
-  if (!window.confirm("Bạn chắc chắn muốn nộp bài?")) return;
+  if (submitting.value || autoSubmitting.value) return;
+  const answered = collectAnsweredChoices();
+  const hasTimeLeft = timeLeft.value > 0;
+  const message =
+    answered.length === 0 && hasTimeLeft
+      ? "Bạn chưa chọn đáp án nào và vẫn còn thời gian. Bạn có chắc muốn nộp bài trắng?"
+      : answered.length === 0
+      ? "Bạn chưa chọn đáp án nào. Bạn có muốn nộp bài trắng?"
+      : "Bạn chắc chắn muốn nộp bài?";
+  if (!window.confirm(message)) return;
   submitAttempt();
 }
 
@@ -512,21 +541,7 @@ async function submitAttempt(isAuto = false) {
   stopTimer();
   submitting.value = true;
   try {
-    const payloadAnswers =
-      questions.value.length > 0
-        ? questions.value.map((q) => ({
-            questionId: q.questionId,
-            selectedChoiceId:
-              typeof answers[q.questionId] === "number"
-                ? Number(answers[q.questionId])
-                : undefined,
-          }))
-        : Object.entries(answers)
-            .filter(([, choiceId]) => typeof choiceId === "number")
-            .map(([qId, choiceId]) => ({
-              questionId: Number(qId),
-              selectedChoiceId: Number(choiceId),
-            }));
+    const payloadAnswers = collectAnsweredChoices();
     const payload = {
       roomId,
       answers: payloadAnswers,
@@ -541,14 +556,7 @@ async function submitAttempt(isAuto = false) {
   } catch (e: any) {
     const { message } = parseApiError(e);
     if (!isAuto) {
-      const normalized = (message || "").toLowerCase();
-      if (normalized.includes("answers must be a non-empty array")) {
-        alert(
-          "B\u1ea1n kh\u00f4ng ch\u1ecdn c\u00e2u n\u00e0o, h\u1ec7 th\u1ed1ng n\u1ed9p tr\u1eafng cho t\u1ea5t c\u1ea3 c\u00e2u."
-        );
-      } else {
-        alert(message || "Khong the nop bai thi");
-      }
+      alert(message || "Khong the nop bai thi");
     } else if (message) {
       console.warn("Auto submit failed:", message);
     }
