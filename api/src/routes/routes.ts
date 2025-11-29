@@ -1489,6 +1489,7 @@ export function RegisterRoutes(app: Router) {
                     req: {"in":"request","name":"req","required":true,"dataType":"object"},
                     examId: {"in":"query","name":"examId","dataType":"double"},
                     roomId: {"in":"query","name":"roomId","dataType":"double"},
+                    studentCode: {"in":"query","name":"studentCode","dataType":"string"},
                     page: {"in":"query","name":"page","dataType":"double"},
                     pageSize: {"in":"query","name":"pageSize","dataType":"double"},
             };

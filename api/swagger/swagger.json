@@ -4758,6 +4758,14 @@
 					},
 					{
 						"in": "query",
+						"name": "studentCode",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
 						"name": "page",
 						"required": false,
 						"schema": {

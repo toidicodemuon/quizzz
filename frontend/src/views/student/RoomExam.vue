@@ -1,7 +1,7 @@
 <template>
-  <div class="card">
+  <div class="card exam-card">
     <div
-      class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3"
+      class="card-header exam-header d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
       <div>
         <h5 class="mb-0">Làm bài thi</h5>
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div class="card-body" v-if="loaded && !submitting && !submitted">
+    <div class="card-body exam-body" v-if="loaded && !submitting && !submitted">
       <template v-if="!started">
         <div class="text-center mt-4">
           <button
@@ -62,11 +62,15 @@
         </div>
       </template>
       <template v-else>
-        <div v-for="(q, idx) in questions" :key="q.questionId" class="mb-3">
+        <div
+          v-for="(q, idx) in questions"
+          :key="q.questionId"
+          class="mb-3 question-block"
+        >
           <div class="fw-semibold mb-1">
             Câu {{ idx + 1 }}: {{ q.questionText }}
           </div>
-          <div class="ms-3">
+          <div class="ms-2 ms-sm-3 choices-wrap">
             <div v-for="ch in q.choices" :key="ch.id" class="form-check">
               <input
                 class="form-check-input"
@@ -656,6 +660,37 @@ function endDragWarning() {
   width: 100%;
 }
 
+.exam-card {
+  border: none;
+  box-shadow: none;
+  margin: 0;
+}
+
+.exam-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: #ffffff;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.exam-body {
+  padding: 12px 16px 24px;
+}
+
+.question-block {
+  padding: 12px 10px;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.choices-wrap .form-check {
+  margin-bottom: 6px;
+}
+
 .countdown-wrap {
   align-items: stretch;
 }
@@ -669,15 +704,15 @@ function endDragWarning() {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 0;
-  border-radius: 14px;
+  gap: 10px;
+  padding: 2px 10px;
+  border-radius: 12px;
   background: #0f172a;
   color: #eaf9ff;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  min-width: 210px;
+  min-width: 150px;
   overflow: hidden;
-  min-height: 56px;
+  min-height: 44px;
 }
 
 .countdown-pill > * {
@@ -686,25 +721,25 @@ function endDragWarning() {
 }
 
 .countdown-icon {
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: #d4f7ff;
 }
 
 .countdown-body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 4px;
+  padding: 0;
 }
 
 .countdown-label {
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #cbe7ff;
   font-weight: 600;
@@ -712,8 +747,8 @@ function endDragWarning() {
 
 .countdown-screen {
   position: relative;
-  padding: 6px 10px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 10px;
   background: linear-gradient(
     180deg,
     rgba(2, 10, 22, 0.86),
@@ -721,16 +756,16 @@ function endDragWarning() {
   );
   border: 1px solid rgba(148, 233, 255, 0.35);
   box-shadow: none;
-  min-width: 150px;
+  min-width: 110px;
 }
 
 .countdown-text {
   display: block;
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   font-family: "Share Tech Mono", "Orbitron", "DS-Digital", "Digital-7",
     monospace;
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.08em;
   color: #32ff85;
   text-shadow: none;
 }
@@ -764,11 +799,13 @@ function endDragWarning() {
 }
 
 .submit-btn {
-  height: 56px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  padding: 0 14px;
+  font-weight: 600;
 }
 
 .warning-toast {

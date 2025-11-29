@@ -110,7 +110,7 @@ onMounted(() => {
   flex: 1;
   overflow: auto;
   min-height: 0;
-  padding: 1rem 1.25rem;
+  /* padding: 1rem 1.25rem; */
 }
 
 .app-footer {

@@ -11,7 +11,9 @@
         </div>
       </div>
       <div class="nav-actions">
-        <a class="ghost-btn" href="mailto:hello@miniweb.cloud">hello@miniweb.cloud</a>
+        <a class="ghost-btn" href="mailto:hello@miniweb.cloud"
+          >hello@miniweb.cloud</a
+        >
         <router-link class="primary-btn" to="/login">Đăng nhập</router-link>
       </div>
     </header>
@@ -22,14 +24,25 @@
           <p class="eyebrow">Studio sản phẩm nhanh và tinh gọn</p>
           <h1>Biến ý tưởng web thành sản phẩm thực tế trong 4 tuần</h1>
           <p class="lead">
-            Đội ngũ Mini Web Cloud chuyên xây dựng ứng dụng web hiện đại, triển khai cloud,
-            tối ưu trải nghiệm và hiệu năng cho doanh nghiệp vừa và nhỏ.
+            Đội ngũ Mini Web Cloud chuyên xây dựng ứng dụng web hiện đại, triển
+            khai cloud, tối ưu trải nghiệm và hiệu năng cho doanh nghiệp vừa và
+            nhỏ.
           </p>
           <div class="cta-group">
-            <a class="primary-btn large" href="https://miniweb.cloud" target="_blank" rel="noreferrer">
+            <a
+              class="primary-btn large"
+              href="https://miniweb.cloud"
+              target="_blank"
+              rel="noreferrer"
+            >
               Xem portfolio
             </a>
-            <a class="ghost-btn large" href="https://cal.com" target="_blank" rel="noreferrer">
+            <a
+              class="ghost-btn large"
+              href="https://cal.com"
+              target="_blank"
+              rel="noreferrer"
+            >
               Đặt lịch tư vấn 30'
             </a>
           </div>
@@ -91,16 +104,16 @@
           <p class="eyebrow">Thiết kế</p>
           <h3>UI/UX độc đáo, khác biệt thương hiệu</h3>
           <p>
-            Ưu tiên trải nghiệm rõ ràng, tương tác tinh tế và không chạy theo template đại trà.
-            Thiết kế được kiểm thử trên cả desktop lẫn mobile.
+            Ưu tiên trải nghiệm rõ ràng, tương tác tinh tế và không chạy theo
+            template đại trà. Thiết kế được kiểm thử trên cả desktop lẫn mobile.
           </p>
         </div>
         <div class="grid-card">
           <p class="eyebrow">Công nghệ</p>
           <h3>Stack hiện đại và kiểm thử tự động</h3>
           <p>
-            Vue/React/NextJS cho frontend, Node/Python/Go cho backend.
-            Kèm theo CI/CD, test cơ bản và giám sát hiệu năng ngay từ ngày đầu.
+            Vue/React/NextJS cho frontend, Node/Python/Go cho backend. Kèm theo
+            CI/CD, test cơ bản và giám sát hiệu năng ngay từ ngày đầu.
           </p>
         </div>
       </section>
@@ -109,28 +122,43 @@
         <div class="section-header">
           <p class="eyebrow">Quy trình</p>
           <h2>Đi thẳng vào sản phẩm, không vòng vo</h2>
-          <p>Chúng tôi làm việc theo nhịp rõ ràng để bạn nắm được tiến độ từng tuần.</p>
+          <p>
+            Chúng tôi làm việc theo nhịp rõ ràng để bạn nắm được tiến độ từng
+            tuần.
+          </p>
         </div>
         <div class="steps">
           <div class="step">
             <div class="step-number">01</div>
             <h4>Discovery Call</h4>
-            <p>Hiểu mục tiêu kinh doanh, bản đồ chức năng và chọn công nghệ phù hợp.</p>
+            <p>
+              Hiểu mục tiêu kinh doanh, bản đồ chức năng và chọn công nghệ phù
+              hợp.
+            </p>
           </div>
           <div class="step">
             <div class="step-number">02</div>
             <h4>Prototype & UI</h4>
-            <p>Ra prototype tương tác, hoàn thiện UI, chốt phạm vi cho phiên bản đầu.</p>
+            <p>
+              Ra prototype tương tác, hoàn thiện UI, chốt phạm vi cho phiên bản
+              đầu.
+            </p>
           </div>
           <div class="step">
             <div class="step-number">03</div>
             <h4>Build & Launch</h4>
-            <p>Phát triển, kiểm thử, triển khai cloud và bàn giao hướng dẫn vận hành.</p>
+            <p>
+              Phát triển, kiểm thử, triển khai cloud và bàn giao hướng dẫn vận
+              hành.
+            </p>
           </div>
           <div class="step">
             <div class="step-number">04</div>
             <h4>Tối ưu & Scale</h4>
-            <p>Đo lường, A/B testing, cải thiện hiệu năng, thêm tính năng theo nhu cầu.</p>
+            <p>
+              Đo lường, A/B testing, cải thiện hiệu năng, thêm tính năng theo
+              nhu cầu.
+            </p>
           </div>
         </div>
       </section>
@@ -140,13 +168,15 @@
           <p class="eyebrow">Ready to build?</p>
           <h2>Book lịch, nhận proposal trong 48h</h2>
           <p>
-            Chia sẻ bài toán của bạn, Mini Web Cloud sẽ gửi lộ trình, ước tính thời gian
-            và bảng giá minh bạch cho từng giai đoạn.
+            Chia sẻ bài toán của bạn, Mini Web Cloud sẽ gửi lộ trình, ước tính
+            thời gian và bảng giá minh bạch cho từng giai đoạn.
           </p>
         </div>
         <div class="cta-buttons">
           <a class="primary-btn" href="mailto:hello@miniweb.cloud">Gửi brief</a>
-          <router-link class="ghost-btn" to="/login">Xem demo sản phẩm</router-link>
+          <router-link class="ghost-btn" to="/login"
+            >Xem demo sản phẩm</router-link
+          >
         </div>
       </section>
     </main>
@@ -159,8 +189,16 @@
 .landing {
   position: relative;
   min-height: 100vh;
-  background: radial-gradient(120% 120% at 20% 20%, rgba(14, 165, 233, 0.35) 0%, transparent 45%),
-    radial-gradient(100% 100% at 80% 0%, rgba(59, 130, 246, 0.35) 0%, transparent 40%),
+  background: radial-gradient(
+      120% 120% at 20% 20%,
+      rgba(14, 165, 233, 0.35) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      100% 100% at 80% 0%,
+      rgba(59, 130, 246, 0.35) 0%,
+      transparent 40%
+    ),
     linear-gradient(180deg, #f5f9ff 0%, #e7f1ff 30%, #f7fbff 100%);
   color: #0f172a;
   overflow: hidden;
@@ -434,7 +472,8 @@
   border-radius: 14px;
   padding: 18px;
   color: #0f172a;
-  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease,
+    background 0.18s ease;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
@@ -515,7 +554,11 @@
   margin-top: 40px;
   padding: 24px;
   border-radius: 18px;
-  background: linear-gradient(120deg, rgba(14, 165, 233, 0.15), rgba(37, 99, 235, 0.18));
+  background: linear-gradient(
+    120deg,
+    rgba(14, 165, 233, 0.15),
+    rgba(37, 99, 235, 0.18)
+  );
   border: 1px solid rgba(37, 99, 235, 0.2);
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;

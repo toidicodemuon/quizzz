@@ -55,6 +55,7 @@ export class AttemptController extends Controller {
     @Request() req: ExRequest,
     @Query() examId?: number,
     @Query() roomId?: number,
+    @Query() studentCode?: string,
     @Query() page?: number,
     @Query() pageSize?: number
   ): Promise<{ items: AttemptSummary[]; total: number }> {
@@ -62,11 +63,24 @@ export class AttemptController extends Controller {
     const role = user.role?.toUpperCase();
     const take = Math.max(1, Math.min(100, Number(pageSize) || 50));
     const skip = Math.max(0, ((Number(page) || 1) - 1) * take);
+    const studentCodeFilter = (studentCode || "").trim();
 
     if (role === "ADMIN") {
       const where: any = {};
       if (typeof examId === "number") where.examId = examId;
       if (typeof roomId === "number") where.roomId = roomId;
+      if (studentCodeFilter) {
+        const or: any[] = [
+          {
+            userCode: {
+              contains: studentCodeFilter,
+            },
+          },
+        ];
+        const asNumber = Number(studentCodeFilter);
+        if (!Number.isNaN(asNumber)) or.push({ id: asNumber });
+        where.student = { OR: or };
+      }
       const [raw, total] = await Promise.all([
         prisma.attempt.findMany({
           where,
@@ -149,6 +163,18 @@ export class AttemptController extends Controller {
       const where: any = { exam: { authorId: user.id } };
       if (typeof examId === "number") where.examId = examId;
       if (typeof roomId === "number") where.roomId = roomId;
+      if (studentCodeFilter) {
+        const or: any[] = [
+          {
+            userCode: {
+              contains: studentCodeFilter,
+            },
+          },
+        ];
+        const asNumber = Number(studentCodeFilter);
+        if (!Number.isNaN(asNumber)) or.push({ id: asNumber });
+        where.student = { OR: or };
+      }
       const [raw, total] = await Promise.all([
         prisma.attempt.findMany({
           where,

@@ -44,7 +44,18 @@
           </td>
           <td>{{ a.examTitle ?? "-" }}</td>
           <td v-if="isTeacher" class="small">
-            <code>{{ a.studentCode ?? "-" }}</code>
+            <div class="d-flex align-items-center gap-1">
+              <code>{{ a.studentCode ?? "-" }}</code>
+              <button
+                v-if="a.studentCode"
+                type="button"
+                class="btn btn-link p-0 text-primary"
+                @click="onSearchStudentCode(a.studentCode)"
+                title="Tìm mã SV này"
+              >
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
           </td>
           <td v-if="isTeacher">
             {{ a.studentName ?? "#" + a.studentId }}
@@ -125,6 +136,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "view", id: number): void;
   (e: "delete", id: number): void;
+  (e: "search-student-code", code: string): void;
 }>();
 
 const isTeacher = computed(() => (props.mode ?? "student") === "teacher");
@@ -189,6 +201,10 @@ function onView(id: number) {
 
 function onDelete(id: number) {
   emit("delete", id);
+}
+
+function onSearchStudentCode(code: string) {
+  emit("search-student-code", code);
 }
 </script>
 

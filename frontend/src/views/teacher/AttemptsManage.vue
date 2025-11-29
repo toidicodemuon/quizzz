@@ -30,36 +30,60 @@
       </div>
     </div>
     <div class="card-body">
-      <div class="position-relative" style="max-width: 400px">
-        <input
-          class="form-control form-control-sm"
-          v-model="examInput"
-          placeholder="Tìm theo mã đề hoặc tiêu đề..."
-          type="search"
-          @focus="showExamDropdown = true"
-          @input="showExamDropdown = true"
-          @keydown.enter.prevent="onExamInputChange"
-          @blur="onExamInputBlur"
-        />
-        <div
-          v-if="showExamDropdown && filteredExams.length > 0"
-          class="dropdown-menu show w-100"
-          style="max-height: 100vh; overflow-y: auto"
-        >
-          <button
-            v-for="e in filteredExams"
-            :key="e.id"
-            type="button"
-            class="dropdown-item small"
-            @mousedown.prevent="onExamPick(e)"
-          >
-            <span class="fw-semibold">
-              {{ e.code || "-" }}
-            </span>
-            -
-            <span>{{ e.title }}</span>
-            <span class="text-muted">(#{{ e.id }})</span>
-          </button>
+      <div class="row g-2">
+        <div class="col-md-6 col-lg-5">
+          <div class="position-relative">
+            <input
+              class="form-control form-control-sm"
+              v-model="examInput"
+              placeholder="Tìm theo mã đề hoặc tiêu đề..."
+              type="search"
+              @focus="showExamDropdown = true"
+              @input="showExamDropdown = true"
+              @keydown.enter.prevent="onExamInputChange"
+              @blur="onExamInputBlur"
+            />
+            <div
+              v-if="showExamDropdown && filteredExams.length > 0"
+              class="dropdown-menu show w-100"
+              style="max-height: 100vh; overflow-y: auto"
+            >
+              <button
+                v-for="e in filteredExams"
+                :key="e.id"
+                type="button"
+                class="dropdown-item small"
+                @mousedown.prevent="onExamPick(e)"
+              >
+                <span class="fw-semibold">
+                  {{ e.code || "-" }}
+                </span>
+                -
+                <span>{{ e.title }}</span>
+                <span class="text-muted">(#{{ e.id }})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-5 col-xl-4">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Mã SV</span>
+            <input
+              type="search"
+              class="form-control"
+              placeholder="Nhập mã số sinh viên"
+              v-model="studentCode"
+              @keydown.enter.prevent="onStudentCodeSearch"
+            />
+            <button
+              class="btn btn-primary"
+              type="button"
+              @click="onStudentCodeSearch"
+              :disabled="loading"
+            >
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -72,6 +96,7 @@
         :selected-ids="selectedIds"
         @view="openDetail"
         @delete="delAttempt"
+        @search-student-code="onSelectStudentCode"
       />
 
       <Pagination
@@ -167,6 +192,7 @@ const publishedExams = computed(() =>
   exams.value.filter((e) => String(e.status).toUpperCase() === "PUBLISHED")
 );
 const examInput = ref("");
+const studentCode = ref("");
 const showExamDropdown = ref(false);
 const filteredExams = computed(() => {
   const v = (examInput.value || "").trim().toLowerCase();
@@ -239,6 +265,27 @@ function onExamPick(e: ExamSummary) {
   reload();
 }
 
+function onStudentCodeSearch() {
+  page.value = 1;
+  clearSelection();
+  reload();
+}
+
+function clearStudentCode() {
+  if (!studentCode.value) return;
+  studentCode.value = "";
+  page.value = 1;
+  clearSelection();
+  reload();
+}
+
+function onSelectStudentCode(code: string) {
+  studentCode.value = code || "";
+  page.value = 1;
+  clearSelection();
+  onStudentCodeSearch();
+}
+
 function onExamInputBlur() {
   setTimeout(() => {
     showExamDropdown.value = false;
@@ -250,6 +297,8 @@ async function reload() {
   try {
     const params: any = { page: page.value, pageSize: pageSize.value };
     if (examId.value) params.examId = examId.value;
+    const studentCodeFilter = (studentCode.value || "").trim();
+    if (studentCodeFilter) params.studentCode = studentCodeFilter;
     const { data } = await api.get<Paginated<AttemptRow>>("/attempts", {
       params,
     });
