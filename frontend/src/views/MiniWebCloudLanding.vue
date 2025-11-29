@@ -6,10 +6,48 @@
       <div class="brand">
         <div class="brand-mark">MW</div>
         <div class="brand-name">
-          <span class="brand-title">Mini Web Cloud</span>
-          <span class="brand-tagline">Xưởng sản phẩm web theo yêu cầu</span>
+          <span class="brand-title">Mini Web</span>
+          <span class="brand-tagline">Xây sản phẩm web theo yêu cầu</span>
         </div>
       </div>
+      <nav class="nav-links">
+        <a
+          href="#"
+          :class="{ active: currentSection === 'overview' }"
+          @click.prevent="switchSection('overview')"
+          >Tổng quan</a
+        >
+        <a
+          href="#"
+          :class="{ active: currentSection === 'services' }"
+          @click.prevent="switchSection('services')"
+          >Dịch vụ</a
+        >
+        <a
+          href="#"
+          :class="{ active: currentSection === 'process' }"
+          @click.prevent="switchSection('process')"
+          >Quy trình</a
+        >
+        <a
+          href="#"
+          :class="{ active: currentSection === 'products' }"
+          @click.prevent="switchSection('products')"
+          >Sản phẩm</a
+        >
+        <a
+          href="#"
+          :class="{ active: currentSection === 'customers' }"
+          @click.prevent="switchSection('customers')"
+          >Khách hàng</a
+        >
+        <a
+          href="#"
+          :class="{ active: currentSection === 'contact' }"
+          @click.prevent="switchSection('contact')"
+          >Liên hệ</a
+        >
+      </nav>
       <div class="nav-actions">
         <a class="ghost-btn" href="mailto:hello@miniweb.cloud"
           >hello@miniweb.cloud</a
@@ -19,169 +57,55 @@
     </header>
 
     <main class="content">
-      <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Studio sản phẩm nhanh và tinh gọn</p>
-          <h1>Biến ý tưởng web thành sản phẩm thực tế trong 4 tuần</h1>
-          <p class="lead">
-            Đội ngũ Mini Web Cloud chuyên xây dựng ứng dụng web hiện đại, triển
-            khai cloud, tối ưu trải nghiệm và hiệu năng cho doanh nghiệp vừa và
-            nhỏ.
-          </p>
-          <div class="cta-group">
-            <a
-              class="primary-btn large"
-              href="https://miniweb.cloud"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Xem portfolio
-            </a>
-            <a
-              class="ghost-btn large"
-              href="https://cal.com"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Đặt lịch tư vấn 30'
-            </a>
-          </div>
-          <div class="trust">
-            <div>
-              <strong>120+</strong>
-              <span>phiên bản MVP ra mắt</span>
-            </div>
-            <div>
-              <strong>99.9%</strong>
-              <span>uptime trên hạ tầng cloud</span>
-            </div>
-            <div>
-              <strong>4 tuần</strong>
-              <span>chu kỳ từ ý tưởng đến release</span>
-            </div>
-          </div>
-        </div>
-        <div class="hero-card">
-          <div class="card-header">
-            <span>Gói tăng trưởng</span>
-            <span class="dot"></span>
-            <span>Launch nhanh</span>
-          </div>
-          <h3>Kiến trúc cloud-ready, sẵn sàng scale</h3>
-          <ul>
-            <li>Thiết kế UI đậm cá tính, responsive chuẩn</li>
-            <li>Backend API bảo mật, logging & monitoring đầy đủ</li>
-            <li>Tự động CI/CD lên AWS, Azure hoặc Vercel</li>
-            <li>Hỗ trợ tối ưu chuyển đổi và A/B testing</li>
-          </ul>
-          <div class="mini-metrics">
-            <div>
-              <span class="label">Thời gian onboard</span>
-              <span class="value">3 ngày</span>
-            </div>
-            <div>
-              <span class="label">Team core</span>
-              <span class="value">PM + Dev + UI</span>
-            </div>
-            <div>
-              <span class="label">Bảo hành</span>
-              <span class="value">60 ngày</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid">
-        <div class="grid-card">
-          <p class="eyebrow">Chiến lược</p>
-          <h3>Khám phá nhanh, đóng gói phạm vi rõ ràng</h3>
-          <p>
-            Workshop 90 phút để chốt chân dung người dùng, luồng giá trị và KPI.
-            Mỗi sprint đều có demo, số liệu và checklist nghiệm thu minh bạch.
-          </p>
-        </div>
-        <div class="grid-card">
-          <p class="eyebrow">Thiết kế</p>
-          <h3>UI/UX độc đáo, khác biệt thương hiệu</h3>
-          <p>
-            Ưu tiên trải nghiệm rõ ràng, tương tác tinh tế và không chạy theo
-            template đại trà. Thiết kế được kiểm thử trên cả desktop lẫn mobile.
-          </p>
-        </div>
-        <div class="grid-card">
-          <p class="eyebrow">Công nghệ</p>
-          <h3>Stack hiện đại và kiểm thử tự động</h3>
-          <p>
-            Vue/React/NextJS cho frontend, Node/Python/Go cho backend. Kèm theo
-            CI/CD, test cơ bản và giám sát hiệu năng ngay từ ngày đầu.
-          </p>
-        </div>
-      </section>
-
-      <section class="process">
-        <div class="section-header">
-          <p class="eyebrow">Quy trình</p>
-          <h2>Đi thẳng vào sản phẩm, không vòng vo</h2>
-          <p>
-            Chúng tôi làm việc theo nhịp rõ ràng để bạn nắm được tiến độ từng
-            tuần.
-          </p>
-        </div>
-        <div class="steps">
-          <div class="step">
-            <div class="step-number">01</div>
-            <h4>Discovery Call</h4>
-            <p>
-              Hiểu mục tiêu kinh doanh, bản đồ chức năng và chọn công nghệ phù
-              hợp.
-            </p>
-          </div>
-          <div class="step">
-            <div class="step-number">02</div>
-            <h4>Prototype & UI</h4>
-            <p>
-              Ra prototype tương tác, hoàn thiện UI, chốt phạm vi cho phiên bản
-              đầu.
-            </p>
-          </div>
-          <div class="step">
-            <div class="step-number">03</div>
-            <h4>Build & Launch</h4>
-            <p>
-              Phát triển, kiểm thử, triển khai cloud và bàn giao hướng dẫn vận
-              hành.
-            </p>
-          </div>
-          <div class="step">
-            <div class="step-number">04</div>
-            <h4>Tối ưu & Scale</h4>
-            <p>
-              Đo lường, A/B testing, cải thiện hiệu năng, thêm tính năng theo
-              nhu cầu.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section class="cta-band">
-        <div class="cta-text">
-          <p class="eyebrow">Ready to build?</p>
-          <h2>Book lịch, nhận proposal trong 48h</h2>
-          <p>
-            Chia sẻ bài toán của bạn, Mini Web Cloud sẽ gửi lộ trình, ước tính
-            thời gian và bảng giá minh bạch cho từng giai đoạn.
-          </p>
-        </div>
-        <div class="cta-buttons">
-          <a class="primary-btn" href="mailto:hello@miniweb.cloud">Gửi brief</a>
-          <router-link class="ghost-btn" to="/login"
-            >Xem demo sản phẩm</router-link
-          >
-        </div>
-      </section>
+      <transition name="fade-slide" mode="out-in">
+        <component :is="sectionComponent" :key="currentSection" />
+      </transition>
     </main>
+    <footer class="footer">
+      <div class="footer-left">
+        <div class="brand-mark small">MW</div>
+        <div>
+          <div class="footer-title">Mini Web</div>
+          <div class="footer-sub">Xây sản phẩm web theo yêu cầu</div>
+        </div>
+      </div>
+      <div class="footer-right">
+        <div class="footer-founder">Contact: <strong>ABCD</strong></div>
+        <div class="footer-contact">Phone: +84 902xxxxx</div>
+        <div class="footer-contact">Email: hello@miniweb.cloud</div>
+      </div>
+    </footer>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import MiniOverview from "../components/miniweb/MiniOverview.vue";
+import MiniServices from "../components/miniweb/MiniServices.vue";
+import MiniProcess from "../components/miniweb/MiniProcess.vue";
+import MiniProducts from "../components/miniweb/MiniProducts.vue";
+import MiniCustomers from "../components/miniweb/MiniCustomers.vue";
+import MiniContact from "../components/miniweb/MiniContact.vue";
+
+const currentSection = ref<
+  "overview" | "services" | "process" | "products" | "customers" | "contact"
+>("overview");
+
+const sectionComponent = computed(() => {
+  return {
+    overview: MiniOverview,
+    services: MiniServices,
+    process: MiniProcess,
+    products: MiniProducts,
+    customers: MiniCustomers,
+    contact: MiniContact,
+  }[currentSection.value];
+});
+
+function switchSection(section: typeof currentSection.value) {
+  currentSection.value = section;
+}
+</script>
 
 <style scoped>
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap");
@@ -189,6 +113,8 @@
 .landing {
   position: relative;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: radial-gradient(
       120% 120% at 20% 20%,
       rgba(14, 165, 233, 0.35) 0%,
@@ -277,6 +203,40 @@
   letter-spacing: 0.2px;
 }
 
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.nav-links a {
+  color: inherit;
+  text-decoration: none;
+  padding: 8px 0;
+  position: relative;
+}
+
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .nav-actions {
   display: flex;
   align-items: center;
@@ -287,6 +247,7 @@
   position: relative;
   z-index: 1;
   padding: 48px 64px 80px;
+  flex: 1;
 }
 
 .hero {
@@ -397,6 +358,7 @@
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
   backdrop-filter: blur(10px);
   color: #0f172a;
+  animation: floatIn 0.6s ease;
 }
 
 .card-header {
@@ -473,7 +435,7 @@
   padding: 18px;
   color: #0f172a;
   transition: transform 0.18s ease, border-color 0.18s ease,
-    background 0.18s ease;
+    background 0.18s ease, box-shadow 0.18s ease;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
@@ -493,6 +455,7 @@
   transform: translateY(-4px);
   border-color: rgba(37, 99, 235, 0.4);
   background: #ffffff;
+  box-shadow: 0 16px 36px rgba(14, 165, 233, 0.18);
 }
 
 .process {
@@ -510,44 +473,105 @@
   margin: 0;
 }
 
-.steps {
+.process-grid {
   margin-top: 18px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
+  position: relative;
 }
 
-.step {
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(37, 99, 235, 0.1);
-  background: rgba(255, 255, 255, 0.9);
-  transition: border-color 0.18s ease, transform 0.18s ease;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+.process-grid::before {
+  content: "";
+  position: absolute;
+  inset: 20px;
+  background: linear-gradient(
+    135deg,
+    rgba(14, 165, 233, 0.12),
+    rgba(37, 99, 235, 0.08)
+  );
+  filter: blur(50px);
+  z-index: 0;
+  pointer-events: none;
 }
 
-.step-number {
-  font-family: "Space Grotesk", sans-serif;
-  color: #2563eb;
-  font-weight: 700;
+.step-card {
+  position: relative;
+  padding: 18px 16px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(244, 248, 255, 0.96) 100%
+  );
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  overflow: hidden;
+  animation: floatIn 0.6s ease;
+  z-index: 1;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.step-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.12),
+    rgba(14, 165, 233, 0.12)
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 38px rgba(14, 165, 233, 0.22);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.step-card:hover::after {
+  opacity: 1;
+}
+
+.step-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  color: #f8fafc;
+  font-weight: 800;
   letter-spacing: 0.08em;
-  margin-bottom: 6px;
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
 }
 
-.step h4 {
+.step-body h4 {
   color: #0f172a;
-  margin: 0 0 6px;
+  margin: 4px 0 6px;
   font-size: 18px;
 }
 
-.step p {
+.step-body p {
   color: #1e293b;
   margin: 0;
 }
 
-.step:hover {
-  border-color: rgba(37, 99, 235, 0.35);
-  transform: translateY(-3px);
+.step-tag {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
 .cta-band {
@@ -597,6 +621,155 @@
   background: rgba(255, 255, 255, 0.7);
 }
 
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.showcase {
+  margin: 48px 0;
+}
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.showcase-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: floatIn 0.6s ease;
+}
+
+.pill {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.customers {
+  margin: 48px 0;
+}
+
+.customers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.testimonial {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: floatIn 0.6s ease;
+}
+
+.quote {
+  margin: 0;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.showcase-card:hover,
+.testimonial:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px rgba(14, 165, 233, 0.2);
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 64px 32px;
+  color: #0f172a;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark.small {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+}
+
+.footer-title {
+  font-weight: 700;
+}
+
+.footer-sub {
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  text-align: right;
+}
+
+.footer-contact {
+  color: #0f172a;
+}
+
 @media (max-width: 1024px) {
   .navbar,
   .content {
@@ -619,6 +792,12 @@
     gap: 12px;
   }
 
+  .nav-links {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
   .hero-copy h1 {
     font-size: 36px;
   }
@@ -635,6 +814,12 @@
   .cta-buttons {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
   }
 }
 </style>

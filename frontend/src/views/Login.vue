@@ -7,13 +7,13 @@
 
           <form @submit.prevent="onSubmit" novalidate>
             <div class="mb-3">
-              <label class="form-label" for="identifier">Mã số / Email</label>
+              <label class="form-label" for="userCode">Mã số</label>
               <input
-                v-model.trim="identifier"
+                v-model.trim="userCode"
                 type="text"
                 class="form-control"
-                id="identifier"
-                placeholder="VD: SV20240001 hoặc user@example.com"
+                id="userCode"
+                placeholder="VD: SV20240001"
                 required
                 :disabled="loading"
               />
@@ -55,10 +55,6 @@
           <p v-if="success" class="text-success text-center mt-3 small">
             Đăng nhập thành công! Chuyển hướng...
           </p>
-
-          <p class="text-muted text-center mt-3 small mb-0">
-            API: <code>{{ apiBase }}/api/auth/login</code>
-          </p>
         </div>
       </div>
     </div>
@@ -71,7 +67,7 @@ import { useRouter } from "vue-router";
 import { saveAuth, getRole } from "../utils/auth";
 
 const router = useRouter();
-const identifier = ref("");
+const userCode = ref("");
 const password = ref("");
 const loading = ref(false);
 const error = ref("");
@@ -85,8 +81,8 @@ async function onSubmit() {
   error.value = "";
   success.value = false;
 
-  if (!identifier.value || !password.value) {
-    error.value = "Vui lòng nhập mã số/email và mật khẩu.";
+  if (!userCode.value || !password.value) {
+    error.value = "Vui lòng nhập mã số và mật khẩu.";
     return;
   }
 
@@ -96,7 +92,7 @@ async function onSubmit() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        identifier: identifier.value,
+        identifier: userCode.value,
         password: password.value,
       }),
     });

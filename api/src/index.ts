@@ -15,25 +15,38 @@ dotenv.config({ path: `.env.${env}` });
 
 const app = express();
 
+// CORS whitelist (supports dynamic env overrides)
+const staticOrigins = [
+  "http://192.168.1.3:5173",
+  "http://192.168.1.8:5173",
+  "http://192.168.1.11:5173",
+  "http://192.168.1.15:5173",
+  "http://192.168.1.18:5173",
+  "http://192.168.1.19:5173",
+  "http://192.168.1.20:5173",
+  "http://192.168.1.21:5173",
+  "http://192.168.1.23:5173",
+  "http://192.168.1.24:5173",
+  "http://192.168.1.25:5173",
+  "http://192.168.1.30:5173",
+  "http://localhost:5173",
+];
+const envOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const allowedOrigins = new Set([...staticOrigins, ...envOrigins]);
+
 // Middleware
 app.use(bodyParser.json());
 app.use(
   cors({
-    origin: [
-      "http://192.168.1.3:5173",
-      "http://192.168.1.8:5173",
-      "http://192.168.1.11:5173",
-      "http://192.168.1.15:5173",
-      "http://192.168.1.18:5173",
-      "http://192.168.1.19:5173",
-      "http://192.168.1.20:5173",
-      "http://192.168.1.21:5173",
-      "http://192.168.1.23:5173",
-      "http://192.168.1.24:5173",
-      "http://192.168.1.25:5173",
-      "http://192.168.1.30:5173",
-      "http://localhost:5173",
-    ],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // allow server-to-server or curl
+      if (allowedOrigins.has(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
   })
 );
 

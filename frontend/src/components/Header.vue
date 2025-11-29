@@ -6,7 +6,7 @@
       <!-- Mobile hide/show toggle -->
       <button
         class="btn btn-outline-secondary d-lg-none"
-        @click="$emit('toggle-sidebar')"
+        @click="emit('toggle-sidebar')"
         aria-label="Toggle sidebar"
       >
         <i class="bi bi-arrow-bar-right"></i>
@@ -15,7 +15,7 @@
       <!-- Desktop collapse toggle -->
       <button
         class="btn btn-outline-secondary d-none d-lg-inline-flex"
-        @click="$emit('toggle-collapse')"
+        @click="emit('toggle-collapse')"
         aria-label="Collapse sidebar"
       >
         <i
@@ -67,6 +67,10 @@ import ProfileModal from "./ProfileModal.vue";
 defineOptions({ name: "AppHeader" });
 
 const props = defineProps<{ sidebarOpen?: boolean; collapsed?: boolean }>();
+const emit = defineEmits<{
+  (e: "toggle-sidebar"): void;
+  (e: "toggle-collapse"): void;
+}>();
 
 const router = useRouter();
 const role = computed(() => getRole());

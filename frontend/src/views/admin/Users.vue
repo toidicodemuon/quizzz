@@ -90,6 +90,8 @@
             <button
               class="btn btn-outline-danger"
               type="button"
+              :disabled="isSelf(row)"
+              :title="isSelf(row) ? 'Kh\u00f4ng th\u1ec3 x\u00f3a t\u00e0i kho\u1ea3n c\u1ee7a ch\u00ednh b\u1ea1n.' : ''"
               @click="confirmDelete(row)"
             >
               <i class="bi bi-trash"></i>
@@ -211,6 +213,7 @@ import { onMounted, reactive, ref, watch } from "vue";
 import api, { type Paginated } from "../../api";
 import DataTable from "../../components/common/DataTable.vue";
 import Pagination from "../../components/common/Pagination.vue";
+import { getUser } from "../../utils/auth";
 
 defineOptions({
   name: "UsersList",
@@ -237,6 +240,12 @@ const filters = reactive<{ search: string; role: "" | Role }>({
   search: "",
   role: "",
 });
+
+const currentUser = getUser();
+const currentUserId = currentUser?.id ?? null;
+const currentEmail = currentUser?.email?.toLowerCase() ?? null;
+const currentUserCode =
+  (currentUser as any)?.userCode ?? (currentUser as any)?.username ?? null;
 
 const columns = [
   { key: "userCode", title: "Tên đăng nhập" },
@@ -378,7 +387,11 @@ async function save() {
 }
 
 async function confirmDelete(row: User) {
-  if (!confirm(`Xóa tài khoản: ${row.email}?`)) return;
+  if (isSelf(row)) {
+    alert("Không thể xóa tài khoản của chính bạn.");
+    return;
+  }
+  if (!confirm(`Xóa tài khoản: ${row.email || row.userCode}?`)) return;
   try {
     await api.delete(`/users/${row.id}`);
     fetchUsers();
@@ -387,6 +400,13 @@ async function confirmDelete(row: User) {
     const msg = e?.response?.data?.message || "Không thể xóa người dùng.";
     alert(msg);
   }
+}
+
+function isSelf(row: User) {
+  if (currentUserId !== null && row.id === currentUserId) return true;
+  if (currentEmail && row.email?.toLowerCase() === currentEmail) return true;
+  if (currentUserCode && row.userCode === currentUserCode) return true;
+  return false;
 }
 </script>
 

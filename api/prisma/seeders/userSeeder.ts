@@ -12,9 +12,9 @@ export async function seedUsers(
 ) {
   const hash = (pwd: string) => bcrypt.hash(pwd, 10);
   const [teacherPassword, studentPassword, adminPassword] = await Promise.all([
-    hash("123456"),
-    hash("123456"),
-    hash("123456"),
+    hash("Thu#$3"),
+    hash("Thu#$3"),
+    hash("Thu#$3"),
   ]);
 
   const teacher = await prisma.user.create({
@@ -61,7 +61,7 @@ export async function seedUsers(
       email: "admin@example.com",
       password: adminPassword,
       fullName: "System Administrator",
-      userCode: "ADM001",
+      userCode: "admw1",
       role: Role.ADMIN,
     },
   });

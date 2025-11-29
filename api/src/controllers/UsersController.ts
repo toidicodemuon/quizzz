@@ -203,6 +203,22 @@ export class UserController extends Controller {
       }
     }
 
+    // Prevent deleting teachers while their id is referenced elsewhere
+    if (existing.role === Role.TEACHER) {
+      const [questionRefs, examRefs, roomRefs] = await Promise.all([
+        prisma.question.count({ where: { authorId: id } }),
+        prisma.exam.count({ where: { authorId: id } }),
+        prisma.room.count({ where: { createdById: id } }),
+      ]);
+      if (questionRefs + examRefs + roomRefs > 0) {
+        const err: any = new Error(
+          "Không thể xóa giáo viên vì còn câu hỏi/đề thi/phòng thi tham chiếu tới tài khoản này. Vui lòng chuyển quyền hoặc xóa các dữ liệu liên quan trước."
+        );
+        err.status = 409;
+        throw err;
+      }
+    }
+
     await prisma.user.delete({ where: { id } });
     return { message: "User deleted", id };
   }
