@@ -75,7 +75,7 @@
                   v-if="passState !== null"
                   :class="['badge', passState ? 'bg-success' : 'bg-danger']"
                 >
-                  {{ passState ? "Đậu" : "Trượt" }}
+                  {{ passState ? "Đậu" : "Rớt" }}
                 </span>
               </div>
               <div class="fw-semibold mb-1">
@@ -249,7 +249,9 @@ const loading = ref(false);
 const loadingLastAttempt = ref(false);
 const loadingRooms = ref(false);
 const subjectId = ref<number | null>(null);
-const examMetaMap = reactive<Record<number, { title?: string | null; code?: string | null }>>({});
+const examMetaMap = reactive<
+  Record<number, { title?: string | null; code?: string | null }>
+>({});
 
 const lastAttempt = ref<AttemptRow | null>(null);
 const nearestRoom = ref<RoomSummary | null>(null);
@@ -447,9 +449,7 @@ async function loadNearestRoom() {
     });
     const missingExamIds = Array.from(
       new Set(
-        openList
-          .filter((r) => !r.examTitle || !r.examCode)
-          .map((r) => r.examId)
+        openList.filter((r) => !r.examTitle || !r.examCode).map((r) => r.examId)
       )
     );
     if (missingExamIds.length) {

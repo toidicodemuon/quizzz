@@ -17,7 +17,14 @@
           <div class="small mb-3">
             <div class="mb-1">
               <span class="text-muted">Đề thi:</span>
-              <span class="ms-1">#{{ room.examId }}</span>
+              <span class="ms-1 fw-semibold">#{{ room.examId }}</span>
+              <span v-if="room.examCode" class="ms-1 text-muted">
+                (Mã đề: <code>{{ room.examCode }}</code
+                >)
+              </span>
+              <div v-if="room.examTitle" class="text-muted">
+                {{ room.examTitle }}
+              </div>
             </div>
             <div class="row g-2">
               <div class="col-12 col-md-4">
@@ -50,6 +57,8 @@
             :items="items"
             :loading="loading"
             class="mb-2"
+            :show-exam-icon="false"
+            :show-student-search="false"
             @view="openAttemptDetail"
             @delete="deleteAttempt"
           />
@@ -104,6 +113,8 @@ import api, { type Paginated } from "../../api";
 type RoomRow = {
   id: number;
   examId: number;
+  examCode?: string | null;
+  examTitle?: string | null;
   code: string;
   openAt: string | null;
   closeAt: string | null;
@@ -143,8 +154,9 @@ type AttemptDetail = {
   studentCode?: string | null;
   examId: number;
   examTitle?: string | null;
+  examCode?: string | null;
   passMarkPercent?: number | null;
-  roomId: number;
+  roomId?: number | null;
   score: number | null;
   startedAt: string;
   submittedAt: string | null;
@@ -208,7 +220,13 @@ async function reload() {
 async function openAttemptDetail(id: number) {
   try {
     const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
-    attemptDetail.value = data as any;
+    const meta = items.value.find((it) => it.id === id);
+    attemptDetail.value = {
+      ...data,
+      examCode: data.examCode ?? meta?.examCode ?? null,
+      examTitle: data.examTitle ?? meta?.examTitle ?? null,
+      roomId: data.roomId ?? meta?.roomId ?? null,
+    } as any;
     showAttemptDetail.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể tải chi tiết bài thi");

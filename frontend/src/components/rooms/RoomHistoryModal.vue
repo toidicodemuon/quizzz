@@ -116,7 +116,9 @@
             <template #cell-isProtected="{ value }">
               <span
                 class="badge"
-                :class="value ? 'bg-warning text-dark' : 'bg-light text-muted border'"
+                :class="
+                  value ? 'bg-warning text-dark' : 'bg-light text-muted border'
+                "
               >
                 <i class="bi" :class="value ? 'bi-lock-fill' : 'bi-unlock'"></i>
                 {{ value ? "Có mật khẩu" : "Mở" }}
@@ -191,7 +193,11 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Cập nhật bảo vệ phòng</h5>
-          <button type="button" class="btn-close" @click="showEdit = false"></button>
+          <button
+            type="button"
+            class="btn-close"
+            @click="showEdit = false"
+          ></button>
         </div>
         <div class="modal-body">
           <div class="form-check form-switch mb-2">
@@ -232,7 +238,11 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-light" @click="showEdit = false">Hủy</button>
-          <button class="btn btn-primary" @click="saveEdit" :disabled="deleting">
+          <button
+            class="btn btn-primary"
+            @click="saveEdit"
+            :disabled="deleting"
+          >
             <span
               v-if="deleting"
               class="spinner-border spinner-border-sm me-1"
@@ -319,7 +329,12 @@ const columns = [
   { key: "durationSec", title: "Thời lượng" },
   { key: "maxAttempts", title: "Lượt tối đa" },
   { key: "createdAt", title: "Tạo lúc" },
-  { key: "isProtected", title: "Bảo vệ", thClass: "text-center", tdClass: "text-center" },
+  {
+    key: "isProtected",
+    title: "Bảo vệ",
+    thClass: "text-center",
+    tdClass: "text-center",
+  },
 ];
 
 const filteredRooms = computed(() => {

@@ -97,6 +97,7 @@
         @view="openDetail"
         @delete="delAttempt"
         @search-student-code="onSelectStudentCode"
+        @view-exam="openExam"
       />
 
       <Pagination
@@ -130,6 +131,7 @@
     :detail="detail"
     @close="closeDetail"
   />
+  <ExamViewModal :show="showExamModal" :exam-id="viewExamId" @close="closeExam" />
 </template>
 
 <script setup lang="ts">
@@ -137,6 +139,7 @@ import { onMounted, ref, computed, reactive } from "vue";
 import Pagination from "../../components/common/Pagination.vue";
 import AttemptList from "../../components/attempts/AttemptList.vue";
 import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
+import ExamViewModal from "../../components/exams/ExamViewModal.vue";
 import type { AttemptAnswerView } from "../../components/attempts/AttemptAnswersList.vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
@@ -177,8 +180,9 @@ type AttemptDetail = {
   studentCode?: string | null;
   examId: number;
   examTitle?: string | null;
+  examCode?: string | null;
   passMarkPercent?: number | null;
-  roomId: number;
+  roomId?: number | null;
   score: number | null;
   status: string;
   startedAt: string;
@@ -219,6 +223,8 @@ const selectedCount = computed(() => selectedIds.size);
 
 const showDetail = ref(false);
 const detail = ref<AttemptDetail | null>(null);
+const showExamModal = ref(false);
+const viewExamId = ref<number | null>(null);
 
 async function ensureExams() {
   const user = getUser();
@@ -297,6 +303,8 @@ async function reload() {
   try {
     const params: any = { page: page.value, pageSize: pageSize.value };
     if (examId.value) params.examId = examId.value;
+    const examSearch = (examInput.value || "").trim();
+    if (examSearch) params.search = examSearch;
     const studentCodeFilter = (studentCode.value || "").trim();
     if (studentCodeFilter) params.studentCode = studentCodeFilter;
     const { data } = await api.get<Paginated<AttemptRow>>("/attempts", {
@@ -313,7 +321,13 @@ async function reload() {
 async function openDetail(id: number) {
   try {
     const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
-    detail.value = data as any;
+    const meta = items.value.find((it) => it.id === id);
+    detail.value = {
+      ...data,
+      examCode: data.examCode ?? meta?.examCode ?? null,
+      examTitle: data.examTitle ?? meta?.examTitle ?? null,
+      roomId: data.roomId ?? meta?.roomId ?? null,
+    } as any;
     showDetail.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể tải chi tiết");
@@ -321,6 +335,14 @@ async function openDetail(id: number) {
 }
 function closeDetail() {
   showDetail.value = false;
+}
+
+function openExam(id: number) {
+  viewExamId.value = id;
+  showExamModal.value = true;
+}
+function closeExam() {
+  showExamModal.value = false;
 }
 
 async function delAttempt(id: number) {

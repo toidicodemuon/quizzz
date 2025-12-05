@@ -28,12 +28,18 @@
     <div class="card-body">
       <div class="row g-3 align-items-center mb-3">
         <div class="col-12 col-md-4">
-          <input
-            v-model.trim="search"
-            type="search"
-            class="form-control form-control-sm"
-            placeholder="Tìm đề thi..."
-          />
+          <div class="input-group input-group-sm">
+            <input
+              v-model.trim="search"
+              type="search"
+              class="form-control"
+              placeholder="Tìm đề thi..."
+              @keydown.enter.prevent="onSearch"
+            />
+            <button class="btn btn-primary" type="button">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="input-group input-group-sm">
@@ -279,7 +285,14 @@ const filteredItems = computed(() => {
 
 function formatDate(d: string) {
   try {
-    return new Date(d).toLocaleString();
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return "";
+    const day = String(dt.getDate()).padStart(2, "0");
+    const month = String(dt.getMonth() + 1).padStart(2, "0");
+    const year = String(dt.getFullYear()).slice(-2);
+    const hour = String(dt.getHours()).padStart(2, "0");
+    const minute = String(dt.getMinutes()).padStart(2, "0");
+    return `${day}/${month}/${year} ${hour}:${minute}`;
   } catch {
     return d;
   }
@@ -292,12 +305,18 @@ async function load() {
     const params: any = { page: page.value, pageSize: pageSize.value };
     if (user?.id) params.authorId = Number(user.id);
     if (subjectId.value > 0) params.subjectId = subjectId.value;
+    if (search.value.trim()) params.search = search.value.trim();
     const { data } = await api.get<Paginated<ExamRow>>("/exams", { params });
     items.value = data.items as any;
     total.value = data.total;
   } finally {
     loading.value = false;
   }
+}
+
+function onSearch() {
+  page.value = 1;
+  load();
 }
 async function bulkDelete() {
   if (selectedIds.size === 0) return;

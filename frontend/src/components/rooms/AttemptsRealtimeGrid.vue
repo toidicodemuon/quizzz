@@ -93,7 +93,7 @@
               <td>
                 <span v-if="a.pass === true" class="badge bg-success">Đậu</span>
                 <span v-else-if="a.pass === false" class="badge bg-danger"
-                  >Trượt</span
+                  >Rớt</span
                 >
                 <span v-else class="badge bg-secondary">-</span>
               </td>

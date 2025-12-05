@@ -117,9 +117,7 @@
         <div class="mb-2">
           Kết quả:
           <span v-if="pass === true" class="badge bg-success"> Đạt </span>
-          <span v-else-if="pass === false" class="badge bg-danger">
-            Trượt
-          </span>
+          <span v-else-if="pass === false" class="badge bg-danger"> Rớt </span>
           <span v-else class="badge bg-secondary">-</span>
         </div>
       </div>

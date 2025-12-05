@@ -247,7 +247,7 @@
                 >
                   <i
                     class="bi"
-                    :class="showPassword ? 'bi-eye-slash' : 'bi-eye'"
+                    :class="showPassword ? 'bi-eye' : 'bi-eye-slash'"
                   ></i>
                 </button>
               </div>

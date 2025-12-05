@@ -325,6 +325,8 @@ type RoomSummary = {
   id: number;
   examId: number;
   code?: string | null;
+  examCode?: string | null;
+  examTitle?: string | null;
   openAt: string | null;
   closeAt: string | null;
   durationSec: number | null;
@@ -343,7 +345,9 @@ type AttemptDetail = {
   timeTakenSec: number | null;
   examId: number;
   examTitle?: string | null;
+  examCode?: string | null;
   passMarkPercent?: number | null;
+  roomId?: number | null;
   answers: any[];
   studentId?: number;
   studentName?: string | null;
@@ -411,6 +415,8 @@ function normalizeRoom(r: any): RoomSummary {
     id: Number(r.id),
     examId: Number(r.examId),
     code: r.code ?? null,
+    examCode: r.examCode ?? selectedExam.value?.code ?? null,
+    examTitle: r.examTitle ?? selectedExam.value?.title ?? null,
     openAt: (r.openAt as string | null) ?? null,
     closeAt: (r.closeAt as string | null) ?? null,
     durationSec:
@@ -646,7 +652,14 @@ function toggleConfig() {
 async function openAttemptDetail(id: number) {
   try {
     const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
-    attemptDetail.value = data as any;
+    const examMeta = selectedExam.value;
+    const roomMeta = selectedRoom.value;
+    attemptDetail.value = {
+      ...data,
+      examCode: data.examCode ?? examMeta?.code ?? null,
+      examTitle: data.examTitle ?? examMeta?.title ?? null,
+      roomId: data.roomId ?? roomMeta?.id ?? selectedRoomId.value ?? null,
+    } as any;
     showAttemptDetail.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể tải chi tiết bài thi");

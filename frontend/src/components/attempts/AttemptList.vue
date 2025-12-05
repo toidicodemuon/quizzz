@@ -37,7 +37,18 @@
           </td>
           <td>{{ a.id }}</td>
           <td>
-            <code>{{ a.examCode ?? "-" }}</code>
+            <div class="d-flex align-items-center gap-1">
+              <code>{{ a.examCode ?? "-" }}</code>
+              <button
+                v-if="isTeacher && showExamIcon && a.examId"
+                type="button"
+                class="btn btn-link p-0 text-primary"
+                @click="onViewExam(a.examId)"
+                title="Xem đề thi"
+              >
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
           </td>
           <td>
             <code>{{ a.roomId ?? "-" }}</code>
@@ -47,7 +58,7 @@
             <div class="d-flex align-items-center gap-1">
               <code>{{ a.studentCode ?? "-" }}</code>
               <button
-                v-if="a.studentCode"
+                v-if="showStudentSearch && a.studentCode"
                 type="button"
                 class="btn btn-link p-0 text-primary"
                 @click="onSearchStudentCode(a.studentCode)"
@@ -64,7 +75,7 @@
           <td>
             <span v-if="a.pass === true" class="badge bg-success">Đậu</span>
             <span v-else-if="a.pass === false" class="badge bg-danger"
-              >Trượt</span
+              >Rớt</span
             >
             <span v-else class="badge bg-secondary">-</span>
           </td>
@@ -78,6 +89,7 @@
                 class="btn btn-outline-primary"
                 type="button"
                 @click="onView(a.id)"
+                title="Xem bài thi"
               >
                 <i class="bi bi-eye"></i>
               </button>
@@ -110,6 +122,7 @@ import { computed } from "vue";
 
 type AttemptListItem = {
   id: number;
+  examId?: number;
   examCode?: string | null;
   roomId?: number | null;
   examTitle?: string | null;
@@ -125,23 +138,34 @@ type AttemptListItem = {
   pass?: boolean | null;
 };
 
-const props = defineProps<{
-  mode?: "student" | "teacher";
-  items: AttemptListItem[];
-  loading?: boolean;
-  showCheckbox?: boolean;
-  selectedIds?: Set<number>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    mode?: "student" | "teacher";
+    items: AttemptListItem[];
+    loading?: boolean;
+    showCheckbox?: boolean;
+    selectedIds?: Set<number>;
+    showExamIcon?: boolean;
+    showStudentSearch?: boolean;
+  }>(),
+  {
+    showExamIcon: true,
+    showStudentSearch: true,
+  }
+);
 
 const emit = defineEmits<{
   (e: "view", id: number): void;
   (e: "delete", id: number): void;
   (e: "search-student-code", code: string): void;
+  (e: "view-exam", examId: number): void;
 }>();
 
 const isTeacher = computed(() => (props.mode ?? "student") === "teacher");
 const loading = computed(() => !!props.loading);
 const showCheckbox = computed(() => !!props.showCheckbox);
+const showExamIcon = computed(() => props.showExamIcon !== false);
+const showStudentSearch = computed(() => props.showStudentSearch !== false);
 const allPageSelected = computed(
   () =>
     !!props.showCheckbox &&
@@ -205,6 +229,10 @@ function onDelete(id: number) {
 
 function onSearchStudentCode(code: string) {
   emit("search-student-code", code);
+}
+
+function onViewExam(examId: number) {
+  emit("view-exam", examId);
 }
 </script>
 

@@ -12,20 +12,32 @@
         <div class="modal-header">
           <h5 class="modal-title">
             Bài thi #{{ detail.id }}
-            <template v-if="mode === 'student'">
-              - {{ detail.examTitle ?? "-" }}
-            </template>
-            <template v-else>
-              -
-              {{ detail.studentName ?? "#" + detail.studentId }}
-              <span v-if="detail.studentCode" class="text-muted small">
-                ({{ detail.studentCode }})
-              </span>
-            </template>
+            <template v-if="mode === 'student'"
+              >- {{ detail.examTitle ?? "-" }}</template
+            >
+            <template v-else
+              >- {{ detail.studentName ?? "#" + detail.studentId }}</template
+            >
+            <span
+              v-if="mode === 'teacher' && detail.studentCode"
+              class="text-muted small"
+            >
+              ({{ detail.studentCode }})
+            </span>
           </h5>
           <button type="button" class="btn-close" @click="close"></button>
         </div>
         <div class="modal-body">
+          <div class="mb-3 d-flex flex-wrap gap-3 align-items-center">
+            <span
+              ><b>Mã đề:</b> <code>{{ detail.examCode ?? "-" }}</code></span
+            >
+            <span><b>Tiêu đề:</b> {{ detail.examTitle ?? "-" }}</span>
+            <span
+              ><b>Phòng:</b> <code>{{ detail.roomId ?? "-" }}</code></span
+            >
+          </div>
+
           <div class="mb-2 d-flex flex-wrap gap-3 align-items-center">
             <span><b>Bắt đầu:</b> {{ fmtDate(detail.startedAt) }}</span>
             <span>
@@ -51,7 +63,7 @@
                 v-else-if="detailPass === false"
                 class="badge bg-danger ms-1"
               >
-                Trượt
+                Rớt
               </span>
               <span v-else class="badge bg-secondary ms-1">-</span>
             </span>
@@ -109,6 +121,8 @@ type BaseAttemptDetail = {
   studentId?: number;
   studentName?: string | null;
   studentCode?: string | null;
+  examCode?: string | null;
+  roomId?: number | null;
 };
 
 type ExamConfig = {

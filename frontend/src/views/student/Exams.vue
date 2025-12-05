@@ -77,8 +77,9 @@ type AttemptDetail = {
   studentId: number;
   examId: number;
   examTitle?: string | null;
+  examCode?: string | null;
   passMarkPercent?: number | null;
-  roomId: number;
+  roomId?: number | null;
   status: string;
   answers: AttemptAnswerView[];
 };
@@ -86,6 +87,7 @@ type AttemptDetail = {
 type ExamConfig = {
   id: number;
   title: string;
+  code?: string | null;
   feedbackMode?: "NONE" | "AFTER_SUBMIT" | "DETAILED";
   showScoreImmediately?: boolean;
   showCorrectAnswers?: boolean;
@@ -128,8 +130,14 @@ async function reload() {
 async function openDetail(id: number) {
   try {
     const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
-    detail.value = data as any;
+    const meta = items.value.find((a) => a.id === id);
     const { data: exam } = await api.get<ExamConfig>(`/exams/${data.examId}`);
+    detail.value = {
+      ...data,
+      examCode: data.examCode ?? meta?.examCode ?? exam.code ?? null,
+      examTitle: data.examTitle ?? meta?.examTitle ?? exam.title ?? null,
+      roomId: data.roomId ?? meta?.roomId ?? null,
+    } as any;
     examConfig.value = exam;
     showDetail.value = true;
   } catch (e: any) {
@@ -145,4 +153,3 @@ onMounted(() => {
   reload();
 });
 </script>
-
