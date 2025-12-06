@@ -254,4 +254,7 @@ watch(
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
+.date-picker-wrap .btn {
+  border-color: var(--bs-border-color);
+}
 </style>

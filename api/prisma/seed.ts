@@ -1,8 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { clearData } from "./seeders/clearData";
 import { seedUsers } from "./seeders/userSeeder";
-import { seedSubjects } from "./seeders/subjectSeeder";
-import { seedQuestionsBySubjects } from "./seeders/questionSeeder";
+import { SUBJECTS, seedSubjects } from "./seeders/subjectSeeder";
 import { seedExamsWithQuestions } from "./seeders/examSeeder";
 import { seedRoomsAndAttempts } from "./seeders/roomAttemptSeeder";
 
@@ -11,24 +10,35 @@ const prisma = new PrismaClient();
 async function main() {
   await clearData(prisma);
 
-  const subjects = await seedSubjects(prisma);
-  console.log(`Seeded ${subjects.length} subjects`);
+  const createdSubjects = [];
+  for (const s of SUBJECTS) {
+    let subject = await prisma.subject.findFirst({
+      where: { code: s.code },
+    });
+    if (!subject) {
+      subject = await prisma.subject.create({
+        data: { name: s.name, code: s.code },
+      });
+    }
+    createdSubjects.push(subject);
+  }
+  console.log(`Created ${createdSubjects.length} subjects`);
 
-  const users = await seedUsers(prisma, subjects);
+  const users = await seedUsers(prisma, createdSubjects);
   console.log("Seeded users:", users);
 
-  await seedQuestionsBySubjects(
-    prisma,
-    subjects.map((s) => ({ id: s.id, name: s.name })),
-    users.teacher.id,
-    20
-  );
+  console.log("Seeding questions for subjects...");
+  await seedSubjects(prisma, users.teacher.id);
   console.log("Seeded questions for all subjects");
 
   // Create 54 exams across 18 subjects (or distribute across available subjects)
   const exams = await seedExamsWithQuestions(
     prisma,
-    subjects.map((s) => ({ id: s.id, name: s.name, code: s.code })),
+    createdSubjects.map((s) => ({
+      id: s.id,
+      name: s.name,
+      code: s.code,
+    })),
     users.teacher.id,
     54
   );
