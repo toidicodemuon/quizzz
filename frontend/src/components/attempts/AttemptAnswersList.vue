@@ -46,11 +46,11 @@
           class="list-group-item py-1 d-flex align-items-center gap-2 bg-danger-subtle text-danger"
         >
           <i class="bi bi-x-circle-fill"></i>
-          <span>Khong chon</span>
+          <span>Không chọn</span>
         </li>
       </ul>
       <div class="small ms-4 mt-1">
-        Diem:
+        Điểm:
         <strong :class="ans.isCorrect ? 'text-success' : 'text-danger'">
           {{ ans.earned ?? 0 }}
         </strong>
@@ -60,7 +60,7 @@
         v-if="(showExplanation ?? true) && ans.explanation"
         class="small ms-4 mt-1 text-muted"
       >
-        <strong>Giai thich:</strong>
+        <strong>Giải thích:</strong>
         <span class="ms-1">{{ ans.explanation }}</span>
       </div>
     </div>
