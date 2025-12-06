@@ -28,7 +28,7 @@ async function main() {
   // Create 54 exams across 18 subjects (or distribute across available subjects)
   const exams = await seedExamsWithQuestions(
     prisma,
-    subjects.map((s) => ({ id: s.id, name: s.name })),
+    subjects.map((s) => ({ id: s.id, name: s.name, code: s.code })),
     users.teacher.id,
     54
   );

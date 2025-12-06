@@ -1,17 +1,14 @@
 import { PrismaClient, ExamStatus } from "@prisma/client";
 
-type SubjectInfo = { id: number; name?: string | null };
+type SubjectInfo = { id: number; name?: string | null; code?: string | null };
 
 function randItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function randomCode(prefix: string, len = 6) {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let s = prefix;
-  for (let i = 0; i < len; i++)
-    s += chars[Math.floor(Math.random() * chars.length)];
-  return s;
+function buildExamCode(subjectCode: string | null | undefined, idx: number) {
+  const base = (subjectCode || "SUBJ").toUpperCase();
+  return `DT${base}${String(idx).padStart(3, "0")}`;
 }
 
 export async function seedExamsWithQuestions(
@@ -35,12 +32,12 @@ export async function seedExamsWithQuestions(
     for (let k = 0; k < count; k++) {
       const status = randItem(statuses);
       const passMarkPercent = 50 + Math.floor(Math.random() * 36); // 50 - 85
-      const code = randomCode("EX");
+      const examCode = buildExamCode(subj.code, k + 1);
       const exam = await prisma.exam.create({
         data: {
           title: `${subj.name || "Môn"} - Đề số ${k + 1}`,
           description: `Đề thi cho môn ${subj.name || subj.id}`,
-          code,
+          code: examCode,
           status,
           subjectId: subj.id,
           authorId,
