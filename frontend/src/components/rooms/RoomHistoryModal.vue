@@ -232,7 +232,7 @@
               placeholder="Nhập mật khẩu"
             />
             <div class="form-text" v-if="editProtected">
-              Sinh viên sẽ cần mật khẩu này để vào phòng.
+              Học viên sẽ cần mật khẩu này để vào phòng.
             </div>
           </div>
         </div>

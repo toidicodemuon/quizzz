@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="card rounded-0">
     <div class="card-header d-flex align-items-center justify-content-between">
-      <h5 class="mb-0">Quản lý bài thi sinh viên</h5>
+      <h5 class="mb-0">Quản lý bài thi học viên</h5>
       <div class="d-flex align-items-center gap-2">
         <button
           type="button"
@@ -71,7 +71,7 @@
             <input
               type="search"
               class="form-control"
-              placeholder="Nhập mã số sinh viên"
+              placeholder="Nhập mã số học viên"
               v-model="studentCode"
               @keydown.enter.prevent="onStudentCodeSearch"
             />
@@ -131,7 +131,11 @@
     :detail="detail"
     @close="closeDetail"
   />
-  <ExamViewModal :show="showExamModal" :exam-id="viewExamId" @close="closeExam" />
+  <ExamViewModal
+    :show="showExamModal"
+    :exam-id="viewExamId"
+    @close="closeExam"
+  />
 </template>
 
 <script setup lang="ts">

@@ -50,7 +50,7 @@
 
           <hr />
 
-          <h6 class="mb-2">Danh sách sinh viên đã thi trong phòng này</h6>
+          <h6 class="mb-2">Danh sách học viên đã thi trong phòng này</h6>
 
           <AttemptList
             mode="teacher"

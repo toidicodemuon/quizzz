@@ -1,11 +1,11 @@
 <template>
-  <div class="card rounded-0 mt-3 attempts-grid">
+  <div class="card rounded-0 mt-0 attempts-grid border-0 px-1">
     <div
       class="card-header py-2 d-flex justify-content-between align-items-center"
     >
       <div class="d-flex flex-column">
         <span class="fw-semibold small">
-          Danh sách sinh viên thi trong
+          Danh sách học viên thi trong
           <span v-if="roomId">phòng #{{ roomId }}</span>
         </span>
         <span class="text-muted small" v-if="!roomId">
@@ -58,7 +58,7 @@
           <thead>
             <tr class="text-muted small">
               <th>STT</th>
-              <th>Sinh viên</th>
+              <th>Học viên</th>
               <th>Trạng thái</th>
               <th>Đúng/Tổng</th>
               <th>Kết quả</th>
@@ -113,12 +113,12 @@
             </tr>
             <tr v-if="!loading && !roomId">
               <td colspan="9" class="text-center text-muted small py-3">
-                Chọn phòng thi để xem danh sách sinh viên.
+                Chọn phòng thi để xem danh sách học viên.
               </td>
             </tr>
             <tr v-else-if="!loading && attempts.length === 0">
               <td colspan="9" class="text-center text-muted small py-3">
-                Chưa có sinh viên nào trong phòng này.
+                Chưa có học viên nào trong phòng này.
               </td>
             </tr>
           </tbody>

@@ -42,7 +42,7 @@ export async function seedUsers(
       data: {
         email: `student${i}@example.com`,
         password: studentPassword,
-        fullName: `Sinh viên ${subject.name} #${i}`,
+        fullName: `Học viên ${subject.name} #${i}`,
         userCode: `HV${subjectCode}${num}`,
         subjectId: subject.id,
         role: Role.STUDENT,

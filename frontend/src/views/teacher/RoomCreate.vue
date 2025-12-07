@@ -1,11 +1,11 @@
 <template>
   <div class="room-create-page">
-    <div class="card rounded-0 mb-3">
+    <div class="card rounded-0 mb-">
       <div
         class="card-header d-flex justify-content-between align-items-center"
       >
         <div>
-          <h5 class="mb-0">Mở phòng thi cho sinh viên</h5>
+          <h5 class="mb-0">Mở phòng thi cho học viên</h5>
           <div class="small text-muted">
             Bước 1: chọn đề thi đã publish. Bước 2: tạo phòng. Bước 3: theo dõi
             trạng thái làm bài.
@@ -79,7 +79,7 @@
                   </span>
                 </div>
                 <div class="small text-muted mt-1" v-else>
-                  Hãy chọn đề thi đã publish để tạo phòng cho sinh viên.
+                  Hãy chọn đề thi đã publish để tạo phòng cho học viên.
                 </div>
               </div>
 
@@ -547,7 +547,7 @@ async function handleCloseRoom(roomId: number) {
   if (!room) return;
   if (
     !window.confirm(
-      "Bạn chắc chắn muốn đóng phòng thi này ngay bây giờ? Sinh viên sẽ không thể vào thêm."
+      "Bạn chắc chắn muốn đóng phòng thi này ngay bây giờ? học viên sẽ không thể vào thêm."
     )
   ) {
     return;
@@ -572,7 +572,7 @@ async function handleDeleteRoom(roomId: number) {
   }
   if (
     !window.confirm(
-      "Bạn chắc chắn muốn xóa phòng này? Phòng đã có bài thi của sinh viên sẽ không xóa được."
+      "Bạn chắc chắn muốn xóa phòng này? Phòng đã có bài thi của học viên sẽ không xóa được."
     )
   ) {
     return;
