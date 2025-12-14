@@ -87,12 +87,14 @@
               <table class="table align-middle mb-0">
                 <thead>
                   <tr class="text-uppercase text-muted small">
+                    <th style="width: 70px">STT</th>
                     <th class="d-none d-sm-table-cell">ID</th>
                     <th>Nội dung</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="q in questions" :key="q.id">
+                  <tr v-for="(q, idx) in questions" :key="q.id">
+                    <td class="text-center text-muted">{{ idx + 1 }}</td>
                     <td class="d-none d-sm-table-cell fw-semibold">
                       #{{ q.id }}
                     </td>
@@ -121,7 +123,7 @@
                     </td>
                   </tr>
                   <tr v-if="questions.length === 0">
-                    <td colspan="2" class="text-center text-muted">
+                    <td colspan="3" class="text-center text-muted">
                       Chưa có câu hỏi
                     </td>
                   </tr>
