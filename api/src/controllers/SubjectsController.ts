@@ -11,7 +11,10 @@ export class SubjectsController extends Controller {
   @Security("bearerAuth")
   public async list(): Promise<{ items: SubjectDto[]; total: number }> {
     const [items, total] = await Promise.all([
-      prisma.subject.findMany({ select: { id: true, name: true, code: true }, orderBy: { name: "asc" } }),
+      prisma.subject.findMany({
+        select: { id: true, name: true, code: true },
+        orderBy: { id: "asc" }, // default sort by ID
+      }),
       prisma.subject.count(),
     ]);
     return { items, total };
