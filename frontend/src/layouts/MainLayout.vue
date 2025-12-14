@@ -22,11 +22,11 @@
       </div>
 
       <footer class="app-footer">
-        © 2025 – Designed by &nbsp;<span style="color: blue"
+        © 2025 – Developed by &nbsp;<span style="color: blue"
           ><a
             style="text-decoration: none"
             target="_blank"
-            href="#/mini-web-cloud"
+            href="https://miniweb.cloud"
             >miniweb.cloud</a
           ></span
         >

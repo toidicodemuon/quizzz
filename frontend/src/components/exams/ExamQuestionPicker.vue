@@ -23,12 +23,13 @@
                   @change="toggleSelectAllExamQuestions($event)"
                 />
               </th>
+              <th class="d-none d-sm-table-cell">STT</th>
               <th class="d-none d-sm-table-cell">ID</th>
               <th>Nội dung</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="q in examQuestions" :key="q.id">
+            <tr v-for="(q, idx) in examQuestions" :key="q.id">
               <td>
                 <input
                   class="form-check-input"
@@ -37,6 +38,7 @@
                   @change="onToggleExamQuestion(q.id, $event)"
                 />
               </td>
+              <td class="d-none d-sm-table-cell fw-semibold">{{ idx + 1 }}</td>
               <td class="d-none d-sm-table-cell fw-semibold">#{{ q.id }}</td>
               <td>
                 <div class="fw-semibold">{{ q.text }}</div>
@@ -108,12 +110,13 @@
                   @change="toggleSelectAllBank($event)"
                 />
               </th>
+              <th class="d-none d-sm-table-cell">STT</th>
               <th class="d-none d-sm-table-cell">ID</th>
               <th>Nội dung</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="q in qb.filteredItems" :key="q.id">
+            <tr v-for="(q, idx) in qb.filteredItems" :key="q.id">
               <td>
                 <input
                   class="form-check-input"
@@ -122,6 +125,7 @@
                   @change="onToggleBank(q.id, $event)"
                 />
               </td>
+              <td class="d-none d-sm-table-cell fw-semibold">#{{ idx + 1 }}</td>
               <td class="d-none d-sm-table-cell fw-semibold">#{{ q.id }}</td>
               <td>
                 <div class="fw-semibold">{{ q.text }}</div>
