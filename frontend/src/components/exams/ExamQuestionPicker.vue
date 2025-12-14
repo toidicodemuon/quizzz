@@ -38,7 +38,9 @@
                   @change="onToggleExamQuestion(q.id, $event)"
                 />
               </td>
-              <td class="d-none d-sm-table-cell fw-semibold">{{ idx + 1 }}</td>
+              <td class="d-none d-sm-table-cell fw-semibold text-muted">
+                {{ idx + 1 }}
+              </td>
               <td class="d-none d-sm-table-cell fw-semibold">#{{ q.id }}</td>
               <td>
                 <div class="fw-semibold">{{ q.text }}</div>
@@ -125,7 +127,9 @@
                   @change="onToggleBank(q.id, $event)"
                 />
               </td>
-              <td class="d-none d-sm-table-cell fw-semibold">#{{ idx + 1 }}</td>
+              <td class="d-none d-sm-table-cell fw-semibold text-muted">
+                {{ idx + 1 }}
+              </td>
               <td class="d-none d-sm-table-cell fw-semibold">#{{ q.id }}</td>
               <td>
                 <div class="fw-semibold">{{ q.text }}</div>

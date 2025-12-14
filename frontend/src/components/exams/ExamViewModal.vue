@@ -94,7 +94,7 @@
                 </thead>
                 <tbody>
                   <tr v-for="(q, idx) in questions" :key="q.id">
-                    <td class="text-center text-muted">{{ idx + 1 }}</td>
+                    <td class="text-muted">{{ idx + 1 }}</td>
                     <td class="d-none d-sm-table-cell fw-semibold">
                       #{{ q.id }}
                     </td>

@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div class="dashboard" style="overflow-x: hidden">
     <div class="card border-0 shadow-sm hero mb-4">
       <div
         class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3"
@@ -37,7 +37,7 @@
         :key="card.title"
         class="col-12 col-md-6 col-lg-3"
       >
-        <div class="card h-100 shadow-sm border-0">
+        <div class="card h-100 shadow-sm border-0 mx-2">
           <div class="card-body d-flex align-items-center gap-3">
             <span :class="['stat-icon', card.bg]">
               <i :class="card.icon"></i>
@@ -56,7 +56,7 @@
 
     <div class="row g-3">
       <div class="col-lg-7">
-        <div class="card shadow-sm border-0 h-100">
+        <div class="card shadow-sm border-0 h-100 mx-2">
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
               <h6 class="mb-0">Hoạt động gần đây</h6>
