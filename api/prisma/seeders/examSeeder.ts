@@ -11,6 +11,45 @@ function buildExamCode(subjectCode: string | null | undefined, idx: number) {
   return `DT${base}${String(idx).padStart(3, "0")}`;
 }
 
+
+function normalizeSubjectCode(code: string | null | undefined): string {
+  return (code || "").toUpperCase();
+}
+
+/**
+ * Chuẩn hoá số lượng câu hỏi trắc nghiệm lý thuyết cho từng môn.
+ * Dùng để chọn số câu đưa vào mỗi đề thi.
+ */
+function getTheoryQuestionCountForSubject(
+  code: string | null | undefined
+): number {
+  const c = normalizeSubjectCode(code);
+  // Tiểu học: đề trắc nghiệm lý thuyết ~20 câu / 30 phút
+  if (["TH03L", "TH04L", "TH05L"].includes(c)) return 20;
+  // THCS/THPT + tin học cơ bản/nâng cao: ~30 câu / 45 phút
+  if (
+    [
+      "TH06L",
+      "TH07L",
+      "TH08",
+      "TH09L",
+      "TH10L",
+      "TH11L",
+      "TH12L",
+      "THCB",
+      "THNC",
+    ].includes(c)
+  )
+    return 30;
+  // MOS: ~35 câu / 50 phút (gần với 33–37 task của MOS thật)
+  if (["MOSW", "MOSE", "MOSP"].includes(c)) return 35;
+  // Lập trình Scratch/Python: nhẹ hơn, khoảng 25 câu
+  if (["SCRA", "PYTH"].includes(c)) return 25;
+
+  // Mặc định nếu chưa cấu hình: 30 câu
+  return 30;
+}
+
 export async function seedExamsWithQuestions(
   prisma: PrismaClient,
   subjects: SubjectInfo[],
@@ -58,37 +97,38 @@ export async function seedExamsWithQuestions(
         select: { id: true },
       });
 
-      // pick 5-20 random questions in this subject
+      // pick standardized number of random questions in this subject
       const totalQs = await prisma.question.count({
         where: { subjectId: subj.id },
       });
       if (totalQs > 0) {
-        const limit = Math.max(5, Math.min(20, totalQs));
-        const take = Math.floor(Math.random() * (limit - 4)) + 5; // between 5..limit
-        // fetch random subset: use offset sampling if many
-        const qids = await prisma.question
-          .findMany({
-            where: { subjectId: subj.id },
-            select: { id: true },
-            orderBy: { id: "asc" },
-            take: limit, // cap read
-          })
-          .then((rows) => rows.map((r) => r.id));
-        // shuffle
-        for (let j = qids.length - 1; j > 0; j--) {
-          const m = Math.floor(Math.random() * (j + 1));
-          [qids[j], qids[m]] = [qids[m], qids[j]];
-        }
-        const selected = qids.slice(0, Math.min(take, qids.length));
-        if (selected.length) {
-          await prisma.examQuestion.createMany({
-            data: selected.map((qid, idx) => ({
-              examId: exam.id,
-              questionId: qid,
-              points: 1.0 as any,
-              order: idx,
-            })),
-          });
+        const desired = getTheoryQuestionCountForSubject(subj.code);
+        const take = Math.min(desired, totalQs);
+        if (take > 0) {
+          // fetch all question ids for this subject, sau đó chọn ngẫu nhiên
+          const qids = await prisma.question
+            .findMany({
+              where: { subjectId: subj.id },
+              select: { id: true },
+              orderBy: { id: "asc" },
+            })
+            .then((rows) => rows.map((r) => r.id));
+          // shuffle
+          for (let j = qids.length - 1; j > 0; j--) {
+            const m = Math.floor(Math.random() * (j + 1));
+            [qids[j], qids[m]] = [qids[m], qids[j]];
+          }
+          const selected = qids.slice(0, take);
+          if (selected.length) {
+            await prisma.examQuestion.createMany({
+              data: selected.map((qid, idx) => ({
+                examId: exam.id,
+                questionId: qid,
+                points: 1.0 as any,
+                order: idx,
+              })),
+            });
+          }
         }
       }
 

@@ -180,7 +180,711 @@ export async function seedTH03L(prisma: PrismaClient, subjectId: number, authorI
       }
     ]
   }
-];
+,
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 9 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 10 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 11 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 12 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 13 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 14 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 15 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 16 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 17 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 18 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 19 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 20 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 21 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 22 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 23 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 24 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 25 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 26 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 27 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 28 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 29 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 30 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 31 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 32 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 33 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 34 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 35 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 36 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 37 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 38 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 39 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+},
+{
+  "text": "[TH03L] Câu hỏi bổ sung số 40 cho môn Tin học lớp 3 (placeholder)?",
+  "explanation": "Câu hỏi placeholder được sinh tự động để đủ số lượng. Vui lòng chỉnh sửa nội dung thực tế sau khi seed dữ liệu.",
+  "choices": [
+    {
+      "content": "Đáp án đúng (placeholder)",
+      "isCorrect": true
+    },
+    {
+      "content": "Đáp án sai 1 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 2 (placeholder)",
+      "isCorrect": false
+    },
+    {
+      "content": "Đáp án sai 3 (placeholder)",
+      "isCorrect": false
+    }
+  ]
+}];
 
   for (const q of questions) {{
     await ensureQuestionWithChoices(prisma, subjectId, authorId, q);

@@ -8,6 +8,44 @@ function randomCode(prefix: string, len = 6) {
   return s;
 }
 
+
+function normalizeSubjectCode(code: string | null | undefined): string {
+  return (code || "").toUpperCase();
+}
+
+/**
+ * Ánh xạ mã môn -> thời lượng làm bài chuẩn (phút).
+ * - TH03L–TH05L: 30'
+ * - TH06L–TH12L, THCB, THNC, SCRA, PYTH: 45'
+ * - MOSW/MOSE/MOSP: 50'
+ */
+function getDurationMinForSubjectCode(
+  code: string | null | undefined
+): number {
+  const c = normalizeSubjectCode(code);
+  if (["TH03L", "TH04L", "TH05L"].includes(c)) return 30;
+  if (["MOSW", "MOSE", "MOSP"].includes(c)) return 50;
+  if (
+    [
+      "TH06L",
+      "TH07L",
+      "TH08",
+      "TH09L",
+      "TH10L",
+      "TH11L",
+      "TH12L",
+      "THCB",
+      "THNC",
+      "SCRA",
+      "PYTH",
+    ].includes(c)
+  )
+    return 45;
+
+  // fallback mặc định: 30'
+  return 30;
+}
+
 export async function seedRoomsAndAttempts(
   prisma: PrismaClient,
   exams: { id: number; subjectId: number }[],
@@ -15,10 +53,24 @@ export async function seedRoomsAndAttempts(
   students: Array<{ id: number }>,
   attemptPerStudent = 5
 ) {
+  // Xây map: subjectId -> durationSec theo chuẩn từng môn
+  const subjectIds = Array.from(new Set(exams.map((e) => e.subjectId)));
+  const subjects = await prisma.subject.findMany({
+    where: { id: { in: subjectIds } },
+    select: { id: true, code: true },
+  });
+  const durationBySubjectId = new Map<number, number>();
+  for (const subj of subjects) {
+    const minutes = getDurationMinForSubjectCode(subj.code);
+    durationBySubjectId.set(subj.id, minutes * 60);
+  }
+
   // create one room per exam
   const rooms = await Promise.all(
     exams.map(async (ex) => {
       const code = randomCode("R");
+      const durationSec =
+        durationBySubjectId.get(ex.subjectId) ?? 60 * 30; // fallback 30 min
       const room = await prisma.room.create({
         data: {
           examId: ex.id,
@@ -26,7 +78,7 @@ export async function seedRoomsAndAttempts(
           openAt: null,
           closeAt: null,
           createdById: teacherId,
-          durationSec: 60 * 30, // default 30 min
+          durationSec,
           shuffleChoices: true,
           shuffleQuestions: true,
           maxAttempts: 1,
