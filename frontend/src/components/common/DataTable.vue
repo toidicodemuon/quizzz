@@ -1,60 +1,64 @@
 <template>
-  <div class="table-responsive">
-    <table class="table table-sm align-middle mb-0">
-      <thead>
-        <tr class="text-uppercase text-muted small">
-          <th v-if="showCheckbox" style="width: 36px">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              :checked="allPageSelected"
-              @change="toggleSelectAll"
-            />
-          </th>
-          <th v-for="col in columns" :key="col.key" :class="col.thClass">
-            {{ col.title }}
-          </th>
-          <th v-if="$slots['row-actions']" class="text-end"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="row in items" :key="row[rowKey]">
-          <td v-if="showCheckbox">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              :checked="isSelected(row)"
-              @change="(e) => onToggle(row, e)"
-            />
-          </td>
-          <td v-for="col in columns" :key="col.key" :class="col.tdClass">
-            <slot :name="'cell-' + col.key" :row="row" :value="row[col.key]">
-              {{ row[col.key] }}
-            </slot>
-          </td>
-          <td v-if="$slots['row-actions']" class="text-end">
-            <slot name="row-actions" :row="row" />
-          </td>
-        </tr>
-        <tr v-if="!loading && items.length === 0">
-          <td
-            :colspan="
-              columns.length +
-              (showCheckbox ? 1 : 0) +
-              ($slots['row-actions'] ? 1 : 0)
-            "
-            class="text-center text-muted"
-          >
-            {{ emptyText || "Không có dữ liệu" }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="position-relative">
+    <LoadingOverlay :show="loading" />
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr class="text-uppercase text-muted small">
+            <th v-if="showCheckbox" style="width: 36px">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                :checked="allPageSelected"
+                @change="toggleSelectAll"
+              />
+            </th>
+            <th v-for="col in columns" :key="col.key" :class="col.thClass">
+              {{ col.title }}
+            </th>
+            <th v-if="$slots['row-actions']" class="text-end"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="row in items" :key="row[rowKey]">
+            <td v-if="showCheckbox">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                :checked="isSelected(row)"
+                @change="(e) => onToggle(row, e)"
+              />
+            </td>
+            <td v-for="col in columns" :key="col.key" :class="col.tdClass">
+              <slot :name="'cell-' + col.key" :row="row" :value="row[col.key]">
+                {{ row[col.key] }}
+              </slot>
+            </td>
+            <td v-if="$slots['row-actions']" class="text-end">
+              <slot name="row-actions" :row="row" />
+            </td>
+          </tr>
+          <tr v-if="!loading && items.length === 0">
+            <td
+              :colspan="
+                columns.length +
+                (showCheckbox ? 1 : 0) +
+                ($slots['row-actions'] ? 1 : 0)
+              "
+              class="text-center text-muted"
+            >
+              {{ emptyText || "Không có dữ liệu" }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import LoadingOverlay from "./LoadingOverlay.vue";
 
 type Column = {
   key: string;

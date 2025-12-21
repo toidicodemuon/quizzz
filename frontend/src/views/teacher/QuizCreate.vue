@@ -25,7 +25,8 @@
         </button>
       </div>
     </div>
-    <div class="card-body">
+    <div class="card-body position-relative">
+      <LoadingOverlay :show="loading" />
       <div class="row g-3 align-items-center mb-3">
         <div class="col-12 col-md-4">
           <div class="input-group input-group-sm">
@@ -224,6 +225,7 @@ import Pagination from "../../components/common/Pagination.vue";
 import ExamFormModal from "../../components/exams/ExamFormModal.vue";
 import ExamViewModal from "../../components/exams/ExamViewModal.vue";
 import ExamQuestionPicker from "../../components/exams/ExamQuestionPicker.vue";
+import LoadingOverlay from "../../components/common/LoadingOverlay.vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
 

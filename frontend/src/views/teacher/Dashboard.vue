@@ -1,5 +1,6 @@
 <template>
   <div class="dashboard" style="overflow-x: hidden">
+    <LoadingOverlay :show="loading" />
     <div class="card border-0 shadow-sm hero mb-4">
       <div
         class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3"
@@ -127,6 +128,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import api, { type Paginated } from "../../api";
+import LoadingOverlay from "../../components/common/LoadingOverlay.vue";
 
 defineOptions({
   name: "TeacherDashboard",
@@ -304,7 +306,6 @@ function statusLabel(s: string): string {
 }
 
 async function loadDashboard() {
-  loading.value = true;
   try {
     const [examsRes, roomsRes, attemptsRes] = await Promise.all([
       api.get<Paginated<ExamSummary>>("/exams", {
@@ -344,12 +345,16 @@ async function loadDashboard() {
       activeStudents,
       attemptsToday,
     };
-  } finally {
-    loading.value = false;
+  } catch (error) {
+    console.error("Failed to load teacher dashboard:", error);
   }
 }
 
-onMounted(loadDashboard);
+onMounted(async () => {
+  loading.value = true;
+  await loadDashboard();
+  loading.value = false;
+});
 </script>
 
 <style scoped>

@@ -1,5 +1,6 @@
 <template>
   <div class="student-dashboard" style="overflow-x: hidden">
+    <LoadingOverlay :show="loading" />
     <div class="card border-0 shadow-sm hero mb-4">
       <div
         class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3"
@@ -53,10 +54,10 @@
                 type="button"
                 class="btn btn-sm btn-outline-secondary"
                 @click="reload"
-                :disabled="loading || loadingLastAttempt"
+                :disabled="loading"
               >
                 <span
-                  v-if="loading || loadingLastAttempt"
+                  v-if="loading"
                   class="spinner-border spinner-border-sm me-1"
                 ></span>
                 <i v-else class="bi bi-arrow-clockwise me-1"></i>
@@ -119,7 +120,7 @@
                 </router-link>
               </div>
             </div>
-            <div v-else-if="loadingLastAttempt" class="text-muted small">
+            <div v-else-if="loading" class="text-muted small">
               <span
                 class="spinner-border spinner-border-sm text-primary me-2"
               ></span>
@@ -189,7 +190,7 @@
                 </button>
               </div>
             </div>
-            <div v-else-if="loadingRooms" class="text-muted small">
+            <div v-else-if="loading" class="text-muted small">
               <span
                 class="spinner-border spinner-border-sm text-primary me-2"
               ></span>
@@ -209,6 +210,7 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
 import api, { type Paginated } from "../../api";
+import LoadingOverlay from "../../components/common/LoadingOverlay.vue";
 import { getUser } from "../../utils/auth";
 
 type AttemptRow = {
@@ -246,8 +248,6 @@ type RoomSummary = {
 const router = useRouter();
 
 const loading = ref(false);
-const loadingLastAttempt = ref(false);
-const loadingRooms = ref(false);
 const subjectId = ref<number | null>(null);
 const examMetaMap = reactive<
   Record<number, { title?: string | null; code?: string | null }>
@@ -370,7 +370,6 @@ function isRoomLive(r: RoomSummary): boolean {
 }
 
 async function loadLastAttempt() {
-  loadingLastAttempt.value = true;
   try {
     const { data: first } = await api.get<Paginated<AttemptRow>>("/attempts", {
       params: { page: 1, pageSize: 1 },
@@ -389,8 +388,6 @@ async function loadLastAttempt() {
     lastAttempt.value = lastPage.items[0] || null;
   } catch {
     lastAttempt.value = null;
-  } finally {
-    loadingLastAttempt.value = false;
   }
 }
 
@@ -412,7 +409,6 @@ async function fetchExamMeta(id: number) {
 }
 
 async function loadNearestRoom() {
-  loadingRooms.value = true;
   try {
     const { data } = await api.get<Paginated<RoomSummary>>("/rooms", {
       params: {
@@ -465,8 +461,6 @@ async function loadNearestRoom() {
   } catch {
     nearestRoom.value = null;
     openRooms.value = [];
-  } finally {
-    loadingRooms.value = false;
   }
 }
 

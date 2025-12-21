@@ -4,7 +4,8 @@
     <div class="card-header d-flex align-items-center justify-content-between">
       <h5 class="mb-0">Môn học</h5>
     </div>
-    <div class="card-body">
+    <div class="card-body position-relative">
+      <LoadingOverlay :show="loading" />
       <form class="row g-2 align-items-end mb-3" @submit.prevent>
         <div class="col-12 col-md-5">
           <label class="form-label">Tên môn</label>
@@ -123,6 +124,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, computed } from "vue";
 import api, { type Paginated } from "../../api";
+import LoadingOverlay from "../../components/common/LoadingOverlay.vue";
 
 type Subject = { id: number; name: string; code: string | null };
 
@@ -138,6 +140,7 @@ const form = reactive<{ name: string; code: string | null }>({
 const canAdd = computed(() => form.name.trim().length > 0);
 
 async function load() {
+  items.value = [];
   loading.value = true;
   try {
     const { data } = await api.get<Paginated<Subject>>("/subjects");
