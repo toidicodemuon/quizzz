@@ -18,3 +18,29 @@ if (!fs.existsSync(destDir)) {
 fs.copyFileSync(srcPath, destPath);
 
 console.log("prisma/schema.prisma copied to dist/prisma/schema.prisma");
+
+const subjectsSrcDir = path.join(__dirname, "..", "prisma", "seeders", "subjects");
+const subjectsDestDir = path.join(
+  __dirname,
+  "..",
+  "dist",
+  "prisma",
+  "seeders",
+  "subjects"
+);
+
+if (fs.existsSync(subjectsSrcDir)) {
+  fs.mkdirSync(subjectsDestDir, { recursive: true });
+  const jsonFiles = fs
+    .readdirSync(subjectsSrcDir)
+    .filter((file) => file.endsWith(".json"));
+  jsonFiles.forEach((file) => {
+    fs.copyFileSync(
+      path.join(subjectsSrcDir, file),
+      path.join(subjectsDestDir, file)
+    );
+  });
+  if (jsonFiles.length > 0) {
+    console.log("prisma/seeders/subjects/*.json copied to dist/prisma/seeders/subjects");
+  }
+}

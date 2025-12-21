@@ -11,6 +11,6 @@ export default defineConfig({
   },
   build: {
     outDir: "../api/public",
-    emptyOutDir: false,
+    emptyOutDir: true,
   },
 });

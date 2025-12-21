@@ -21,6 +21,9 @@ const prodPackageJson = {
   author: packageJson.author,
   license: packageJson.license,
   dependencies: packageJson.dependencies,
+  prisma: {
+    seed: "node prisma/seed.js",
+  },
   scripts: {
     start: "cross-env NODE_ENV=production node src/index.js",
     postinstall: "npx prisma generate",

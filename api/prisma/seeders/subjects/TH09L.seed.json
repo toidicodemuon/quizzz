@@ -1,0 +1,178 @@
+[
+  {
+    "text": "[TH09L] Thuật toán sắp xếp nổi bọt (Bubble Sort) hoạt động thế nào?",
+    "explanation": "So sánh cặp kề nhau và đổi chỗ nếu sai thứ tự, lặp lại qua nhiều lượt.",
+    "choices": [
+      {
+        "content": "So sánh cặp kề và đổi chỗ, lặp nhiều lượt",
+        "isCorrect": true
+      },
+      {
+        "content": "Chia mảng rồi trộn",
+        "isCorrect": false
+      },
+      {
+        "content": "Chọn phần tử nhỏ nhất đưa lên đầu",
+        "isCorrect": false
+      },
+      {
+        "content": "Dùng cây nhị phân tìm kiếm",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH09L] Tìm kiếm tuần tự (linear search) có độ phức tạp?",
+    "explanation": "O(n) vì có thể phải kiểm tra từng phần tử.",
+    "choices": [
+      {
+        "content": "O(n)",
+        "isCorrect": true
+      },
+      {
+        "content": "O(1)",
+        "isCorrect": false
+      },
+      {
+        "content": "O(log n)",
+        "isCorrect": false
+      },
+      {
+        "content": "O(n log n)",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH09L] Trong cơ sở dữ liệu, khóa chính (Primary Key) dùng để?",
+    "explanation": "Xác định duy nhất mỗi bản ghi trong bảng.",
+    "choices": [
+      {
+        "content": "Nhận dạng duy nhất mỗi bản ghi",
+        "isCorrect": true
+      },
+      {
+        "content": "Cho phép trùng lặp",
+        "isCorrect": false
+      },
+      {
+        "content": "Lưu dữ liệu lớn",
+        "isCorrect": false
+      },
+      {
+        "content": "Tạo liên kết yếu",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH09L] Câu lệnh SQL chọn tất cả cột từ bảng Students là?",
+    "explanation": "SELECT * FROM Students;",
+    "choices": [
+      {
+        "content": "SELECT * FROM Students;",
+        "isCorrect": true
+      },
+      {
+        "content": "GET ALL FROM Students;",
+        "isCorrect": false
+      },
+      {
+        "content": "SELECT ALL Students;",
+        "isCorrect": false
+      },
+      {
+        "content": "FETCH Students;",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH09L] Mô hình ER có thực thể (Entity) và?",
+    "explanation": "Thuộc tính (Attribute) và mối quan hệ (Relationship).",
+    "choices": [
+      {
+        "content": "Thuộc tính và mối quan hệ",
+        "isCorrect": true
+      },
+      {
+        "content": "Chỉ có khóa",
+        "isCorrect": false
+      },
+      {
+        "content": "Chỉ có bảng",
+        "isCorrect": false
+      },
+      {
+        "content": "Chỉ có trường văn bản",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH09L] Chuẩn hóa dữ liệu nhằm mục đích?",
+    "explanation": "Giảm dư thừa và tránh bất thường cập nhật.",
+    "choices": [
+      {
+        "content": "Giảm dư thừa, tránh bất thường",
+        "isCorrect": true
+      },
+      {
+        "content": "Tăng kích thước bảng",
+        "isCorrect": false
+      },
+      {
+        "content": "Giảm số lượng khóa",
+        "isCorrect": false
+      },
+      {
+        "content": "Tăng độ trễ truy vấn",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH09L] Tìm kiếm nhị phân yêu cầu dữ liệu như thế nào?",
+    "explanation": "Danh sách/ mảng đã được sắp xếp.",
+    "choices": [
+      {
+        "content": "Dữ liệu đã sắp xếp",
+        "isCorrect": true
+      },
+      {
+        "content": "Dữ liệu ngẫu nhiên",
+        "isCorrect": false
+      },
+      {
+        "content": "Dữ liệu có khóa chính",
+        "isCorrect": false
+      },
+      {
+        "content": "Dữ liệu có chỉ mục văn bản",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH09L] Đệ quy (recursion) là gì?",
+    "explanation": "Hàm/thuật toán tự gọi lại chính nó với bài toán con.",
+    "choices": [
+      {
+        "content": "Hàm tự gọi chính nó",
+        "isCorrect": true
+      },
+      {
+        "content": "Lặp vô hạn",
+        "isCorrect": false
+      },
+      {
+        "content": "Chạy song song",
+        "isCorrect": false
+      },
+      {
+        "content": "Khởi tạo mảng",
+        "isCorrect": false
+      }
+    ]
+  }
+]

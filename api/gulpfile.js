@@ -36,6 +36,7 @@ const clean = async () => {
 
 const routes = () => run("npx", ["tsoa", "spec-and-routes"]);
 const compile = () => run("npx", ["tsc", "-p", "tsconfig.json"]);
+const compileSeed = () => run("npx", ["tsc", "-p", "tsconfig.prisma.json"]);
 
 const copyEnv = () => runScript("copy-env-file.mjs");
 const copyPackageJson = () => runScript("copy-package-json.mjs");
@@ -62,11 +63,12 @@ const obfuscateJs = () => runScript("obfuscate.mjs");
 const copy = parallel(copyEnv, copyPackageJson, copyPrismaSchema, copyPublic);
 const optimize = series(minifyJs, obfuscateJs);
 
-const build = series(clean, routes, compile, copy, optimize);
+const build = series(clean, routes, compile, compileSeed, copy, optimize);
 
 exports.clean = clean;
 exports.routes = routes;
 exports.compile = compile;
+exports.compileSeed = compileSeed;
 exports.copy = copy;
 exports.optimize = optimize;
 exports.build = build;

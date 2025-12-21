@@ -1,0 +1,178 @@
+[
+  {
+    "text": "[TH10L] Tư duy thuật toán gồm hoạt động nào?",
+    "explanation": "Phân rã vấn đề, nhận diện mẫu, trừu tượng hóa, thiết kế thuật toán.",
+    "choices": [
+      {
+        "content": "Phân rã, nhận diện mẫu, trừu tượng, thiết kế thuật toán",
+        "isCorrect": true
+      },
+      {
+        "content": "Chỉ viết mã",
+        "isCorrect": false
+      },
+      {
+        "content": "Chỉ dùng bảng tính",
+        "isCorrect": false
+      },
+      {
+        "content": "Chỉ vẽ lưu đồ",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH10L] Biểu diễn thông tin bằng bit giúp?",
+    "explanation": "Máy tính xử lý lưu trữ thông tin dạng 0/1 ổn định và hiệu quả.",
+    "choices": [
+      {
+        "content": "Lưu trữ/xử lý hiệu quả dưới dạng 0/1",
+        "isCorrect": true
+      },
+      {
+        "content": "Tiết kiệm điện",
+        "isCorrect": false
+      },
+      {
+        "content": "Tăng độ phân giải màn hình",
+        "isCorrect": false
+      },
+      {
+        "content": "Chỉ để mã hóa hình ảnh",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH10L] Trong Python, kiểu bool có hai giá trị là?",
+    "explanation": "True và False (viết hoa chữ cái đầu).",
+    "choices": [
+      {
+        "content": "True và False",
+        "isCorrect": true
+      },
+      {
+        "content": "true và false",
+        "isCorrect": false
+      },
+      {
+        "content": "1 và 0 duy nhất",
+        "isCorrect": false
+      },
+      {
+        "content": "On và Off",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH10L] Toán tử so sánh bằng trong Python là?",
+    "explanation": "Dùng '==' để so sánh bằng.",
+    "choices": [
+      {
+        "content": "==",
+        "isCorrect": true
+      },
+      {
+        "content": "=",
+        "isCorrect": false
+      },
+      {
+        "content": "===",
+        "isCorrect": false
+      },
+      {
+        "content": "eq",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH10L] Cấu trúc rẽ nhánh đầy đủ trong Python là?",
+    "explanation": "if ... elif ... else ...",
+    "choices": [
+      {
+        "content": "if / elif / else",
+        "isCorrect": true
+      },
+      {
+        "content": "if ... then ...",
+        "isCorrect": false
+      },
+      {
+        "content": "switch ... case ...",
+        "isCorrect": false
+      },
+      {
+        "content": "match ... when ...",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH10L] Danh sách (list) trong Python là?",
+    "explanation": "Cấu trúc có thứ tự, thay đổi được, chứa nhiều kiểu phần tử.",
+    "choices": [
+      {
+        "content": "Cấu trúc có thứ tự, thay đổi được",
+        "isCorrect": true
+      },
+      {
+        "content": "Tập hợp không thứ tự",
+        "isCorrect": false
+      },
+      {
+        "content": "Không thể thay đổi",
+        "isCorrect": false
+      },
+      {
+        "content": "Chỉ chứa số",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH10L] Hàm range(0, 5) tạo dãy gì?",
+    "explanation": "0,1,2,3,4 (không gồm 5).",
+    "choices": [
+      {
+        "content": "0,1,2,3,4",
+        "isCorrect": true
+      },
+      {
+        "content": "1,2,3,4,5",
+        "isCorrect": false
+      },
+      {
+        "content": "0,1,2,3,4,5",
+        "isCorrect": false
+      },
+      {
+        "content": "0,2,4",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "text": "[TH10L] Thực hành an toàn số gồm?",
+    "explanation": "Mật khẩu mạnh, 2FA, cập nhật phần mềm, sao lưu định kỳ.",
+    "choices": [
+      {
+        "content": "Mật khẩu mạnh, 2FA, cập nhật, sao lưu",
+        "isCorrect": true
+      },
+      {
+        "content": "Chia sẻ mật khẩu",
+        "isCorrect": false
+      },
+      {
+        "content": "Tắt tường lửa",
+        "isCorrect": false
+      },
+      {
+        "content": "Bỏ qua cập nhật",
+        "isCorrect": false
+      }
+    ]
+  }
+]
