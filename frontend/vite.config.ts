@@ -9,4 +9,8 @@ export default defineConfig({
     strictPort: true,
     host: true,
   },
+  build: {
+    outDir: "../api/public",
+    emptyOutDir: false,
+  },
 });

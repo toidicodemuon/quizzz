@@ -8,13 +8,26 @@ import { RegisterRoutes } from "./routes/routes";
 import { refreshTokens } from "./services/authService";
 //import { authMiddleware } from "./middlewares/authMiddleware";
 //import { loginHandler } from "./handlers/auth";
-
+import path from "path";
+import fs from "fs";
 // Load environment variables
 const env = process.env.NODE_ENV || "development";
 dotenv.config({ path: `.env.${env}` });
 
 const app = express();
-
+const baseDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
+const publicCandidates = [
+  path.join(baseDir, "public"), // dist/src/public when built or api/public in dev
+  path.join(baseDir, "..", "public"), // fallback to repo-level public
+];
+const publicDir = publicCandidates.find((dir) => fs.existsSync(dir));
+if (publicDir) {
+  app.use(express.static(publicDir));
+} else {
+  console.warn(
+    "Static assets folder not found. Skipping express.static setup."
+  );
+}
 // CORS whitelist (supports dynamic env overrides)
 const staticOrigins = [
   "http://192.168.1.3:5173",
@@ -31,6 +44,8 @@ const staticOrigins = [
   "http://192.168.1.25:5173",
   "http://192.168.1.30:5173",
   "http://localhost:5173",
+  "https://miniweb.cloud",
+  "http://miniweb.cloud",
 ];
 const envOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")

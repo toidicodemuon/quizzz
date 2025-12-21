@@ -32,3 +32,5 @@ coverage
 api/.env.development
 
 api/.env.production
+
+api/public/
