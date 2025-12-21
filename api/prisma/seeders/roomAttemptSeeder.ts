@@ -15,27 +15,26 @@ export async function seedRoomsAndAttempts(
   students: Array<{ id: number }>,
   attemptPerStudent = 5
 ) {
-  // create one room per exam
-  const rooms = await Promise.all(
-    exams.map(async (ex) => {
-      const code = randomCode("R");
-      const room = await prisma.room.create({
-        data: {
-          examId: ex.id,
-          code,
-          openAt: null,
-          closeAt: null,
-          createdById: teacherId,
-          durationSec: 60 * 30, // default 30 min
-          shuffleChoices: true,
-          shuffleQuestions: true,
-          maxAttempts: 1,
-        },
-        select: { id: true, examId: true },
-      });
-      return room;
-    })
-  );
+  // create one room per exam (sequential to avoid exhausting DB connections)
+  const rooms: Array<{ id: number; examId: number }> = [];
+  for (const ex of exams) {
+    const code = randomCode("R");
+    const room = await prisma.room.create({
+      data: {
+        examId: ex.id,
+        code,
+        openAt: null,
+        closeAt: null,
+        createdById: teacherId,
+        durationSec: 60 * 30, // default 30 min
+        shuffleChoices: true,
+        shuffleQuestions: true,
+        maxAttempts: 1,
+      },
+      select: { id: true, examId: true },
+    });
+    rooms.push(room);
+  }
 
   // Map exam index to published status for selection
   const examsFull = await prisma.exam.findMany({
