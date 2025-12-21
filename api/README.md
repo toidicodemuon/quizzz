@@ -289,3 +289,22 @@ npx tsoa spec-and-routes
       GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.1.20' WITH GRANT OPTION;
       FLUSH PRIVILEGES;
    ```
+
+
+## Production
+1. Hosting config CPanel
+   1.1 Setup DB
+    Namechaeap missed Remote Access, using SSH instead
+    - `npx prisma db push` push whole db to hosting without migration
+   1.2 Setup Node App
+    Search : Manage Shell -> Enable SSH access
+    Use Terminal on web UI : will limit RAM for prisma generate, so switch to Putty SSH to generate prisma client
+    Use Putty access by SSH need config key for local, detail here : https://www.youtube.com/watch?v=uP7Vo_tUAjs
+   1.3 Restart Node App : change node version and npm install then wait 5 minute restart app will take effect
+```shell 
+source /home/minifuoh/nodevenv/that/22/bin/activate
+which node
+node -v
+which npm
+npm -v
+```

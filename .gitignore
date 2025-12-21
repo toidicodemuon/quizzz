@@ -34,3 +34,7 @@ api/.env.development
 api/.env.production
 
 api/public/
+
+frontend/.env.prod
+
+frontend/.env

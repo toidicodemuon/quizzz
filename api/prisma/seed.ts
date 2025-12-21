@@ -1,9 +1,12 @@
+import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import { clearData } from "./seeders/clearData";
 import { seedUsers } from "./seeders/userSeeder";
 import { SUBJECTS, seedSubjects } from "./seeders/subjectSeeder";
 import { seedExamsWithQuestions } from "./seeders/examSeeder";
 import { seedRoomsAndAttempts } from "./seeders/roomAttemptSeeder";
+
+dotenv.config({ path: "./.env" });
 
 const prisma = new PrismaClient();
 
