@@ -12,6 +12,7 @@
       </button>
     </div>
     <div class="card-body">
+      <LoadingOverlay :show="loading" />
       <div class="row g-3">
         <div
           class="col-12 col-md-6 col-lg-4"
@@ -69,10 +70,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import api from "../../api";
-import { getUser } from "../../utils/auth";
+import LoadingOverlay from "../../components/common/LoadingOverlay.vue";
 
 type RoomSummary = {
   id: number;
@@ -92,8 +93,6 @@ type RoomSummary = {
 const rooms = ref<RoomSummary[]>([]);
 const loading = ref(false);
 const router = useRouter();
-const subjectId = ref<number | null>(null);
-const examTitleMap = reactive<Record<number, string>>({});
 
 function fmtDate(d: string | null): string {
   if (!d) return "-";
@@ -128,73 +127,19 @@ const openRooms = computed(() => {
 async function reload() {
   loading.value = true;
   try {
-    await ensureSubject();
     const { data } = await api.get<{ items: RoomSummary[]; total: number }>(
-      "/rooms",
-      {
-        params: {
-          page: 1,
-          pageSize: 100,
-          subjectId: subjectId.value ?? undefined,
-        },
-      }
+      "/student/rooms",
+      { params: { page: 1, pageSize: 100 } }
     );
-    // TODO: backend could be extended to include exam title; for now keep as-is
-    rooms.value = (data.items as any[]).map((r) => ({
+    rooms.value = (data.items || []).map((r: any) => ({
       ...r,
-      openAt: (r as any).openAt ?? null,
-      closeAt: (r as any).closeAt ?? null,
-      isProtected: !!(r as any).isProtected,
-      examTitle:
-        (r as any).examTitle ?? examTitleMap[(r as any).examId] ?? null,
+      openAt: r.openAt ?? null,
+      closeAt: r.closeAt ?? null,
+      isProtected: !!r.isProtected,
+      examTitle: r.examTitle ?? null,
     }));
-    const missingExamIds = rooms.value
-      .filter((r) => !r.examTitle && !examTitleMap[r.examId])
-      .map((r) => r.examId);
-    if (missingExamIds.length) {
-      await fetchExamTitles(missingExamIds);
-      rooms.value = rooms.value.map((r) => ({
-        ...r,
-        examTitle: r.examTitle || examTitleMap[r.examId] || null,
-      }));
-    }
   } finally {
     loading.value = false;
-  }
-}
-
-async function fetchExamTitles(ids: number[]) {
-  const unique = Array.from(
-    new Set(ids.filter((id) => typeof id === "number" && !Number.isNaN(id)))
-  );
-  await Promise.all(
-    unique.map(async (id) => {
-      try {
-        const { data } = await api.get<any>(`/exams/${id}`);
-        if (data?.title) {
-          examTitleMap[id] = data.title;
-        }
-      } catch {
-        // ignore missing exam title
-      }
-    })
-  );
-}
-
-async function ensureSubject() {
-  if (subjectId.value !== null) return;
-  const cached = getUser();
-  if (cached && typeof cached.subjectId === "number") {
-    subjectId.value = cached.subjectId;
-    return;
-  }
-  try {
-    const { data } = await api.get<any>("/me");
-    if (typeof data?.subjectId === "number") {
-      subjectId.value = data.subjectId;
-    }
-  } catch {
-    subjectId.value = null;
   }
 }
 

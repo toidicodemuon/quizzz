@@ -14,10 +14,6 @@ node_modules
 dist
 dist-ssr
 coverage
-*.local
-
-/cypress/videos/
-/cypress/screenshots/
 
 # Editor directories and files
 .vscode/*
@@ -29,12 +25,5 @@ coverage
 *.sln
 *.sw?
 
-api/.env.development
-
-api/.env.production
-
 api/public/
-
-frontend/.env.prod
-
-frontend/.env
+.env

@@ -741,9 +741,12 @@ export class AttemptController extends Controller {
       });
     }
 
-    // Clear any previous answers (if any) before saving new ones
-    await prisma.attemptAnswer.deleteMany({ where: { attemptId: attempt.id } });
-
+    const answerRows: Array<{
+      questionId: number;
+      isCorrect: boolean;
+      earned: number;
+    }> = [];
+    const choiceRows: Array<{ questionId: number; choiceId: number }> = [];
     for (const sel of submittedAnswers) {
       const options = byQuestion.get(sel.questionId) || [];
       const found = options.find((o) => o.id === sel.selectedChoiceId);
@@ -755,16 +758,10 @@ export class AttemptController extends Controller {
       }
       const isCorrect = !!found.isCorrect;
       const earned = isCorrect ? perQuestion.get(sel.questionId) ?? 1 : 0;
-      const aa = await prisma.attemptAnswer.create({
-        data: {
-          attemptId: attempt.id,
-          questionId: sel.questionId,
-          isCorrect,
-          earned,
-        },
-      });
-      await prisma.attemptAnswerChoice.create({
-        data: { attemptAnswerId: aa.id, choiceId: sel.selectedChoiceId },
+      answerRows.push({ questionId: sel.questionId, isCorrect, earned });
+      choiceRows.push({
+        questionId: sel.questionId,
+        choiceId: sel.selectedChoiceId,
       });
       earnedTotal += earned;
     }
@@ -784,25 +781,65 @@ export class AttemptController extends Controller {
     const durationCap = room.durationSec ? Number(room.durationSec) : null;
     const timeTakenSec = durationCap ? Math.min(diffSec, durationCap) : diffSec;
 
-    const updated = await prisma.attempt.update({
-      where: { id: attempt.id },
-      data: {
-        status: AttemptStatus.SUBMITTED,
-        submittedAt: new Date(),
-        timeTakenSec,
-        score: Number(percent.toFixed(2)),
-      },
-      select: {
-        id: true,
-        score: true,
-        startedAt: true,
-        submittedAt: true,
-        timeTakenSec: true,
-        studentId: true,
-        examId: true,
-        roomId: true,
-        status: true,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      // Clear any previous answers (if any) before saving new ones
+      await tx.attemptAnswer.deleteMany({ where: { attemptId: attempt.id } });
+
+      if (answerRows.length > 0) {
+        await tx.attemptAnswer.createMany({
+          data: answerRows.map((row) => ({
+            ...row,
+            attemptId: attempt.id,
+          })),
+        });
+
+        const answerQuestionIds = answerRows.map((row) => row.questionId);
+        const createdAnswers = await tx.attemptAnswer.findMany({
+          where: {
+            attemptId: attempt.id,
+            questionId: { in: answerQuestionIds },
+          },
+          select: { id: true, questionId: true },
+        });
+        const answerIdByQuestion = new Map<number, number>();
+        for (const a of createdAnswers) answerIdByQuestion.set(a.questionId, a.id);
+
+        const choiceData = choiceRows
+          .map((row) => {
+            const attemptAnswerId = answerIdByQuestion.get(row.questionId);
+            if (!attemptAnswerId) return null;
+            return { attemptAnswerId, choiceId: row.choiceId };
+          })
+          .filter(
+            (row): row is { attemptAnswerId: number; choiceId: number } =>
+              !!row
+          );
+
+        if (choiceData.length > 0) {
+          await tx.attemptAnswerChoice.createMany({ data: choiceData });
+        }
+      }
+
+      return tx.attempt.update({
+        where: { id: attempt.id },
+        data: {
+          status: AttemptStatus.SUBMITTED,
+          submittedAt: new Date(),
+          timeTakenSec,
+          score: Number(percent.toFixed(2)),
+        },
+        select: {
+          id: true,
+          score: true,
+          startedAt: true,
+          submittedAt: true,
+          timeTakenSec: true,
+          studentId: true,
+          examId: true,
+          roomId: true,
+          status: true,
+        },
+      });
     });
     return updated as AttemptSummary;
   }

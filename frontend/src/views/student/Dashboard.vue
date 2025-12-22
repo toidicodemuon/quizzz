@@ -207,11 +207,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
-import api, { type Paginated } from "../../api";
+import api from "../../api";
 import LoadingOverlay from "../../components/common/LoadingOverlay.vue";
-import { getUser } from "../../utils/auth";
 
 type AttemptRow = {
   id: number;
@@ -245,13 +244,16 @@ type RoomSummary = {
   examCode?: string | null;
 };
 
+type DashboardPayload = {
+  attemptsTotal: number;
+  lastAttempt: AttemptRow | null;
+  openRooms: RoomSummary[];
+  nearestRoom: RoomSummary | null;
+};
+
 const router = useRouter();
 
 const loading = ref(false);
-const subjectId = ref<number | null>(null);
-const examMetaMap = reactive<
-  Record<number, { title?: string | null; code?: string | null }>
->({});
 
 const lastAttempt = ref<AttemptRow | null>(null);
 const nearestRoom = ref<RoomSummary | null>(null);
@@ -369,125 +371,21 @@ function isRoomLive(r: RoomSummary): boolean {
   return openOk && closeOk;
 }
 
-async function loadLastAttempt() {
-  try {
-    const { data: first } = await api.get<Paginated<AttemptRow>>("/attempts", {
-      params: { page: 1, pageSize: 1 },
-    });
-    attemptsTotal.value = Number(first.total || 0);
-    if (!attemptsTotal.value) {
-      lastAttempt.value = null;
-      return;
-    }
-    const { data: lastPage } = await api.get<Paginated<AttemptRow>>(
-      "/attempts",
-      {
-        params: { page: attemptsTotal.value, pageSize: 1 },
-      }
-    );
-    lastAttempt.value = lastPage.items[0] || null;
-  } catch {
-    lastAttempt.value = null;
-  }
-}
-
-async function fetchExamMeta(id: number) {
-  if (examMetaMap[id]?.title || examMetaMap[id]?.code) return examMetaMap[id];
-  try {
-    const { data } = await api.get<any>(`/exams/${id}`);
-    if (data) {
-      examMetaMap[id] = {
-        title: data.title ?? examMetaMap[id]?.title ?? null,
-        code: data.code ?? examMetaMap[id]?.code ?? null,
-      };
-      return examMetaMap[id];
-    }
-  } catch {
-    // ignore missing meta
-  }
-  return null;
-}
-
-async function loadNearestRoom() {
-  try {
-    const { data } = await api.get<Paginated<RoomSummary>>("/rooms", {
-      params: {
-        page: 1,
-        pageSize: 100,
-        subjectId: subjectId.value ?? undefined,
-      },
-    });
-    const items = (data.items || []) as RoomSummary[];
-    const enriched = items.map((r) => ({
-      ...r,
-      examTitle: r.examTitle ?? examMetaMap[r.examId]?.title ?? null,
-      examCode: r.examCode ?? examMetaMap[r.examId]?.code ?? null,
-    }));
-    const now = new Date();
-    const openList = enriched.filter((r) => {
-      const openOk = !r.openAt || new Date(r.openAt) <= now;
-      const closeOk = !r.closeAt || new Date(r.closeAt) >= now;
-      return openOk && closeOk;
-    });
-    if (openList.length === 0) {
-      nearestRoom.value = null;
-      openRooms.value = [];
-      return;
-    }
-    openList.sort((a, b) => {
-      const closeA = a.closeAt
-        ? new Date(a.closeAt).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      const closeB = b.closeAt
-        ? new Date(b.closeAt).getTime()
-        : Number.MAX_SAFE_INTEGER;
-      return closeA - closeB;
-    });
-    const missingExamIds = Array.from(
-      new Set(
-        openList.filter((r) => !r.examTitle || !r.examCode).map((r) => r.examId)
-      )
-    );
-    if (missingExamIds.length) {
-      await Promise.all(missingExamIds.map((id) => fetchExamMeta(id)));
-    }
-    const hydrated = openList.map((r) => ({
-      ...r,
-      examTitle: r.examTitle || examMetaMap[r.examId]?.title || null,
-      examCode: r.examCode || examMetaMap[r.examId]?.code || null,
-    }));
-    openRooms.value = hydrated;
-    nearestRoom.value = hydrated[0];
-  } catch {
-    nearestRoom.value = null;
-    openRooms.value = [];
-  }
-}
-
 async function reload() {
   loading.value = true;
   try {
-    await ensureSubject();
-    await Promise.all([loadLastAttempt(), loadNearestRoom()]);
+    const { data } = await api.get<DashboardPayload>("/student/dashboard");
+    attemptsTotal.value = Number(data.attemptsTotal || 0);
+    lastAttempt.value = data.lastAttempt ?? null;
+    openRooms.value = data.openRooms || [];
+    nearestRoom.value = data.nearestRoom ?? null;
+  } catch {
+    attemptsTotal.value = 0;
+    lastAttempt.value = null;
+    openRooms.value = [];
+    nearestRoom.value = null;
   } finally {
     loading.value = false;
-  }
-}
-
-async function ensureSubject() {
-  if (subjectId.value !== null) return;
-  const cached = getUser();
-  if (cached && typeof cached.subjectId === "number") {
-    subjectId.value = cached.subjectId;
-    return;
-  }
-  try {
-    const { data } = await api.get<any>("/me");
-    if (typeof data?.subjectId === "number") {
-      subjectId.value = data.subjectId;
-    }
-  } catch {
-    subjectId.value = null;
   }
 }
 
