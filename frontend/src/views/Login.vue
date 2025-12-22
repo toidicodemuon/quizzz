@@ -33,6 +33,15 @@
               />
             </div>
 
+            <div v-if="captchaEnabled" class="mb-3">
+              <div v-if="recaptchaSiteKey" class="recaptcha">
+                <div class="g-recaptcha" :data-sitekey="recaptchaSiteKey"></div>
+              </div>
+              <div v-else class="text-danger small">
+                Captcha is enabled but site key is missing.
+              </div>
+            </div>
+
             <div v-if="error" class="alert alert-danger py-2" role="alert">
               {{ error }}
             </div>
@@ -62,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { saveAuth, getRole } from "../utils/auth";
 
@@ -72,10 +81,57 @@ const password = ref("");
 const loading = ref(false);
 const error = ref("");
 const success = ref(false);
+const captchaEnabled = ref(false);
+const recaptchaSiteKey = ref<string | null>(null);
 
 const apiBase = computed(
   () => import.meta.env.VITE_API_BASE_URL || "http://localhost:3000"
 );
+
+const loadRecaptchaScript = () =>
+  new Promise<void>((resolve) => {
+    if ((window as any).grecaptcha) return resolve();
+    const existing = document.querySelector('script[data-recaptcha="true"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve());
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://www.google.com/recaptcha/api.js";
+    script.async = true;
+    script.defer = true;
+    script.setAttribute("data-recaptcha", "true");
+    script.onload = () => resolve();
+    document.head.appendChild(script);
+  });
+
+const getCaptchaToken = () => {
+  const grecaptcha = (window as any).grecaptcha;
+  return typeof grecaptcha?.getResponse === "function"
+    ? grecaptcha.getResponse()
+    : "";
+};
+
+const resetCaptcha = () => {
+  const grecaptcha = (window as any).grecaptcha;
+  if (typeof grecaptcha?.reset === "function") {
+    grecaptcha.reset();
+  }
+};
+
+onMounted(async () => {
+  try {
+    const res = await fetch(`${apiBase.value}/api/settings/public`);
+    const data = await res.json();
+    captchaEnabled.value = Boolean(data?.captchaEnabled);
+    recaptchaSiteKey.value = data?.recaptchaSiteKey || null;
+    if (captchaEnabled.value && recaptchaSiteKey.value) {
+      await loadRecaptchaScript();
+    }
+  } catch (e) {
+    captchaEnabled.value = false;
+  }
+});
 
 async function onSubmit() {
   error.value = "";
@@ -86,6 +142,19 @@ async function onSubmit() {
     return;
   }
 
+  let captchaToken = "";
+  if (captchaEnabled.value) {
+    if (!recaptchaSiteKey.value) {
+      error.value = "Captcha is enabled but not configured.";
+      return;
+    }
+    captchaToken = getCaptchaToken();
+    if (!captchaToken) {
+      error.value = "Please complete the captcha.";
+      return;
+    }
+  }
+
   loading.value = true;
   try {
     const res = await fetch(`${apiBase.value}/api/auth/login`, {
@@ -94,6 +163,7 @@ async function onSubmit() {
       body: JSON.stringify({
         identifier: userCode.value,
         password: password.value,
+        captchaToken,
       }),
     });
 
@@ -115,6 +185,9 @@ async function onSubmit() {
     }, 300);
   } catch (e: any) {
     error.value = e?.message || "Có lỗi xảy ra.";
+    if (captchaEnabled.value) {
+      resetCaptcha();
+    }
   } finally {
     loading.value = false;
   }
@@ -126,3 +199,4 @@ async function onSubmit() {
   border-radius: 12px;
 }
 </style>
+

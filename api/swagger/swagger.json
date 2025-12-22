@@ -377,6 +377,30 @@
 				],
 				"type": "object"
 			},
+			"PublicSettings": {
+				"properties": {
+					"recaptchaSiteKey": {
+						"type": "string",
+						"nullable": true
+					},
+					"captchaEnabled": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"recaptchaSiteKey",
+					"captchaEnabled"
+				],
+				"type": "object"
+			},
+			"UpdateSettingsRequest": {
+				"properties": {
+					"captchaEnabled": {
+						"type": "boolean"
+					}
+				},
+				"type": "object"
+			},
 			"RoomSummary": {
 				"properties": {
 					"createdAt": {
@@ -758,10 +782,17 @@
 					"password": {
 						"type": "string",
 						"example": "123456"
+					},
+					"username": {
+						"type": "string",
+						"example": "user@example.com"
+					},
+					"captchaToken": {
+						"type": "string",
+						"example": "recaptcha_token"
 					}
 				},
 				"required": [
-					"identifier",
 					"password"
 				],
 				"type": "object",
@@ -2290,6 +2321,162 @@
 					}
 				],
 				"parameters": []
+			}
+		},
+		"/settings/public": {
+			"get": {
+				"operationId": "GetPublic",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicSettings"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Settings"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/settings": {
+			"get": {
+				"operationId": "GetAdmin",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicSettings"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Settings"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": []
+			},
+			"put": {
+				"operationId": "Update",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicSettings"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Settings"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateSettingsRequest"
+							}
+						}
+					}
+				}
 			}
 		},
 		"/": {
@@ -4955,6 +5142,16 @@
 					},
 					"401": {
 						"description": "Invalid credentials",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LoginErrorResponse"
+								}
+							}
+						}
+					},
+					"423": {
+						"description": "Account locked",
 						"content": {
 							"application/json": {
 								"schema": {

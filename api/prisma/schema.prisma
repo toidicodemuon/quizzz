@@ -46,11 +46,20 @@ model User {
   role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  failedLoginCount Int      @default(0)
+  lockedUntil      DateTime?
 
   questionsAuthored Question[] @relation("QuestionAuthor")
   roomsCreated      Room[]     @relation("RoomCreator")
   attempts          Attempt[]
   exams             Exam[]     @relation("ExamAuthor")
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Question {

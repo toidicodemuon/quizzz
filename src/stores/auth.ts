@@ -15,6 +15,7 @@ export interface AuthUser {
 export interface LoginPayload {
   username: string;
   password: string;
+  captchaToken?: string;
 }
 
 export const useAuthStore = defineStore("auth", () => {
@@ -45,7 +46,13 @@ export const useAuthStore = defineStore("auth", () => {
 
   function login(credentials: LoginPayload) {
     // API expects /auth/login with { username, password }
-    return ApiService.post("auth/login", credentials)
+    const payload = {
+      identifier: credentials.username,
+      username: credentials.username,
+      password: credentials.password,
+      captchaToken: credentials.captchaToken,
+    };
+    return ApiService.post("auth/login", payload)
       .then(({ data }) => {
         // data: { accessToken, refreshToken, user }
         setAuth(data.user as AuthUser, data.accessToken as string);

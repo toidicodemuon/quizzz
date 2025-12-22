@@ -1,4 +1,32 @@
 <template>
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5 class="mb-0">Login Security</h5>
+    </div>
+    <div class="card-body">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div>
+          <div class="fw-semibold">Enable captcha on login</div>
+          <div class="text-muted small">
+            Require captcha verification for all login attempts.
+          </div>
+        </div>
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            :checked="captchaEnabled"
+            :disabled="settingsLoading"
+            @change="toggleCaptcha"
+          />
+        </div>
+      </div>
+      <div v-if="captchaEnabled && !recaptchaSiteKey" class="text-warning small mt-2">
+        RECAPTCHA_SITE_KEY is missing on the API server.
+      </div>
+    </div>
+  </div>
+
   <div class="card">
     <div
       class="card-header d-flex align-items-center justify-content-between gap-2 flex-wrap"
@@ -235,6 +263,9 @@ const items = ref<User[]>([]);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
+const settingsLoading = ref(false);
+const captchaEnabled = ref(false);
+const recaptchaSiteKey = ref<string | null>(null);
 
 const filters = reactive<{ search: string; role: "" | Role }>({
   search: "",
@@ -259,6 +290,38 @@ const columns = [
   },
   { key: "createdAt", title: "Ngày tạo" },
 ];
+
+async function fetchSettings() {
+  settingsLoading.value = true;
+  try {
+    const res = await api.get("/settings");
+    captchaEnabled.value = Boolean(res.data?.captchaEnabled);
+    recaptchaSiteKey.value = res.data?.recaptchaSiteKey || null;
+  } catch (e: any) {
+    console.error(e);
+    alert("Failed to load captcha settings.");
+  } finally {
+    settingsLoading.value = false;
+  }
+}
+
+async function toggleCaptcha() {
+  if (settingsLoading.value) return;
+  settingsLoading.value = true;
+  try {
+    const res = await api.put("/settings", {
+      captchaEnabled: !captchaEnabled.value,
+    });
+    captchaEnabled.value = Boolean(res.data?.captchaEnabled);
+    recaptchaSiteKey.value = res.data?.recaptchaSiteKey || null;
+  } catch (e: any) {
+    console.error(e);
+    const msg = e?.response?.data?.message || "Failed to update settings.";
+    alert(msg);
+  } finally {
+    settingsLoading.value = false;
+  }
+}
 
 async function fetchUsers() {
   loading.value = true;
@@ -302,6 +365,7 @@ watch([page, pageSize], () => {
 
 onMounted(() => {
   fetchUsers();
+  fetchSettings();
 });
 
 function formatDate(v: string | Date): string {
@@ -458,3 +522,6 @@ function isSelf(row: User) {
   gap: 0.5rem;
 }
 </style>
+
+
+

@@ -14,6 +14,8 @@ import { StudentRoomsController } from './../controllers/StudentRoomsController'
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { StudentDashboardController } from './../controllers/StudentDashboardController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { SettingsController } from './../controllers/SettingsController';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { RootController } from './../controllers/RootController';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { RoomsController } from './../controllers/RoomsController';
@@ -96,6 +98,16 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"nearestRoom":{"dataType":"union","subSchemas":[{"ref":"DashboardRoom"},{"dataType":"enum","enums":[null]}],"required":true},"openRooms":{"dataType":"array","array":{"dataType":"refAlias","ref":"DashboardRoom"},"required":true},"lastAttempt":{"dataType":"union","subSchemas":[{"ref":"DashboardAttempt"},{"dataType":"enum","enums":[null]}],"required":true},"attemptsTotal":{"dataType":"double","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "PublicSettings": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"recaptchaSiteKey":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},"captchaEnabled":{"dataType":"boolean","required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "UpdateSettingsRequest": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"captchaEnabled":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "RoomSummary": {
         "dataType": "refAlias",
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"createdAt":{"dataType":"datetime","required":true},"createdById":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"maxAttempts":{"dataType":"double","required":true},"shuffleChoices":{"dataType":"boolean","required":true},"shuffleQuestions":{"dataType":"boolean","required":true},"durationSec":{"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},"closeAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"openAt":{"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"enum","enums":[null]}],"required":true},"isProtected":{"dataType":"boolean","required":true},"code":{"dataType":"string","required":true},"examId":{"dataType":"double","required":true},"id":{"dataType":"double","required":true}},"validators":{}},
@@ -155,8 +167,10 @@ const models: TsoaRoute.Models = {
     "LoginRequest": {
         "dataType": "refObject",
         "properties": {
-            "identifier": {"dataType":"string","required":true},
+            "identifier": {"dataType":"string"},
             "password": {"dataType":"string","required":true},
+            "username": {"dataType":"string"},
+            "captchaToken": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
@@ -653,6 +667,96 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'get',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.get('/api/settings/public',
+            ...(fetchMiddlewares<RequestHandler>(SettingsController)),
+            ...(fetchMiddlewares<RequestHandler>(SettingsController.prototype.getPublic)),
+
+            async function SettingsController_getPublic(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new SettingsController();
+
+              await templateService.apiHandler({
+                methodName: 'getPublic',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.get('/api/settings',
+            authenticateMiddleware([{"bearerAuth":["ADMIN"]}]),
+            ...(fetchMiddlewares<RequestHandler>(SettingsController)),
+            ...(fetchMiddlewares<RequestHandler>(SettingsController.prototype.getAdmin)),
+
+            async function SettingsController_getAdmin(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new SettingsController();
+
+              await templateService.apiHandler({
+                methodName: 'getAdmin',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.put('/api/settings',
+            authenticateMiddleware([{"bearerAuth":["ADMIN"]}]),
+            ...(fetchMiddlewares<RequestHandler>(SettingsController)),
+            ...(fetchMiddlewares<RequestHandler>(SettingsController.prototype.update)),
+
+            async function SettingsController_update(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    body: {"in":"body","name":"body","required":true,"ref":"UpdateSettingsRequest"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new SettingsController();
+
+              await templateService.apiHandler({
+                methodName: 'update',
                 controller,
                 response,
                 next,

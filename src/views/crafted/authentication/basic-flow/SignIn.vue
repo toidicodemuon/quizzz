@@ -90,6 +90,15 @@
       </div>
       <!--end::Input group-->
 
+      <div class="mb-10" v-if="captchaEnabled">
+        <div v-if="recaptchaSiteKey" class="recaptcha">
+          <div class="g-recaptcha" :data-sitekey="recaptchaSiteKey"></div>
+        </div>
+        <div v-else class="text-danger fs-7">
+          Captcha is enabled but site key is missing.
+        </div>
+      </div>
+
       <!--begin::Actions-->
       <div class="text-center">
         <!--begin::Submit button-->
@@ -163,12 +172,13 @@
 
 <script lang="ts">
 import { getAssetPath } from "@/core/helpers/assets";
-import { defineComponent, ref } from "vue";
+import { defineComponent, ref, onMounted } from "vue";
 import { ErrorMessage, Field, Form as VForm } from "vee-validate";
 import { useAuthStore, type LoginPayload } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import * as Yup from "yup";
+import ApiService from "@/core/services/ApiService";
 
 export default defineComponent({
   name: "sign-in",
@@ -182,11 +192,59 @@ export default defineComponent({
     const router = useRouter();
 
     const submitButton = ref<HTMLButtonElement | null>(null);
+    const captchaEnabled = ref(false);
+    const recaptchaSiteKey = ref<string | null>(null);
 
     //Create form validation object
     const login = Yup.object().shape({
       username: Yup.string().required().label("Username"),
       password: Yup.string().min(4).required().label("Password"),
+    });
+
+    const loadRecaptchaScript = () =>
+      new Promise<void>((resolve) => {
+        if ((window as any).grecaptcha) return resolve();
+        const existing = document.querySelector(
+          'script[data-recaptcha="true"]'
+        );
+        if (existing) {
+          existing.addEventListener("load", () => resolve());
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://www.google.com/recaptcha/api.js";
+        script.async = true;
+        script.defer = true;
+        script.setAttribute("data-recaptcha", "true");
+        script.onload = () => resolve();
+        document.head.appendChild(script);
+      });
+
+    const getCaptchaToken = () => {
+      const grecaptcha = (window as any).grecaptcha;
+      return typeof grecaptcha?.getResponse === "function"
+        ? grecaptcha.getResponse()
+        : "";
+    };
+
+    const resetCaptcha = () => {
+      const grecaptcha = (window as any).grecaptcha;
+      if (typeof grecaptcha?.reset === "function") {
+        grecaptcha.reset();
+      }
+    };
+
+    onMounted(async () => {
+      try {
+        const { data } = await ApiService.get("settings", "public");
+        captchaEnabled.value = Boolean(data?.captchaEnabled);
+        recaptchaSiteKey.value = data?.recaptchaSiteKey || null;
+        if (captchaEnabled.value && recaptchaSiteKey.value) {
+          await loadRecaptchaScript();
+        }
+      } catch (error) {
+        captchaEnabled.value = false;
+      }
     });
 
     //Form submit function
@@ -200,6 +258,41 @@ export default defineComponent({
         submitButton.value!.disabled = true;
         // Activate indicator
         submitButton.value.setAttribute("data-kt-indicator", "on");
+      }
+
+      if (captchaEnabled.value) {
+        if (!recaptchaSiteKey.value) {
+          Swal.fire({
+            text: "Captcha is enabled but not configured.",
+            icon: "error",
+            buttonsStyling: false,
+            confirmButtonText: "Ok",
+            heightAuto: false,
+            customClass: {
+              confirmButton: "btn fw-semobold btn-light-danger",
+            },
+          });
+          submitButton.value?.removeAttribute("data-kt-indicator");
+          submitButton.value!.disabled = false;
+          return;
+        }
+        const token = getCaptchaToken();
+        if (!token) {
+          Swal.fire({
+            text: "Please complete the captcha.",
+            icon: "error",
+            buttonsStyling: false,
+            confirmButtonText: "Ok",
+            heightAuto: false,
+            customClass: {
+              confirmButton: "btn fw-semobold btn-light-danger",
+            },
+          });
+          submitButton.value?.removeAttribute("data-kt-indicator");
+          submitButton.value!.disabled = false;
+          return;
+        }
+        values.captchaToken = token;
       }
 
       // Send login request
@@ -242,6 +335,9 @@ export default defineComponent({
         }).then(() => {
           store.errors = {};
         });
+        if (captchaEnabled.value) {
+          resetCaptcha();
+        }
       }
 
       //Deactivate indicator
@@ -255,6 +351,8 @@ export default defineComponent({
       login,
       submitButton,
       getAssetPath,
+      captchaEnabled,
+      recaptchaSiteKey,
     };
   },
 });

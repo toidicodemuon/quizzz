@@ -8,10 +8,16 @@ import {
 
 export class LoginRequest {
   @Example<string>("SV20240001")
-  public identifier!: string; // userCode or email
+  public identifier?: string; // userCode or email
 
   @Example<string>("123456")
   public password!: string;
+
+  @Example<string>("user@example.com")
+  public username?: string;
+
+  @Example<string>("recaptcha_token")
+  public captchaToken?: string;
 }
 
 export type LoginErrorResponse = {
@@ -25,12 +31,16 @@ export class AuthController extends Controller {
   @SuccessResponse("200", "Login successful")
   @Response<LoginErrorResponse>(400, "Bad Request")
   @Response<LoginErrorResponse>(401, "Invalid credentials")
+  @Response<LoginErrorResponse>(423, "Account locked")
   @Response<LoginErrorResponse>(500, "Server error")
   public async login(
     @Body() body: LoginRequest
   ): Promise<LoginSuccessResponse | LoginErrorResponse> {
     try {
-      const result = await authenticateUser(body?.identifier, body?.password);
+      const identifier = body?.identifier || body?.username || "";
+      const result = await authenticateUser(identifier, body?.password, {
+        captchaToken: body?.captchaToken,
+      });
       console.log(result);
       return result;
     } catch (error) {
