@@ -27,3 +27,5 @@ coverage
 
 api/public/
 .env
+
+api/.env.production.tino
