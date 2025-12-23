@@ -308,3 +308,8 @@ node -v
 which npm
 npm -v
 ```
+## License
+1. `npm run license:gen-keys`  -> `private.pem` + `public.pem`
+2. use private key to create license.json at server (online signature)
+3. use public key to verify license.json at client
+

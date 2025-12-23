@@ -41,6 +41,9 @@ const compileSeed = () => run("npx", ["tsc", "-p", "tsconfig.prisma.json"]);
 const copyEnv = () => runScript("copy-env-file.mjs");
 const copyPackageJson = () => runScript("copy-package-json.mjs");
 const copyPrismaSchema = () => runScript("copy-prisma-schema.mjs");
+const copyActivate = () => runScript("copy-activate.mjs");
+const copyStartBat = () => runScript("copy-start-bat.mjs");
+const copyPublicKey = () => runScript("copy-public-key.mjs");
 const copyPublic = async () => {
   try {
     await fs.stat(publicDir);
@@ -60,7 +63,15 @@ const copyPublic = async () => {
 const minifyJs = () => runScript("minify.mjs");
 const obfuscateJs = () => runScript("obfuscate.mjs");
 
-const copy = parallel(copyEnv, copyPackageJson, copyPrismaSchema, copyPublic);
+const copy = parallel(
+  copyEnv,
+  copyPackageJson,
+  copyPrismaSchema,
+  copyPublic,
+  copyActivate,
+  copyStartBat,
+  copyPublicKey
+);
 const optimize = series(minifyJs, obfuscateJs);
 
 const build = series(clean, routes, compile, compileSeed, copy, optimize);

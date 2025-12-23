@@ -15,7 +15,13 @@
     "dev:restart": "vite",
     "watch:tsoa": "nodemon --config nodemon.json --exec \"npx tsoa spec-and-routes\"",
     "prisma:migrate:dev": "cross-env NODE_ENV=development npx prisma migrate dev --name init",
-    "prisma:migrate:prod": "cross-env NODE_ENV=production npx prisma migrate deploy"
+    "prisma:migrate:prod": "cross-env NODE_ENV=production npx prisma migrate deploy",
+    "license:machine-id": "node scripts/license/get-machine-id.mjs",
+    "license:gen-keys": "node scripts/license/generate-keypair.mjs",
+    "license:issue": "node scripts/license/issue-license.mjs",
+    "license:activate": "node scripts/license/activate.mjs",
+    "license:request": "node scripts/license/activate.mjs --request-only",
+    "license:server": "node scripts/license/server.mjs"
   },
   "prisma": {
     "seed": "ts-node prisma\\seed.ts"
@@ -28,13 +34,14 @@
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.3",
-    "swagger-ui-express": "^5.0.1",
-    "cross-env": "^7.0.3",
+    "node-machine-id": "^1.1.12",
     "prisma": "^6.19.0",
+    "swagger-ui-express": "^5.0.1",
     "tsoa": "^6.5.1"
   },
   "devDependencies": {
@@ -48,18 +55,18 @@
     "cheerio": "^1.0.0",
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3",
-    "javascript-obfuscator": "^4.1.1",
-    "nodemon": "^3.1.7",
     "gulp": "^4.0.2",
     "gulp-cli": "^2.3.0",
+    "javascript-obfuscator": "^4.1.1",
+    "nodemon": "^3.1.7",
     "prisma": "^6.19.0",
     "terser": "^5.44.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3",
     "vite": "^5.4.10",
     "vite-plugin-clear-console": "^0.2.3",
     "vite-plugin-node": "^4.0.0",
-    "vite-plugin-restart": "^0.4.1",
-    "typescript": "^5.6.3"
+    "vite-plugin-restart": "^0.4.1"
   }
 }
