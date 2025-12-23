@@ -6,6 +6,7 @@ import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
 import { refreshTokens } from "./services/authService";
+import { enforceLicenseOrExit } from "./utils/license";
 //import { authMiddleware } from "./middlewares/authMiddleware";
 //import { loginHandler } from "./handlers/auth";
 import path from "path";
@@ -13,6 +14,7 @@ import fs from "fs";
 // Load environment variables
 const env = process.env.NODE_ENV || "development";
 dotenv.config({ path: `.env.${env}` });
+enforceLicenseOrExit();
 
 const app = express();
 const baseDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
