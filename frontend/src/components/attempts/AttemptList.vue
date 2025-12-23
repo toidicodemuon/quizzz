@@ -165,7 +165,7 @@ const props = withDefaults(
   {
     showExamIcon: true,
     showStudentSearch: true,
-    showPrint: false,
+    showPrint: true,
   }
 );
 

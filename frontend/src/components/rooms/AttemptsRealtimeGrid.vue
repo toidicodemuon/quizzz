@@ -116,7 +116,6 @@
                     @click="onPrint(a.id)"
                     :disabled="!roomId"
                     title="In bai thi"
-                    v-if="false"
                   >
                     <i class="bi bi-printer"></i>
                   </button>

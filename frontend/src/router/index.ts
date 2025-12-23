@@ -107,6 +107,12 @@ const routes: Array<RouteRecordRaw> = [
     ],
   },
   {
+    path: "/print/attempt",
+    name: "attempt-print",
+    component: () => import("../views/attempts/AttemptPrint.vue"),
+    meta: { auth: true, pageTitle: "PRINT ATTEMPT" },
+  },
+  {
     path: "/login",
     name: "login",
     component: () => import("../views/Login.vue"),

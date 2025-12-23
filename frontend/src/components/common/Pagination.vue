@@ -108,8 +108,22 @@ const emit = defineEmits<{
   (e: "update:page-size", value: number): void;
 }>();
 
-const pageSizeOptions = computed(
-  () => props.pageSizeOptions ?? [10, 20, 30, 40, 50]
+function parsePageSizeOptions(value?: string): number[] {
+  if (!value) return [];
+  const nums = value
+    .split(",")
+    .map((v) => Number(String(v).trim()))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return Array.from(new Set(nums));
+}
+
+const envPageSizeOptions = parsePageSizeOptions(
+  (import.meta as any).env?.VITE_PAGE_SIZE_OPTIONS
+);
+
+const pageSizeOptions = computed(() =>
+  props.pageSizeOptions ??
+  (envPageSizeOptions.length ? envPageSizeOptions : [10, 20, 30, 40, 50])
 );
 const totalPages = computed(() =>
   Math.max(1, Math.ceil((props.total || 0) / Math.max(1, props.pageSize || 10)))

@@ -224,12 +224,7 @@ import {
   getAttemptShuffleSeed,
   shuffleQuestionsAndChoices,
 } from "../../utils/shuffle";
-import {
-  openPrintWindow,
-  renderAttemptPrint,
-  renderPrintError,
-  type PrintAttemptDetail,
-} from "../../utils/printAttempt";
+import { openBlankPrintTab, navigateAttemptPrintTab } from "../../utils/printAttempt";
 import AttemptAnswersList, {
   type AttemptAnswerView,
 } from "../../components/attempts/AttemptAnswersList.vue";
@@ -565,7 +560,7 @@ function confirmSubmit(opts?: { print?: boolean }) {
       ? "Bạn chưa chọn đáp án nào. Bạn có muốn nộp bài trắng?"
       : "Bạn chắc chắn muốn nộp bài?";
   if (!window.confirm(message)) return;
-  const printWin = opts?.print ? openPrintWindow("Attempt") : null;
+  const printWin = opts?.print ? openBlankPrintTab() : null;
   submitAttempt({ printWin });
 }
 
@@ -600,21 +595,24 @@ async function submitAttempt(
       passMarkPercent: data.passMarkPercent ?? null,
     };
     const attemptId = Number(data?.id || 0);
-    const printDetail = attemptId ? await loadReview(attemptId) : null;
-    if (printWin) {
-      if (printDetail) {
-        renderAttemptPrint(printWin, printDetail);
-      } else {
-        renderPrintError(printWin, "Unable to load attempt for printing.");
+    if (attemptId) {
+      await loadReview(attemptId);
+      if (printWin) {
+        navigateAttemptPrintTab(printWin, {
+          attemptId,
+          mode: "student",
+        });
       }
+    } else if (printWin && !printWin.closed) {
+      printWin.close();
     }
   } catch (e: any) {
     const { message } = parseApiError(e);
-    if (printWin) {
-      renderPrintError(printWin, message || "Unable to submit attempt.");
+    if (printWin && !printWin.closed) {
+      printWin.close();
     }
     if (!isAuto) {
-      alert(message || "Không thể nộp bài thi");
+      alert(message || "Khong the nop bai thi");
     } else if (message) {
       console.warn("Auto submit failed:", message);
     }
@@ -625,16 +623,12 @@ async function submitAttempt(
 
 const showReview = computed(() => !!detail.value);
 
-async function loadReview(
-  attemptId: number
-): Promise<PrintAttemptDetail | null> {
+async function loadReview(attemptId: number) {
   try {
     const { data } = await api.get<any>(`/attempts/${attemptId}/detail`);
     const user = getUser();
     const studentIdValue = Number(data?.studentId ?? user?.id);
-    const studentId = Number.isFinite(studentIdValue)
-      ? studentIdValue
-      : undefined;
+    const studentId = Number.isFinite(studentIdValue) ? studentIdValue : undefined;
     const resolvedExamId = data?.examId ?? examId.value ?? undefined;
     const seed = getAttemptShuffleSeed({
       studentId,
@@ -652,29 +646,8 @@ async function loadReview(
       answers: orderedAnswers as AttemptAnswerView[],
       showExplanation: !!data.showExplanation,
     };
-    const printDetail: PrintAttemptDetail = {
-      id: Number(data?.id ?? attemptId),
-      examId: resolvedExamId,
-      examTitle: data?.examTitle ?? examTitle.value ?? null,
-      examCode: data?.examCode ?? null,
-      roomId: data?.roomId ?? roomId,
-      studentId,
-      studentName: data?.studentName ?? null,
-      studentCode: data?.studentCode ?? null,
-      startedAt: data?.startedAt ?? attemptMeta.value?.startedAt ?? null,
-      submittedAt: data?.submittedAt ?? null,
-      timeTakenSec:
-        data?.timeTakenSec ?? attemptMeta.value?.timeTakenSec ?? null,
-      score: data?.score ?? result.value?.score ?? null,
-      passMarkPercent:
-        data?.passMarkPercent ?? result.value?.passMarkPercent ?? null,
-      answers: rawAnswers as AttemptAnswerView[],
-      roomShuffleQuestions: roomMeta.value?.shuffleQuestions,
-      roomShuffleChoices: roomMeta.value?.shuffleChoices,
-    };
-    return printDetail;
   } catch {
-    return null;
+    // ignore
   }
 }
 

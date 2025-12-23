@@ -1,105 +1,120 @@
 <template>
-  <div
-    class="modal fade show"
-    v-if="show && detail"
-    tabindex="-1"
-    aria-modal="true"
-    role="dialog"
-    style="display: block"
-  >
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            Bài thi #{{ detail.id }}
-            <template v-if="mode === 'student'"
-              >- {{ detail.examTitle ?? "-" }}</template
-            >
-            <template v-else
-              >- {{ detail.studentName ?? "#" + detail.studentId }}</template
-            >
-            <span
-              v-if="mode === 'teacher' && detail.studentCode"
-              class="text-muted small"
-            >
-              ({{ detail.studentCode }})
-            </span>
-          </h5>
-          <button type="button" class="btn-close" @click="close"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3 d-flex flex-wrap gap-3 align-items-center">
-            <span
-              ><b>Mã đề:</b> <code>{{ detail.examCode ?? "-" }}</code></span
-            >
-            <span><b>Tiêu đề:</b> {{ detail.examTitle ?? "-" }}</span>
-            <span
-              ><b>Phòng:</b> <code>{{ detail.roomId ?? "-" }}</code></span
-            >
+  <div v-if="show && detail">
+    <div
+      :class="isEmbedded ? 'attempt-detail-embedded' : 'modal fade show'"
+      tabindex="-1"
+      aria-modal="true"
+      role="dialog"
+      :style="isEmbedded ? undefined : 'display: block'"
+    >
+      <div
+        :class="
+          isEmbedded
+            ? 'attempt-detail-dialog'
+            : 'modal-dialog modal-xl modal-dialog-scrollable'
+        "
+      >
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Bài thi #{{ detail.id }}
+              <template v-if="mode === 'student'"
+                >- {{ detail.examTitle ?? "-" }}</template
+              >
+              <template v-else
+                >- {{ detail.studentName ?? "#" + detail.studentId }}</template
+              >
+              <span
+                v-if="mode === 'teacher' && detail.studentCode"
+                class="text-muted small"
+              >
+                ({{ detail.studentCode }})
+              </span>
+            </h5>
+            <button
+              v-if="showClose"
+              type="button"
+              class="btn-close"
+              @click="close"
+            ></button>
           </div>
+          <div class="modal-body">
+            <div class="mb-3 d-flex flex-wrap gap-3 align-items-center">
+              <span
+                ><b>Mã đề:</b> <code>{{ detail.examCode ?? "-" }}</code></span
+              >
+              <span><b>Tiêu đề:</b> {{ detail.examTitle ?? "-" }}</span>
+              <span
+                ><b>Phòng:</b> <code>{{ detail.roomId ?? "-" }}</code></span
+              >
+            </div>
 
-          <div class="mb-2 d-flex flex-wrap gap-3 align-items-center">
-            <span><b>Bắt đầu:</b> {{ fmtDate(detail.startedAt) }}</span>
-            <span>
-              <b>Thời gian làm:</b>
-              {{ fmtDurationText(detail.timeTakenSec) }}
-            </span>
-            <!-- <span v-if="showScore">
+            <div class="mb-2 d-flex flex-wrap gap-3 align-items-center">
+              <span><b>Bắt đầu:</b> {{ fmtDate(detail.startedAt) }}</span>
+              <span>
+                <b>Thời gian làm:</b>
+                {{ fmtDurationText(detail.timeTakenSec) }}
+              </span>
+              <!-- <span v-if="showScore">
               <b>Điểm:</b>
               <strong>{{ detail.score ?? "-" }}</strong>
             </span> -->
 
-            <span>
-              <b>Số câu đúng:</b>
-              <strong>{{ detailCorrect }}</strong
-              >/{{ detailTotal }}
-            </span>
-            <span>
-              <strong>Kết quả:</strong>
-              <span v-if="detailPass === true" class="badge bg-success ms-1">
-                Đậu
+              <span>
+                <b>Số câu đúng:</b>
+                <strong>{{ detailCorrect }}</strong
+                >/{{ detailTotal }}
               </span>
-              <span
-                v-else-if="detailPass === false"
-                class="badge bg-danger ms-1"
-              >
-                Rớt
+              <span>
+                <strong>Kết quả:</strong>
+                <span v-if="detailPass === true" class="badge bg-success ms-1">
+                  Đậu
+                </span>
+                <span
+                  v-else-if="detailPass === false"
+                  class="badge bg-danger ms-1"
+                >
+                  Rớt
+                </span>
+                <span v-else class="badge bg-secondary ms-1">-</span>
               </span>
-              <span v-else class="badge bg-secondary ms-1">-</span>
-            </span>
-          </div>
+            </div>
 
-          <template v-if="mode === 'teacher'">
-            <hr />
-            <AttemptAnswersList
-              :answers="orderedAnswers"
-              :show-explanation="true"
-            />
-          </template>
-          <template v-else>
-            <div v-if="!canReviewNow" class="alert alert-warning">
-              Đã hết thời gian xem lại bài thi này.
-            </div>
-            <div v-else-if="!canShowDetail" class="alert alert-info">
-              Bài thi này không cho xem đáp án chi tiết.
-            </div>
-            <div v-else>
+            <template v-if="mode === 'teacher'">
+              <hr />
               <AttemptAnswersList
                 :answers="orderedAnswers"
-                :show-explanation="!!examConfig?.showExplanation"
+                :show-explanation="true"
               />
-            </div>
-          </template>
-        </div>
-        <div class="modal-footer">
+            </template>
+            <template v-else>
+              <div v-if="!canReviewNow" class="alert alert-warning">
+                Đã hết thời gian xem lại bài thi này.
+              </div>
+              <div v-else-if="!canShowDetail" class="alert alert-info">
+                Bài thi này không cho xem đáp án chi tiết.
+              </div>
+              <div v-else>
+                <AttemptAnswersList
+                  :answers="orderedAnswers"
+                  :show-explanation="!!examConfig?.showExplanation"
+                />
+              </div>
+            </template>
+          </div>
+          <!-- <div class="modal-footer" v-if="showClose">
           <button type="button" class="btn btn-light" @click="close">
             Đóng
           </button>
+        </div> -->
         </div>
       </div>
     </div>
   </div>
-  <div class="modal-backdrop fade show" v-if="show && detail"></div>
+  <div
+    class="modal-backdrop fade show"
+    v-if="show && detail && !isEmbedded"
+  ></div>
 </template>
 
 <script setup lang="ts">
@@ -147,6 +162,8 @@ const props = defineProps<{
   mode?: "student" | "teacher";
   detail: BaseAttemptDetail | null;
   examConfig?: ExamConfig | null;
+  embedded?: boolean;
+  showClose?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -154,6 +171,12 @@ const emit = defineEmits<{
 }>();
 
 const mode = computed(() => props.mode ?? "student");
+
+const isEmbedded = computed(() => !!props.embedded);
+const showClose = computed(() => {
+  if (typeof props.showClose === "boolean") return props.showClose;
+  return !isEmbedded.value;
+});
 
 function fmtDate(d: any) {
   if (!d) return "-";
@@ -204,8 +227,8 @@ const orderedAnswers = computed(() => {
   });
 });
 
-const detailCorrect = computed(() =>
-  orderedAnswers.value.filter((a) => !!a.isCorrect).length
+const detailCorrect = computed(
+  () => orderedAnswers.value.filter((a) => !!a.isCorrect).length
 );
 const detailTotal = computed(() => orderedAnswers.value.length);
 const detailPass = computed(() => {
@@ -243,3 +266,21 @@ function close() {
   emit("close");
 }
 </script>
+
+<style scoped>
+.attempt-detail-embedded {
+  background: #ffffff;
+  padding: 16px;
+}
+
+.attempt-detail-dialog {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+@media print {
+  .attempt-detail-embedded {
+    padding: 0;
+  }
+}
+</style>

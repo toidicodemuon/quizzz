@@ -45,6 +45,7 @@
     mode="student"
     :detail="detail"
     :exam-config="examConfig"
+    :show-close="true"
     @close="closeDetail"
   />
 </template>
@@ -55,12 +56,7 @@ import api, { type Paginated } from "../../api";
 import AttemptList from "../../components/attempts/AttemptList.vue";
 import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
 import type { AttemptAnswerView } from "../../components/attempts/AttemptAnswersList.vue";
-import {
-  openPrintWindow,
-  renderAttemptPrint,
-  renderPrintError,
-  type PrintAttemptDetail,
-} from "../../utils/printAttempt";
+import { openAttemptPrintTab } from "../../utils/printAttempt";
 
 type AttemptRow = {
   id: number;
@@ -178,26 +174,10 @@ async function openDetail(id: number) {
   }
 }
 
-async function printAttempt(id: number) {
-  const win = openPrintWindow(`Attempt #${id}`);
-  try {
-    const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
-    const meta = items.value.find((a) => a.id === id);
-    const shuffle = await getRoomShuffle(data.roomId ?? meta?.roomId ?? null);
-    const detail: PrintAttemptDetail = {
-      ...data,
-      examCode: data.examCode ?? meta?.examCode ?? null,
-      examTitle: data.examTitle ?? meta?.examTitle ?? null,
-      roomId: data.roomId ?? meta?.roomId ?? null,
-      roomShuffleQuestions: shuffle?.shuffleQuestions,
-      roomShuffleChoices: shuffle?.shuffleChoices,
-    };
-    if (win) renderAttemptPrint(win, detail);
-  } catch (e: any) {
-    if (win) {
-      renderPrintError(win, "Unable to load attempt for printing.");
-    }
-    alert(e?.message || "Khong the in bai thi");
+function printAttempt(id: number) {
+  const win = openAttemptPrintTab({ attemptId: id, mode: "student" });
+  if (!win) {
+    alert("Khong the mo cua so in bai thi");
   }
 }
 
