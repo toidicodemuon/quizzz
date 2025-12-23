@@ -96,6 +96,15 @@
                   <i class="bi bi-eye"></i>
                 </button>
                 <button
+                  v-if="showPrint"
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  @click="onPrint(a.id)"
+                  title="In bai thi"
+                >
+                  <i class="bi bi-printer"></i>
+                </button>
+                <button
                   v-if="isTeacher"
                   class="btn btn-outline-danger"
                   type="button"
@@ -151,15 +160,18 @@ const props = withDefaults(
     selectedIds?: Set<number>;
     showExamIcon?: boolean;
     showStudentSearch?: boolean;
+    showPrint?: boolean;
   }>(),
   {
     showExamIcon: true,
     showStudentSearch: true,
+    showPrint: false,
   }
 );
 
 const emit = defineEmits<{
   (e: "view", id: number): void;
+  (e: "print", id: number): void;
   (e: "delete", id: number): void;
   (e: "search-student-code", code: string): void;
   (e: "view-exam", examId: number): void;
@@ -170,6 +182,7 @@ const loading = computed(() => !!props.loading);
 const showCheckbox = computed(() => !!props.showCheckbox);
 const showExamIcon = computed(() => props.showExamIcon !== false);
 const showStudentSearch = computed(() => props.showStudentSearch !== false);
+const showPrint = computed(() => props.showPrint !== false);
 const allPageSelected = computed(
   () =>
     !!props.showCheckbox &&
@@ -225,6 +238,10 @@ function fmtDuration(sec: any) {
 
 function onView(id: number) {
   emit("view", id);
+}
+
+function onPrint(id: number) {
+  emit("print", id);
 }
 
 function onDelete(id: number) {

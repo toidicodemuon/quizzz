@@ -831,7 +831,7 @@ export function RegisterRoutes(app: Router) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
                     req: {"in":"request","name":"req","required":true,"dataType":"object"},
                     id: {"in":"path","name":"id","required":true,"dataType":"double"},
-                    body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"close":{"dataType":"boolean"},"password":{"dataType":"string"},"isProtected":{"dataType":"boolean"}}},
+                    body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"shuffleChoices":{"dataType":"boolean"},"shuffleQuestions":{"dataType":"boolean"},"close":{"dataType":"boolean"},"password":{"dataType":"string"},"isProtected":{"dataType":"boolean"}}},
             };
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa

@@ -25,21 +25,25 @@
             </div>
           </div>
         </div>
-        <button
+        <div
           v-if="started && !submitted"
-          class="btn btn-primary submit-btn"
-          type="button"
-          @click="confirmSubmit"
-          :disabled="submitting"
-          title="Nộp bài"
+          class="d-flex align-items-center gap-2"
         >
-          <span
-            v-if="submitting"
-            class="spinner-border spinner-border-sm me-1"
-          ></span>
-          <i v-else class="bi bi-send-check me-1"></i>
-          Nộp bài
-        </button>
+          <button
+            class="btn btn-primary submit-btn"
+            type="button"
+            @click="() => confirmSubmit()"
+            :disabled="submitting"
+            title="Nộp bài"
+          >
+            <span
+              v-if="submitting"
+              class="spinner-border spinner-border-sm me-1"
+            ></span>
+            <i v-else class="bi bi-send-check me-1"></i>
+            Nộp bài
+          </button>
+        </div>
       </div>
     </div>
 
@@ -89,10 +93,11 @@
             </div>
           </div>
         </div>
-        <div class="text-end mt-4">
+        <div class="d-flex justify-content-end gap-2 mt-4">
           <button
             class="btn btn-outline-secondary submit-btn"
-            @click="confirmSubmit"
+            @click="() => confirmSubmit()"
+            :disabled="submitting"
           >
             <i class="bi bi-send-check me-1"></i>
             Nộp bài
@@ -159,7 +164,7 @@
         <button
           type="button"
           class="btn btn-sm btn-outline-danger"
-          @click="confirmSubmit"
+          @click="() => confirmSubmit()"
           :disabled="submitting"
         >
           Nộp ngay
@@ -214,6 +219,17 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../api";
+import { getUser } from "../../utils/auth";
+import {
+  getAttemptShuffleSeed,
+  shuffleQuestionsAndChoices,
+} from "../../utils/shuffle";
+import {
+  openPrintWindow,
+  renderAttemptPrint,
+  renderPrintError,
+  type PrintAttemptDetail,
+} from "../../utils/printAttempt";
 import AttemptAnswersList, {
   type AttemptAnswerView,
 } from "../../components/attempts/AttemptAnswersList.vue";
@@ -245,7 +261,12 @@ type AttemptMeta = {
   timeTakenSec: number | null;
 };
 const attemptMeta = ref<AttemptMeta | null>(null);
-const roomMeta = ref<{ isProtected?: boolean } | null>(null);
+type RoomMeta = {
+  isProtected?: boolean;
+  shuffleQuestions?: boolean;
+  shuffleChoices?: boolean;
+};
+const roomMeta = ref<RoomMeta | null>(null);
 const roomPassword = ref<string>("");
 
 const loaded = ref(false);
@@ -367,7 +388,13 @@ async function ensureAttemptCanBegin(opts?: {
 
 async function loadRoom() {
   const { data: room } = await api.get<any>(`/rooms/${roomId}`);
-  roomMeta.value = { isProtected: !!room.isProtected };
+  roomMeta.value = {
+    isProtected: !!room.isProtected,
+    shuffleQuestions:
+      typeof room.shuffleQuestions === "boolean" ? room.shuffleQuestions : true,
+    shuffleChoices:
+      typeof room.shuffleChoices === "boolean" ? room.shuffleChoices : true,
+  };
   examId.value = room.examId;
   examTitle.value =
     room.examTitle ?? room.title ?? room?.exam?.title ?? examTitle.value;
@@ -421,10 +448,11 @@ async function loadQuestions() {
       page: 1,
       pageSize: 500,
       includeChoices: true,
+      sort: "desc",
     },
   });
   const full = Array.isArray(data?.items) ? data.items : [];
-  questions.value = full
+  const base = full
     .filter((q: any) => q && Array.isArray(q.choices))
     .map(
       (q: any): QuestionView => ({
@@ -436,6 +464,18 @@ async function loadQuestions() {
         })),
       })
     );
+  const user = getUser();
+  const seed = getAttemptShuffleSeed({
+    studentId: Number(user?.id),
+    roomId,
+    examId: examId.value,
+    sessionKey: `room-shuffle-seed:${roomId}`,
+  });
+  questions.value = shuffleQuestionsAndChoices(base, {
+    seed,
+    shuffleQuestions: !!roomMeta.value?.shuffleQuestions,
+    shuffleChoices: !!roomMeta.value?.shuffleChoices,
+  });
 }
 
 function startTimerFromAttempt(startedAt: string | null) {
@@ -514,7 +554,7 @@ function collectAnsweredChoices(): AnswerPayload[] {
     }));
 }
 
-function confirmSubmit() {
+function confirmSubmit(opts?: { print?: boolean }) {
   if (submitting.value || autoSubmitting.value) return;
   const answered = collectAnsweredChoices();
   const hasTimeLeft = timeLeft.value > 0;
@@ -525,7 +565,8 @@ function confirmSubmit() {
       ? "Bạn chưa chọn đáp án nào. Bạn có muốn nộp bài trắng?"
       : "Bạn chắc chắn muốn nộp bài?";
   if (!window.confirm(message)) return;
-  submitAttempt();
+  const printWin = opts?.print ? openPrintWindow("Attempt") : null;
+  submitAttempt({ printWin });
 }
 
 function autoSubmit(isAuto = false) {
@@ -533,13 +574,17 @@ function autoSubmit(isAuto = false) {
   stopTimer();
   autoSubmitting.value = true;
   showTimeUpModal.value = true;
-  submitAttempt(isAuto).finally(() => {
+  submitAttempt({ isAuto }).finally(() => {
     autoSubmitting.value = false;
   });
 }
 
-async function submitAttempt(isAuto = false) {
+async function submitAttempt(
+  options: { isAuto?: boolean; printWin?: Window | null } = {}
+) {
   if (!examId.value) return;
+  const isAuto = !!options.isAuto;
+  const printWin = options.printWin ?? null;
   stopTimer();
   submitting.value = true;
   try {
@@ -554,11 +599,22 @@ async function submitAttempt(isAuto = false) {
       score: data.score ?? null,
       passMarkPercent: data.passMarkPercent ?? null,
     };
-    await loadReview(data.id);
+    const attemptId = Number(data?.id || 0);
+    const printDetail = attemptId ? await loadReview(attemptId) : null;
+    if (printWin) {
+      if (printDetail) {
+        renderAttemptPrint(printWin, printDetail);
+      } else {
+        renderPrintError(printWin, "Unable to load attempt for printing.");
+      }
+    }
   } catch (e: any) {
     const { message } = parseApiError(e);
+    if (printWin) {
+      renderPrintError(printWin, message || "Unable to submit attempt.");
+    }
     if (!isAuto) {
-      alert(message || "Khong the nop bai thi");
+      alert(message || "Không thể nộp bài thi");
     } else if (message) {
       console.warn("Auto submit failed:", message);
     }
@@ -569,15 +625,56 @@ async function submitAttempt(isAuto = false) {
 
 const showReview = computed(() => !!detail.value);
 
-async function loadReview(attemptId: number) {
+async function loadReview(
+  attemptId: number
+): Promise<PrintAttemptDetail | null> {
   try {
     const { data } = await api.get<any>(`/attempts/${attemptId}/detail`);
+    const user = getUser();
+    const studentIdValue = Number(data?.studentId ?? user?.id);
+    const studentId = Number.isFinite(studentIdValue)
+      ? studentIdValue
+      : undefined;
+    const resolvedExamId = data?.examId ?? examId.value ?? undefined;
+    const seed = getAttemptShuffleSeed({
+      studentId,
+      roomId,
+      examId: resolvedExamId,
+      sessionKey: `room-shuffle-seed:${roomId}`,
+    });
+    const rawAnswers = Array.isArray(data?.answers) ? data.answers : [];
+    const orderedAnswers = shuffleQuestionsAndChoices(rawAnswers, {
+      seed,
+      shuffleQuestions: !!roomMeta.value?.shuffleQuestions,
+      shuffleChoices: !!roomMeta.value?.shuffleChoices,
+    });
     detail.value = {
-      answers: data.answers as AttemptAnswerView[],
+      answers: orderedAnswers as AttemptAnswerView[],
       showExplanation: !!data.showExplanation,
     };
+    const printDetail: PrintAttemptDetail = {
+      id: Number(data?.id ?? attemptId),
+      examId: resolvedExamId,
+      examTitle: data?.examTitle ?? examTitle.value ?? null,
+      examCode: data?.examCode ?? null,
+      roomId: data?.roomId ?? roomId,
+      studentId,
+      studentName: data?.studentName ?? null,
+      studentCode: data?.studentCode ?? null,
+      startedAt: data?.startedAt ?? attemptMeta.value?.startedAt ?? null,
+      submittedAt: data?.submittedAt ?? null,
+      timeTakenSec:
+        data?.timeTakenSec ?? attemptMeta.value?.timeTakenSec ?? null,
+      score: data?.score ?? result.value?.score ?? null,
+      passMarkPercent:
+        data?.passMarkPercent ?? result.value?.passMarkPercent ?? null,
+      answers: rawAnswers as AttemptAnswerView[],
+      roomShuffleQuestions: roomMeta.value?.shuffleQuestions,
+      roomShuffleChoices: roomMeta.value?.shuffleChoices,
+    };
+    return printDetail;
   } catch {
-    // ignore
+    return null;
   }
 }
 

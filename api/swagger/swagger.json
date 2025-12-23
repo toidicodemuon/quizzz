@@ -2867,6 +2867,12 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"shuffleChoices": {
+										"type": "boolean"
+									},
+									"shuffleQuestions": {
+										"type": "boolean"
+									},
 									"close": {
 										"type": "boolean"
 									},

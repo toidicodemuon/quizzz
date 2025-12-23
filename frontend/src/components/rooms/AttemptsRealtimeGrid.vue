@@ -101,14 +101,26 @@
               <td>{{ fmtDate(a.submittedAt) }}</td>
               <td>{{ fmtDuration(a.timeTakenSec) }}</td>
               <td class="text-end">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-primary"
-                  @click="onView(a.id)"
-                  :disabled="!roomId"
-                >
-                  <i class="bi bi-eye"></i>
-                </button>
+                <div class="btn-group btn-group-sm">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    @click="onView(a.id)"
+                    :disabled="!roomId"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    @click="onPrint(a.id)"
+                    :disabled="!roomId"
+                    title="In bai thi"
+                    v-if="false"
+                  >
+                    <i class="bi bi-printer"></i>
+                  </button>
+                </div>
               </td>
             </tr>
             <tr v-if="!loading && !roomId">
@@ -158,6 +170,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "view", id: number): void;
+  (e: "print", id: number): void;
   (e: "update:autoRefresh", value: boolean): void;
 }>();
 
@@ -258,6 +271,10 @@ function stopTimer() {
 
 function onView(id: number) {
   emit("view", id);
+}
+
+function onPrint(id: number) {
+  emit("print", id);
 }
 
 function toggleAutoRefresh(event: Event) {

@@ -34,6 +34,7 @@
         :items="filteredItems"
         :loading="loading"
         @view="openDetail"
+        @print="printAttempt"
       />
     </div>
   </div>
@@ -54,6 +55,12 @@ import api, { type Paginated } from "../../api";
 import AttemptList from "../../components/attempts/AttemptList.vue";
 import AttemptDetailModal from "../../components/attempts/AttemptDetailModal.vue";
 import type { AttemptAnswerView } from "../../components/attempts/AttemptAnswersList.vue";
+import {
+  openPrintWindow,
+  renderAttemptPrint,
+  renderPrintError,
+  type PrintAttemptDetail,
+} from "../../utils/printAttempt";
 
 type AttemptRow = {
   id: number;
@@ -82,6 +89,8 @@ type AttemptDetail = {
   roomId?: number | null;
   status: string;
   answers: AttemptAnswerView[];
+  roomShuffleQuestions?: boolean;
+  roomShuffleChoices?: boolean;
 };
 
 type ExamConfig = {
@@ -103,6 +112,10 @@ const search = ref("");
 const showDetail = ref(false);
 const detail = ref<AttemptDetail | null>(null);
 const examConfig = ref<ExamConfig | null>(null);
+const roomShuffleCache = new Map<
+  number,
+  { shuffleQuestions: boolean; shuffleChoices: boolean }
+>();
 
 const filteredItems = computed(() => {
   const q = (search.value || "").trim().toLowerCase();
@@ -127,16 +140,36 @@ async function reload() {
   }
 }
 
+async function getRoomShuffle(roomId?: number | null) {
+  if (!roomId) return null;
+  const cached = roomShuffleCache.get(roomId);
+  if (cached) return cached;
+  try {
+    const { data } = await api.get<any>(`/rooms/${roomId}`);
+    const info = {
+      shuffleQuestions: !!data?.shuffleQuestions,
+      shuffleChoices: !!data?.shuffleChoices,
+    };
+    roomShuffleCache.set(roomId, info);
+    return info;
+  } catch {
+    return null;
+  }
+}
+
 async function openDetail(id: number) {
   try {
     const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
     const meta = items.value.find((a) => a.id === id);
     const { data: exam } = await api.get<ExamConfig>(`/exams/${data.examId}`);
+    const shuffle = await getRoomShuffle(data.roomId ?? meta?.roomId ?? null);
     detail.value = {
       ...data,
       examCode: data.examCode ?? meta?.examCode ?? exam.code ?? null,
       examTitle: data.examTitle ?? meta?.examTitle ?? exam.title ?? null,
       roomId: data.roomId ?? meta?.roomId ?? null,
+      roomShuffleQuestions: shuffle?.shuffleQuestions,
+      roomShuffleChoices: shuffle?.shuffleChoices,
     } as any;
     examConfig.value = exam;
     showDetail.value = true;
@@ -144,6 +177,30 @@ async function openDetail(id: number) {
     alert(e?.message || "Không thể tải chi tiết bài thi");
   }
 }
+
+async function printAttempt(id: number) {
+  const win = openPrintWindow(`Attempt #${id}`);
+  try {
+    const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
+    const meta = items.value.find((a) => a.id === id);
+    const shuffle = await getRoomShuffle(data.roomId ?? meta?.roomId ?? null);
+    const detail: PrintAttemptDetail = {
+      ...data,
+      examCode: data.examCode ?? meta?.examCode ?? null,
+      examTitle: data.examTitle ?? meta?.examTitle ?? null,
+      roomId: data.roomId ?? meta?.roomId ?? null,
+      roomShuffleQuestions: shuffle?.shuffleQuestions,
+      roomShuffleChoices: shuffle?.shuffleChoices,
+    };
+    if (win) renderAttemptPrint(win, detail);
+  } catch (e: any) {
+    if (win) {
+      renderPrintError(win, "Unable to load attempt for printing.");
+    }
+    alert(e?.message || "Khong the in bai thi");
+  }
+}
+
 
 function closeDetail() {
   showDetail.value = false;

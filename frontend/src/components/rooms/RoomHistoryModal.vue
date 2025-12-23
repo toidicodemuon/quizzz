@@ -110,6 +110,25 @@
             <template #cell-durationSec="{ value }">
               {{ value ? Math.round(Number(value || 0) / 60) + " phút" : "-" }}
             </template>
+            <template #cell-shuffle="{ row }">
+              <div class="d-flex flex-column gap-1 small">
+                <span class="badge bg-light text-muted border">
+                  <i class="bi bi-question-circle" title="Trộn câu hỏi"></i
+                  >&nbsp; <i class="bi bi-arrow-right"></i>&nbsp;
+                  <span :title="row.shuffleQuestions ? 'Có' : 'Không'">{{
+                    row.shuffleQuestions ? "✔" : "❌"
+                  }}</span>
+                </span>
+                <span class="badge bg-light text-muted border">
+                  <i title="Trộn đáp án" class="bi bi-chat-left-text"></i>
+                  &nbsp;
+                  <i class="bi bi-arrow-right"></i>&nbsp;
+                  <span :title="row.shuffleChoices ? 'Có' : 'Không'">{{
+                    row.shuffleChoices ? "✔" : "❌"
+                  }}</span>
+                </span>
+              </div>
+            </template>
             <template #cell-createdAt="{ value }">
               {{ fmtDate(value) }}
             </template>
@@ -121,7 +140,7 @@
                 "
               >
                 <i class="bi" :class="value ? 'bi-lock-fill' : 'bi-unlock'"></i>
-                {{ value ? "Có mật khẩu" : "Mở" }}
+                {{ value ? "Có mật khẩu" : "Không mật khẩu" }}
               </span>
             </template>
             <template #row-actions="{ row }">
@@ -192,7 +211,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Cập nhật bảo vệ phòng</h5>
+          <h5 class="modal-title">Cập nhật phòng thi</h5>
           <button
             type="button"
             class="btn-close"
@@ -220,6 +239,28 @@
             />
             <label class="form-check-label" for="editClose">
               Đóng phòng ngay
+            </label>
+          </div>
+          <div class="form-check form-switch mb-2">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="editShuffleQuestions"
+              v-model="editShuffleQuestions"
+            />
+            <label class="form-check-label" for="editShuffleQuestions">
+              Trộn câu hỏi
+            </label>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="editShuffleChoices"
+              v-model="editShuffleChoices"
+            />
+            <label class="form-check-label" for="editShuffleChoices">
+              Trộn đáp án
             </label>
           </div>
           <div class="mb-2">
@@ -303,6 +344,8 @@ const editingId = ref<number | null>(null);
 const editProtected = ref(false);
 const editPassword = ref("");
 const editClose = ref(false);
+const editShuffleQuestions = ref(false);
+const editShuffleChoices = ref(false);
 const selectedIds = reactive(new Set<number>());
 
 const filters = reactive({
@@ -327,6 +370,7 @@ const columns = [
   { key: "closeAt", title: "Đóng lúc" },
   { key: "status", title: "Trạng thái" },
   { key: "durationSec", title: "Thời lượng" },
+  { key: "shuffle", title: "Trộn Đề" },
   { key: "maxAttempts", title: "Lượt tối đa" },
   { key: "createdAt", title: "Tạo lúc" },
   {
@@ -437,6 +481,8 @@ function openEdit(room: RoomRow) {
   editProtected.value = !!room.isProtected;
   editPassword.value = "";
   editClose.value = !isRoomLive(room);
+  editShuffleQuestions.value = !!room.shuffleQuestions;
+  editShuffleChoices.value = !!room.shuffleChoices;
   showEdit.value = true;
 }
 
@@ -510,6 +556,8 @@ async function saveEdit() {
       isProtected: editProtected.value,
       password: editProtected.value ? editPassword.value.trim() : undefined,
       close: editClose.value ? true : undefined,
+      shuffleQuestions: editShuffleQuestions.value,
+      shuffleChoices: editShuffleChoices.value,
     });
     await reload();
     showEdit.value = false;

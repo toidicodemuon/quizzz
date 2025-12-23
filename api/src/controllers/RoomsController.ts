@@ -243,6 +243,8 @@ export class RoomsController extends Controller {
       isProtected?: boolean;
       password?: string;
       close?: boolean;
+      shuffleQuestions?: boolean;
+      shuffleChoices?: boolean;
     }
   ): Promise<RoomSummary> {
     const user = (req as any).user as { id: number; role: string };
@@ -279,6 +281,12 @@ export class RoomsController extends Controller {
     }
     if (typeof body.close === "boolean") {
       data.closeAt = body.close ? new Date() : null;
+    }
+    if (typeof body.shuffleQuestions === "boolean") {
+      data.shuffleQuestions = body.shuffleQuestions;
+    }
+    if (typeof body.shuffleChoices === "boolean") {
+      data.shuffleChoices = body.shuffleChoices;
     }
 
     const updated = await prisma.room.update({

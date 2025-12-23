@@ -72,7 +72,7 @@
           <template v-if="mode === 'teacher'">
             <hr />
             <AttemptAnswersList
-              :answers="detail.answers || []"
+              :answers="orderedAnswers"
               :show-explanation="true"
             />
           </template>
@@ -85,7 +85,7 @@
             </div>
             <div v-else>
               <AttemptAnswersList
-                :answers="detail.answers || []"
+                :answers="orderedAnswers"
                 :show-explanation="!!examConfig?.showExplanation"
               />
             </div>
@@ -104,6 +104,10 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import {
+  getAttemptShuffleSeed,
+  shuffleQuestionsAndChoices,
+} from "../../utils/shuffle";
 import AttemptAnswersList, {
   type AttemptAnswerView,
 } from "../attempts/AttemptAnswersList.vue";
@@ -123,6 +127,8 @@ type BaseAttemptDetail = {
   studentCode?: string | null;
   examCode?: string | null;
   roomId?: number | null;
+  roomShuffleQuestions?: boolean;
+  roomShuffleChoices?: boolean;
 };
 
 type ExamConfig = {
@@ -179,14 +185,29 @@ function fmtDurationText(sec: any) {
 
 const detail = computed(() => props.detail);
 
+const orderedAnswers = computed(() => {
+  const base = detail.value?.answers || [];
+  if (!base.length) return [];
+  const hasShuffleConfig =
+    typeof detail.value?.roomShuffleQuestions === "boolean" ||
+    typeof detail.value?.roomShuffleChoices === "boolean";
+  if (!hasShuffleConfig) return base;
+  const seed = getAttemptShuffleSeed({
+    studentId: detail.value?.studentId,
+    roomId: detail.value?.roomId,
+    examId: detail.value?.examId,
+  });
+  return shuffleQuestionsAndChoices(base, {
+    seed,
+    shuffleQuestions: !!detail.value?.roomShuffleQuestions,
+    shuffleChoices: !!detail.value?.roomShuffleChoices,
+  });
+});
+
 const detailCorrect = computed(() =>
-  detail.value
-    ? (detail.value.answers || []).filter((a) => !!a.isCorrect).length
-    : 0
+  orderedAnswers.value.filter((a) => !!a.isCorrect).length
 );
-const detailTotal = computed(() =>
-  detail.value ? (detail.value.answers || []).length : 0
-);
+const detailTotal = computed(() => orderedAnswers.value.length);
 const detailPass = computed(() => {
   const p = detail.value?.passMarkPercent;
   const sc = detail.value?.score;

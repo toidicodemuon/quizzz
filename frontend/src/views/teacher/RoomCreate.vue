@@ -129,7 +129,7 @@
                       <th>Phòng</th>
                       <th>Thời gian</th>
                       <th>Bảo vệ</th>
-                      <!-- <th>Thiết lập</th> -->
+                      <th>Trộn đề</th>
                       <th class="text-end">Trạng thái</th>
                     </tr>
                   </thead>
@@ -185,19 +185,35 @@
                               r.isProtected ? 'bi-lock-fill' : 'bi-unlock'
                             "
                           ></i>
-                          {{ r.isProtected ? "Có mật khẩu" : "Mở" }}
+                          {{ r.isProtected ? "Có" : "Không" }}
                         </span>
                       </td>
-                      <!-- <td class="small">
-                        <div>
-                          <span class="badge bg-light text-dark border me-1">
-                            Q {{ r.shuffleQuestions ? "On" : "Off" }}
+                      <td class="small">
+                        <div class="d-flex flex-column gap-1">
+                          <span class="badge bg-light text-muted border">
+                            <i
+                              class="bi bi-question-circle"
+                              title="Trộn câu hỏi"
+                            ></i
+                            >&nbsp; <i class="bi bi-arrow-right"></i>&nbsp;
+                            <span
+                              :title="r.shuffleQuestions ? 'Có' : 'Không'"
+                              >{{ r.shuffleQuestions ? "✔" : "❌" }}</span
+                            >
                           </span>
-                          <span class="badge bg-light text-dark border">
-                            A {{ r.shuffleChoices ? "On" : "Off" }}
+                          <span class="badge bg-light text-muted border">
+                            <i
+                              title="Trộn đáp án"
+                              class="bi bi-chat-left-text"
+                            ></i>
+                            &nbsp;
+                            <i class="bi bi-arrow-right"></i>&nbsp;
+                            <span :title="r.shuffleChoices ? 'Có' : 'Không'">{{
+                              r.shuffleChoices ? "✔" : "❌"
+                            }}</span>
                           </span>
                         </div>
-                      </td> -->
+                      </td>
                       <td class="text-end">
                         <div class="mb-1">
                           <span class="badge" :class="statusClass(r)">
@@ -281,6 +297,7 @@
       v-model:auto-refresh="autoRefreshAttempts"
       class="mb-3"
       @view="openAttemptDetail"
+      @print="printAttempt"
     />
 
     <RoomHistoryModal
@@ -308,6 +325,12 @@
 import { computed, onMounted, ref } from "vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
+import {
+  openPrintWindow,
+  renderAttemptPrint,
+  renderPrintError,
+  type PrintAttemptDetail,
+} from "../../utils/printAttempt";
 import AttemptsRealtimeGrid from "../../components/rooms/AttemptsRealtimeGrid.vue";
 import RoomCreateForm from "../../components/rooms/RoomCreateForm.vue";
 import RoomHistoryModal from "../../components/rooms/RoomHistoryModal.vue";
@@ -352,6 +375,8 @@ type AttemptDetail = {
   studentId?: number;
   studentName?: string | null;
   studentCode?: string | null;
+  roomShuffleQuestions?: boolean;
+  roomShuffleChoices?: boolean;
 };
 
 const exams = ref<ExamSummary[]>([]);
@@ -659,10 +684,33 @@ async function openAttemptDetail(id: number) {
       examCode: data.examCode ?? examMeta?.code ?? null,
       examTitle: data.examTitle ?? examMeta?.title ?? null,
       roomId: data.roomId ?? roomMeta?.id ?? selectedRoomId.value ?? null,
+      roomShuffleQuestions: roomMeta?.shuffleQuestions,
+      roomShuffleChoices: roomMeta?.shuffleChoices,
     } as any;
     showAttemptDetail.value = true;
   } catch (e: any) {
     alert(e?.message || "Không thể tải chi tiết bài thi");
+  }
+}
+
+async function printAttempt(id: number) {
+  const win = openPrintWindow(`Attempt #${id}`);
+  try {
+    const { data } = await api.get<AttemptDetail>(`/attempts/${id}/detail`);
+    const examMeta = selectedExam.value;
+    const roomMeta = selectedRoom.value;
+    const detail: PrintAttemptDetail = {
+      ...data,
+      examCode: data.examCode ?? examMeta?.code ?? null,
+      examTitle: data.examTitle ?? examMeta?.title ?? null,
+      roomId: data.roomId ?? roomMeta?.id ?? selectedRoomId.value ?? null,
+      roomShuffleQuestions: roomMeta?.shuffleQuestions,
+      roomShuffleChoices: roomMeta?.shuffleChoices,
+    };
+    if (win) renderAttemptPrint(win, detail);
+  } catch (e: any) {
+    if (win) renderPrintError(win, "Unable to load attempt for printing.");
+    alert(e?.message || "Khong the in bai thi");
   }
 }
 
