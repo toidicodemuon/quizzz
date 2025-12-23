@@ -29,3 +29,5 @@ api/public/
 .env
 
 api/.env.production.tino
+
+api/license/private.pem
