@@ -31,3 +31,7 @@ api/public/
 api/.env.production.tino
 
 api/license/private.pem
+
+api/license/licenses.csv
+
+api/license/license.json
