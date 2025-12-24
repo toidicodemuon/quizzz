@@ -128,7 +128,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "LicenseResponse": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"signature":{"dataType":"string","required":true},"expiresAt":{"dataType":"string"},"hwid":{"dataType":"string","required":true},"licenseId":{"dataType":"string","required":true},"product":{"dataType":"string","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"signature":{"dataType":"string","required":true},"expiresAt":{"dataType":"string"},"trial":{"dataType":"boolean"},"hwid":{"dataType":"string","required":true},"licenseId":{"dataType":"string","required":true},"product":{"dataType":"string","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Record_string.string_": {
@@ -136,9 +136,14 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"string"},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "LicenseTrialRequest": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"product":{"dataType":"string"},"fingerprintParts":{"ref":"Record_string.string_"},"fingerprint":{"dataType":"string"},"hwid":{"dataType":"string"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "LicenseCreateRequest": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"expiresAt":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},"product":{"dataType":"string"},"fingerprintParts":{"ref":"Record_string.string_"},"fingerprint":{"dataType":"string"},"hwid":{"dataType":"string"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"product":{"dataType":"string"},"fingerprintParts":{"ref":"Record_string.string_"},"fingerprint":{"dataType":"string"},"hwid":{"dataType":"string"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ExamSummary": {
@@ -1142,7 +1147,6 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.get('/api/license/fingerprint',
-            authenticateMiddleware([{"bearerAuth":["ADMIN"]}]),
             ...(fetchMiddlewares<RequestHandler>(LicenseController)),
             ...(fetchMiddlewares<RequestHandler>(LicenseController.prototype.getFingerprintModule)),
 
@@ -1160,6 +1164,36 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getFingerprintModule',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        app.post('/api/license/trial',
+            ...(fetchMiddlewares<RequestHandler>(LicenseController)),
+            ...(fetchMiddlewares<RequestHandler>(LicenseController.prototype.createTrialLicense)),
+
+            async function LicenseController_createTrialLicense(request: ExRequest, response: ExResponse, next: any) {
+            const args: Record<string, TsoaRoute.ParameterSchema> = {
+                    body: {"in":"body","name":"body","required":true,"ref":"LicenseTrialRequest"},
+            };
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args, request, response });
+
+                const controller = new LicenseController();
+
+              await templateService.apiHandler({
+                methodName: 'createTrialLicense',
                 controller,
                 response,
                 next,
