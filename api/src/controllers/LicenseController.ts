@@ -18,13 +18,20 @@ type LicenseCreateRequest = {
   fingerprint?: string;
   fingerprintParts?: Record<string, string>;
   product?: string;
-  expiresAt?: string | null;
+};
+
+type LicenseTrialRequest = {
+  hwid?: string;
+  fingerprint?: string;
+  fingerprintParts?: Record<string, string>;
+  product?: string;
 };
 
 type LicenseResponse = {
   product: string;
   licenseId: string;
   hwid: string;
+  trial?: boolean;
   expiresAt?: string;
   signature: string;
 };
@@ -41,6 +48,7 @@ type LicenseLogEntry = {
   product: string;
   licenseId: string;
   hwid: string;
+  trial?: boolean;
   fingerprintParts?: Record<string, string>;
   expiresAt?: string;
 };
@@ -86,6 +94,67 @@ function buildPayload(payload: LicensePayload): string {
     `hwid=${payload.hwid}`,
     `expiresAt=${expiresValue}`,
   ].join("\n");
+}
+
+function parseTrialDays(raw?: unknown): number | null {
+  if (raw === undefined || raw === null || raw === "") return null;
+  const value = Number(raw);
+  if (!Number.isFinite(value)) return null;
+  const days = Math.floor(value);
+  if (days <= 0) return null;
+  return Math.min(days, 3650);
+}
+
+function issueLicense(options: {
+  product: string;
+  hwid: string;
+  expiresAt?: string;
+  trial?: boolean;
+  fingerprintParts?: Record<string, string>;
+}): LicenseResponse {
+  const { product, hwid, expiresAt, trial, fingerprintParts } = options;
+  const issuedAt = new Date().toISOString();
+  const licenseId =
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : crypto.randomBytes(16).toString("hex");
+
+  const payload: LicensePayload = {
+    product,
+    licenseId,
+    hwid,
+    ...(expiresAt ? { expiresAt } : {}),
+  };
+
+  const privateKey = loadPrivateKey();
+  const signature = crypto
+    .sign("sha256", Buffer.from(buildPayload(payload), "utf8"), privateKey)
+    .toString("base64");
+
+  const license: LicenseResponse = {
+    product,
+    licenseId,
+    hwid,
+    ...(trial ? { trial: true } : {}),
+    ...(expiresAt ? { expiresAt } : {}),
+    signature,
+  };
+
+  try {
+    appendLicenseLog({
+      issuedAt,
+      product,
+      licenseId,
+      hwid,
+      trial,
+      fingerprintParts,
+      expiresAt: expiresAt || undefined,
+    });
+  } catch (err) {
+    console.warn(`[license] failed to log CSV: ${String(err)}`);
+  }
+
+  return license;
 }
 
 function resolveFingerprintModulePath(): string {
@@ -153,6 +222,7 @@ function appendLicenseLog(entry: LicenseLogEntry): void {
     "product",
     "licenseId",
     "hwid",
+    "trial",
     "machineId",
     "baseboardSerial",
     "biosUuid",
@@ -168,6 +238,7 @@ function appendLicenseLog(entry: LicenseLogEntry): void {
     entry.product,
     entry.licenseId,
     entry.hwid,
+    entry.trial ? "true" : "false",
     machineId,
     getPart(entry.fingerprintParts, "baseboardSerial"),
     getPart(entry.fingerprintParts, "biosUuid"),
@@ -184,15 +255,42 @@ function appendLicenseLog(entry: LicenseLogEntry): void {
 @Tags("License")
 export class LicenseController extends Controller {
   @Get("fingerprint")
-  @Response<null>(401, "Unauthorized")
-  @Response<null>(403, "Forbidden")
   @Response<null>(500, "Server error")
-  @Security("bearerAuth", ["ADMIN"])
   public async getFingerprintModule(): Promise<NodeJS.ReadableStream> {
     const source = loadFingerprintModuleSource();
     this.setHeader("content-type", "application/javascript; charset=utf-8");
     this.setHeader("cache-control", "no-store");
     return Readable.from([source]);
+  }
+
+  @Post("trial")
+  @Response<null>(400, "Bad Request")
+  @Response<null>(500, "Server error")
+  public async createTrialLicense(
+    @Body() body: LicenseTrialRequest
+  ): Promise<LicenseResponse> {
+    const hwid = String(body?.hwid || body?.fingerprint || "").trim();
+    if (!hwid) {
+      const err: any = new Error("hwid is required");
+      err.status = 400;
+      throw err;
+    }
+
+    const product = String(
+      body?.product || process.env.LICENSE_PRODUCT || "quizzz"
+    );
+    const trialDays =
+      parseTrialDays(process.env.LICENSE_TRIAL_DAYS) ?? 7;
+    const expiresMs = Date.now() + trialDays * 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(expiresMs).toISOString();
+
+    return issueLicense({
+      product,
+      hwid,
+      expiresAt,
+      trial: true,
+      fingerprintParts: body?.fingerprintParts || undefined,
+    });
   }
 
   @Post("create")
@@ -214,49 +312,10 @@ export class LicenseController extends Controller {
     const product = String(
       body?.product || process.env.LICENSE_PRODUCT || "quizzz"
     );
-    const expiresAtRaw =
-      body?.expiresAt || process.env.LICENSE_EXPIRES_AT || "";
-    const expiresAt = expiresAtRaw ? String(expiresAtRaw) : "";
-    const fingerprintParts = body?.fingerprintParts || undefined;
-    const issuedAt = new Date().toISOString();
-    const licenseId =
-      typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : crypto.randomBytes(16).toString("hex");
-
-    const payload: LicensePayload = {
+    return issueLicense({
       product,
-      licenseId,
       hwid,
-      ...(expiresAt ? { expiresAt } : {}),
-    };
-
-    const privateKey = loadPrivateKey();
-    const signature = crypto
-      .sign("sha256", Buffer.from(buildPayload(payload), "utf8"), privateKey)
-      .toString("base64");
-
-    const license: LicenseResponse = {
-      product,
-      licenseId,
-      hwid,
-      ...(expiresAt ? { expiresAt } : {}),
-      signature,
-    };
-
-    try {
-      appendLicenseLog({
-        issuedAt,
-        product,
-        licenseId,
-        hwid,
-        fingerprintParts,
-        expiresAt: expiresAt || undefined,
-      });
-    } catch (err) {
-      console.warn(`[license] failed to log CSV: ${String(err)}`);
-    }
-
-    return license;
+      fingerprintParts: body?.fingerprintParts || undefined,
+    });
   }
 }

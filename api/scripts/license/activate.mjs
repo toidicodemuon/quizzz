@@ -63,10 +63,12 @@ function joinUrl(base, pathname) {
 
 async function downloadFingerprintModule(apiBase, token) {
   const url = joinUrl(apiBase, "/license/fingerprint");
+  const headers = {};
+  if (token) {
+    headers.authorization = `Bearer ${token}`;
+  }
   const response = await fetch(url, {
-    headers: {
-      authorization: `Bearer ${token}`,
-    },
+    headers,
   });
   if (!response.ok) {
     const text = await response.text();
@@ -142,39 +144,50 @@ if (!apiBase) {
   process.exit(1);
 }
 
-const identifier = await promptText("Admin username/email: ");
-const password = await promptText("Admin password: ", true);
-if (!identifier || !password) {
-  console.error("Admin username and password are required.");
-  process.exit(1);
+const identifier = await promptText("Admin username/email (blank = trial): ");
+let password = "";
+let accessToken = "";
+let useTrial = true;
+let loginError = false;
+
+if (identifier) {
+  password = await promptText("Admin password (blank = trial): ", true);
+  if (password) {
+    const loginUrl = joinUrl(apiBase, "/auth/login");
+    try {
+      const loginResult = await requestJson(loginUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ identifier, password }),
+      });
+      accessToken = loginResult?.accessToken || "";
+    } catch (err) {
+      console.warn(`Login failed, issuing trial license: ${String(err)}`);
+      loginError = true;
+    }
+
+    if (!loginError) {
+      if (accessToken) {
+        useTrial = false;
+      } else {
+        console.warn(
+          "Login response missing accessToken. Issuing trial license."
+        );
+      }
+    }
+  } else {
+    console.warn("No admin password provided. Issuing trial license.");
+  }
+}
+if (args.includes("--trial-days")) {
+  console.warn("Ignoring --trial-days: trial length is controlled by server.");
 }
 
-const loginUrl = joinUrl(apiBase, "/auth/login");
-let accessToken;
-try {
-  const loginResult = await requestJson(loginUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ identifier, password }),
-  });
-  accessToken = loginResult?.accessToken;
-} catch (err) {
-  console.error(`Login failed: ${String(err)}`);
-  process.exit(1);
-}
-
-if (!accessToken) {
-  console.error("Login response missing accessToken.");
-  process.exit(1);
-}
-
-let fingerprintTempDir = "";
 let fingerprintTempPath = "";
 let cleanupFingerprint = false;
 let fingerprintModule;
 try {
   const downloaded = await downloadFingerprintModule(apiBase, accessToken);
-  fingerprintTempDir = downloaded.tempDir;
   fingerprintTempPath = downloaded.tempPath;
   fingerprintModule = await loadFingerprintModule(fingerprintTempPath);
 } catch (err) {
@@ -198,23 +211,23 @@ try {
 }
 
 const product = getArg("--product", process.env.LICENSE_PRODUCT || "quizzz");
-const expiresAt = getArg("--expires-at", process.env.LICENSE_EXPIRES_AT || "");
+const trial = useTrial;
 const payload = {
   product,
   hwid: fingerprintResult.fingerprint,
   fingerprintParts: fingerprintResult.parts,
-  ...(expiresAt ? { expiresAt } : {}),
 };
 
-const createUrl = joinUrl(apiBase, "/license/create");
+const createUrl = joinUrl(apiBase, trial ? "/license/trial" : "/license/create");
 let license;
 try {
+  const headers = {
+    "content-type": "application/json",
+    ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
+  };
   license = await requestJson(createUrl, {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${accessToken}`,
-    },
+    headers,
     body: JSON.stringify(payload),
   });
 } catch (err) {

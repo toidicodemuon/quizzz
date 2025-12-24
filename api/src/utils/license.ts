@@ -16,6 +16,7 @@ type LicenseFile = {
   signature: string;
   licenseId?: string;
   hwid?: string;
+  trial?: boolean;
   expiresAt?: string | null;
   fingerprint?: string;
   fingerprintKeys?: string[];
