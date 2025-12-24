@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import readline from "readline";
 import dotenv from "dotenv";
-import { DEFAULT_FINGERPRINT_KEYS, getFingerprint } from "./fingerprint.mjs";
+import { pathToFileURL } from "url";
 
 dotenv.config();
 
@@ -59,6 +59,36 @@ function joinUrl(base, pathname) {
     ? pathname.slice(1)
     : pathname;
   return new URL(normalizedPath, normalizedBase).toString();
+}
+
+async function downloadFingerprintModule(apiBase, token) {
+  const url = joinUrl(apiBase, "/license/fingerprint");
+  const response = await fetch(url, {
+    headers: {
+      authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Fingerprint download failed: ${response.status} ${text}`);
+  }
+  const source = await response.text();
+  const targetDir = path.resolve(process.cwd(), "scripts", "license");
+  if (!fs.existsSync(targetDir)) {
+    fs.mkdirSync(targetDir, { recursive: true });
+  }
+  const tempPath = path.join(targetDir, "fingerprint.mjs");
+  fs.writeFileSync(tempPath, source, "utf8");
+  return { tempDir: targetDir, tempPath };
+}
+
+async function loadFingerprintModule(tempPath) {
+  const moduleUrl = `${pathToFileURL(tempPath).href}?v=${Date.now()}`;
+  const mod = await import(moduleUrl);
+  if (!mod || typeof mod.getFingerprint !== "function") {
+    throw new Error("Fingerprint module missing getFingerprint export.");
+  }
+  return mod;
 }
 
 function promptText(question, masked = false) {
@@ -138,6 +168,22 @@ if (!accessToken) {
   process.exit(1);
 }
 
+let fingerprintTempDir = "";
+let fingerprintTempPath = "";
+let cleanupFingerprint = false;
+let fingerprintModule;
+try {
+  const downloaded = await downloadFingerprintModule(apiBase, accessToken);
+  fingerprintTempDir = downloaded.tempDir;
+  fingerprintTempPath = downloaded.tempPath;
+  fingerprintModule = await loadFingerprintModule(fingerprintTempPath);
+} catch (err) {
+  console.error(`Failed to load fingerprint module: ${String(err)}`);
+  process.exit(1);
+}
+
+const { getFingerprint, DEFAULT_FINGERPRINT_KEYS } = fingerprintModule;
+
 const keyList = parseKeys(
   getArg("--keys", process.env.LICENSE_FINGERPRINT_KEYS || "")
 );
@@ -155,9 +201,7 @@ const product = getArg("--product", process.env.LICENSE_PRODUCT || "quizzz");
 const expiresAt = getArg("--expires-at", process.env.LICENSE_EXPIRES_AT || "");
 const payload = {
   product,
-  fingerprint: fingerprintResult.fingerprint,
-  fingerprintKeys: fingerprintResult.keys,
-  machineId: fingerprintResult.parts.machineId || undefined,
+  hwid: fingerprintResult.fingerprint,
   fingerprintParts: fingerprintResult.parts,
   ...(expiresAt ? { expiresAt } : {}),
 };
@@ -184,3 +228,10 @@ const outPath = resolvePath(
 ensureDir(outPath);
 fs.writeFileSync(outPath, JSON.stringify(license, null, 2), "utf8");
 console.log(`License written to ${outPath}`);
+cleanupFingerprint = true;
+
+if (cleanupFingerprint && fingerprintTempPath) {
+  try {
+    fs.unlinkSync(fingerprintTempPath);
+  } catch {}
+}

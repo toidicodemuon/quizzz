@@ -310,7 +310,9 @@ npm -v
 ```
 ## License
 1. `npm run license:gen-keys` -> `license/private.pem` + `license/public.pem`
-2. Server: expose `/api/license/create` (ADMIN only) and set `LICENSE_PRIVATE_KEY_PATH` if not using `license/private.pem`
-3. Client machine: set `LICENSE_URL` to API base (ex: `http://host:3000/api`)
-4. Run `npm run license:create`, enter admin credentials, and the CLI saves `license/license.json`
+2. Server: expose `/api/license/create` + `/api/license/fingerprint` (ADMIN only)
+3. Server: set `LICENSE_PRIVATE_KEY_PATH` if not using `license/private.pem`
+4. Server: set `LICENSE_FINGERPRINT_MODULE_PATH` if `scripts/license/fingerprint.mjs` is not present
+5. Client machine: set `LICENSE_URL` to API base (ex: `http://host:3000/api`)
+6. Run `npm run license:create`, enter admin credentials, and the CLI saves `license/license.json` with `product`, `licenseId`, `hwid`, `signature`
 

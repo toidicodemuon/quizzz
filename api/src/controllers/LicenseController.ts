@@ -1,21 +1,21 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import { Readable } from "stream";
 import {
   Body,
   Controller,
+  Get,
   Post,
   Response,
   Route,
   Security,
   Tags,
 } from "tsoa";
-import { DEFAULT_FINGERPRINT_KEYS } from "../utils/fingerprint";
 
 type LicenseCreateRequest = {
-  fingerprint: string;
-  fingerprintKeys?: string[];
-  machineId?: string;
+  hwid?: string;
+  fingerprint?: string;
   fingerprintParts?: Record<string, string>;
   product?: string;
   expiresAt?: string | null;
@@ -23,29 +23,24 @@ type LicenseCreateRequest = {
 
 type LicenseResponse = {
   product: string;
-  fingerprint: string;
-  fingerprintKeys: string[];
-  machineId?: string;
-  issuedAt: string;
+  licenseId: string;
+  hwid: string;
   expiresAt?: string;
   signature: string;
 };
 
 type LicensePayload = {
   product: string;
-  fingerprint: string;
-  fingerprintKeys: string[];
-  machineId?: string;
-  issuedAt: string;
+  licenseId: string;
+  hwid: string;
   expiresAt?: string;
 };
 
 type LicenseLogEntry = {
   issuedAt: string;
   product: string;
-  fingerprint: string;
-  fingerprintKeys: string[];
-  machineId?: string;
+  licenseId: string;
+  hwid: string;
   fingerprintParts?: Record<string, string>;
   expiresAt?: string;
 };
@@ -65,14 +60,6 @@ function ensureDir(filePath: string): void {
 
 function normalizePem(pem: string): string {
   return pem.replace(/\\n/g, "\n").trim();
-}
-
-function normalizeKeys(raw?: string[] | string | null): string[] {
-  if (!raw) return [];
-  const list = Array.isArray(raw) ? raw : String(raw).split(",");
-  return Array.from(
-    new Set(list.map((key) => String(key).trim()).filter(Boolean))
-  ).sort();
 }
 
 function loadPrivateKey(): string {
@@ -95,12 +82,34 @@ function buildPayload(payload: LicensePayload): string {
   const expiresValue = payload.expiresAt ? String(payload.expiresAt) : "";
   return [
     `product=${payload.product}`,
-    `fingerprint=${payload.fingerprint || ""}`,
-    `fingerprintKeys=${(payload.fingerprintKeys || []).join(",")}`,
-    `machineId=${payload.machineId || ""}`,
-    `issuedAt=${payload.issuedAt}`,
+    `licenseId=${payload.licenseId}`,
+    `hwid=${payload.hwid}`,
     `expiresAt=${expiresValue}`,
   ].join("\n");
+}
+
+function resolveFingerprintModulePath(): string {
+  const candidates = [
+    process.env.LICENSE_FINGERPRINT_MODULE_PATH,
+    "scripts/license/fingerprint.mjs",
+    "dist/scripts/license/fingerprint.mjs",
+  ].filter(Boolean) as string[];
+  for (const candidate of candidates) {
+    const resolved = resolvePath(candidate);
+    if (fs.existsSync(resolved)) return resolved;
+  }
+  const err: any = new Error(
+    "Fingerprint module not found. Set LICENSE_FINGERPRINT_MODULE_PATH."
+  );
+  err.status = 500;
+  throw err;
+}
+
+function loadFingerprintModuleSource(): string {
+  const inline = process.env.LICENSE_FINGERPRINT_MODULE_INLINE;
+  if (inline) return inline;
+  const modulePath = resolveFingerprintModulePath();
+  return fs.readFileSync(modulePath, "utf8");
 }
 
 function ensureCsvHeader(filePath: string, headerLine: string): void {
@@ -142,8 +151,8 @@ function appendLicenseLog(entry: LicenseLogEntry): void {
   const header = [
     "issuedAt",
     "product",
-    "fingerprint",
-    "fingerprintKeys",
+    "licenseId",
+    "hwid",
     "machineId",
     "baseboardSerial",
     "biosUuid",
@@ -153,13 +162,12 @@ function appendLicenseLog(entry: LicenseLogEntry): void {
   ].join(",");
   ensureCsvHeader(logPath, header);
 
-  const machineId =
-    entry.machineId || getPart(entry.fingerprintParts, "machineId");
+  const machineId = getPart(entry.fingerprintParts, "machineId");
   const row = [
     entry.issuedAt,
     entry.product,
-    entry.fingerprint,
-    entry.fingerprintKeys.join("|"),
+    entry.licenseId,
+    entry.hwid,
     machineId,
     getPart(entry.fingerprintParts, "baseboardSerial"),
     getPart(entry.fingerprintParts, "biosUuid"),
@@ -175,6 +183,18 @@ function appendLicenseLog(entry: LicenseLogEntry): void {
 @Route("license")
 @Tags("License")
 export class LicenseController extends Controller {
+  @Get("fingerprint")
+  @Response<null>(401, "Unauthorized")
+  @Response<null>(403, "Forbidden")
+  @Response<null>(500, "Server error")
+  @Security("bearerAuth", ["ADMIN"])
+  public async getFingerprintModule(): Promise<NodeJS.ReadableStream> {
+    const source = loadFingerprintModuleSource();
+    this.setHeader("content-type", "application/javascript; charset=utf-8");
+    this.setHeader("cache-control", "no-store");
+    return Readable.from([source]);
+  }
+
   @Post("create")
   @Response<null>(400, "Bad Request")
   @Response<null>(401, "Unauthorized")
@@ -184,20 +204,12 @@ export class LicenseController extends Controller {
   public async createLicense(
     @Body() body: LicenseCreateRequest
   ): Promise<LicenseResponse> {
-    const fingerprint = String(body?.fingerprint || "").trim();
-    if (!fingerprint) {
-      const err: any = new Error("fingerprint is required");
+    const hwid = String(body?.hwid || body?.fingerprint || "").trim();
+    if (!hwid) {
+      const err: any = new Error("hwid is required");
       err.status = 400;
       throw err;
     }
-
-    const envKeys = normalizeKeys(process.env.LICENSE_FINGERPRINT_KEYS || "");
-    const requestKeys = normalizeKeys(body?.fingerprintKeys || []);
-    const fingerprintKeys = requestKeys.length
-      ? requestKeys
-      : envKeys.length
-      ? envKeys
-      : DEFAULT_FINGERPRINT_KEYS;
 
     const product = String(
       body?.product || process.env.LICENSE_PRODUCT || "quizzz"
@@ -206,17 +218,16 @@ export class LicenseController extends Controller {
       body?.expiresAt || process.env.LICENSE_EXPIRES_AT || "";
     const expiresAt = expiresAtRaw ? String(expiresAtRaw) : "";
     const fingerprintParts = body?.fingerprintParts || undefined;
-    const machineId = body?.machineId
-      ? String(body.machineId)
-      : getPart(fingerprintParts, "machineId");
     const issuedAt = new Date().toISOString();
+    const licenseId =
+      typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : crypto.randomBytes(16).toString("hex");
 
     const payload: LicensePayload = {
       product,
-      fingerprint,
-      fingerprintKeys,
-      ...(machineId ? { machineId } : {}),
-      issuedAt,
+      licenseId,
+      hwid,
       ...(expiresAt ? { expiresAt } : {}),
     };
 
@@ -225,8 +236,11 @@ export class LicenseController extends Controller {
       .sign("sha256", Buffer.from(buildPayload(payload), "utf8"), privateKey)
       .toString("base64");
 
-    const license = {
-      ...payload,
+    const license: LicenseResponse = {
+      product,
+      licenseId,
+      hwid,
+      ...(expiresAt ? { expiresAt } : {}),
       signature,
     };
 
@@ -234,9 +248,8 @@ export class LicenseController extends Controller {
       appendLicenseLog({
         issuedAt,
         product,
-        fingerprint,
-        fingerprintKeys,
-        machineId: machineId || undefined,
+        licenseId,
+        hwid,
         fingerprintParts,
         expiresAt: expiresAt || undefined,
       });
