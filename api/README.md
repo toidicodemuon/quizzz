@@ -309,7 +309,8 @@ which npm
 npm -v
 ```
 ## License
-1. `npm run license:gen-keys`  -> `private.pem` + `public.pem`
-2. use private key to create license.json at server (online signature)
-3. use public key to verify license.json at client
+1. `npm run license:gen-keys` -> `license/private.pem` + `license/public.pem`
+2. Server: expose `/api/license/create` (ADMIN only) and set `LICENSE_PRIVATE_KEY_PATH` if not using `license/private.pem`
+3. Client machine: set `LICENSE_URL` to API base (ex: `http://host:3000/api`)
+4. Run `npm run license:create`, enter admin credentials, and the CLI saves `license/license.json`
 

@@ -1,17 +1,17 @@
-import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import readline from "readline";
+import dotenv from "dotenv";
 import { DEFAULT_FINGERPRINT_KEYS, getFingerprint } from "./fingerprint.mjs";
+
+dotenv.config();
+
 const args = process.argv.slice(2);
 
 function getArg(flag, fallback) {
   const index = args.indexOf(flag);
   if (index >= 0 && args[index + 1]) return args[index + 1];
   return fallback;
-}
-
-function hasFlag(flag) {
-  return args.includes(flag);
 }
 
 function resolvePath(rawPath) {
@@ -35,85 +35,112 @@ function parseKeys(raw) {
     .filter(Boolean);
 }
 
-function normalizeServerUrl(raw) {
+function normalizeApiBase(raw) {
   if (!raw) return "";
   let value = String(raw).trim();
   if (!value.includes("://")) {
     value = `http://${value}`;
   }
   const parsed = new URL(value);
-  if (!parsed.pathname || parsed.pathname === "/") {
-    parsed.pathname = "/activate";
+  let pathname = parsed.pathname.replace(/\/+$/, "");
+  const suffix = "/license/create";
+  if (pathname.toLowerCase().endsWith(suffix)) {
+    pathname = pathname.slice(0, -suffix.length);
   }
-  return parsed.toString();
+  parsed.pathname = pathname || "";
+  parsed.search = "";
+  parsed.hash = "";
+  return parsed.toString().replace(/\/$/, "");
 }
 
-function buildPayload({
-  product,
-  fingerprint,
-  fingerprintKeys,
-  machineId,
-  issuedAt,
-  expiresAt,
-}) {
-  const expiresValue = expiresAt ? String(expiresAt) : "";
-  return [
-    `product=${product}`,
-    `fingerprint=${fingerprint || ""}`,
-    `fingerprintKeys=${(fingerprintKeys || []).join(",")}`,
-    `machineId=${machineId || ""}`,
-    `issuedAt=${issuedAt}`,
-    `expiresAt=${expiresValue}`,
-  ].join("\n");
+function joinUrl(base, pathname) {
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  const normalizedPath = pathname.startsWith("/")
+    ? pathname.slice(1)
+    : pathname;
+  return new URL(normalizedPath, normalizedBase).toString();
 }
 
-async function requestOnlineLicense({
-  serverUrl,
-  token,
-  payload,
-}) {
+function promptText(question, masked = false) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true,
+    });
+
+    if (masked) {
+      rl.stdoutMuted = false;
+      rl._writeToOutput = function _writeToOutput(stringToWrite) {
+        if (rl.stdoutMuted) {
+          const masked = String(stringToWrite).replace(/[^\r\n]/g, "*");
+          rl.output.write(masked);
+        } else {
+          rl.output.write(stringToWrite);
+        }
+      };
+    }
+
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(String(answer || "").trim());
+    });
+
+    if (masked) {
+      rl.stdoutMuted = true;
+    }
+  });
+}
+
+async function requestJson(url, options) {
   if (typeof fetch !== "function") {
     throw new Error("Global fetch is not available in this Node runtime.");
   }
-  const response = await fetch(serverUrl, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...(token ? { "x-activation-token": token } : {}),
-    },
-    body: JSON.stringify(payload),
-  });
+  const response = await fetch(url, options);
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Activation failed: ${response.status} ${text}`);
+    throw new Error(`${response.status} ${text}`);
   }
   return response.json();
 }
 
-const product = getArg("--product", process.env.LICENSE_PRODUCT || "quizzz");
-const expiresAt = getArg("--expires-at", "");
-const licenseOut = resolvePath(getArg("--license-out", "license/license.json"));
-const requestOut = resolvePath(
-  getArg("--request-out", "license/license-request.json")
+const apiBase = normalizeApiBase(
+  getArg("--url", process.env.LICENSE_URL || "")
 );
-const privateKeyPath = resolvePath(
-  getArg(
-    "--private-key",
-    process.env.LICENSE_PRIVATE_KEY_PATH || "license/private.pem"
-  )
-);
-const requestOnly = hasFlag("--request-only");
-const serverUrl = normalizeServerUrl(
-  getArg("--server", process.env.LICENSE_ACTIVATION_URL || "")
-);
-const token = getArg(
-  "--token",
-  process.env.LICENSE_ACTIVATION_TOKEN || ""
-);
+if (!apiBase) {
+  console.error("LICENSE_URL is required (e.g. http://host:3000/api).");
+  process.exit(1);
+}
+
+const identifier = await promptText("Admin username/email: ");
+const password = await promptText("Admin password: ", true);
+if (!identifier || !password) {
+  console.error("Admin username and password are required.");
+  process.exit(1);
+}
+
+const loginUrl = joinUrl(apiBase, "/auth/login");
+let accessToken;
+try {
+  const loginResult = await requestJson(loginUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ identifier, password }),
+  });
+  accessToken = loginResult?.accessToken;
+} catch (err) {
+  console.error(`Login failed: ${String(err)}`);
+  process.exit(1);
+}
+
+if (!accessToken) {
+  console.error("Login response missing accessToken.");
+  process.exit(1);
+}
+
 const keyList = parseKeys(
   getArg("--keys", process.env.LICENSE_FINGERPRINT_KEYS || "")
 );
-
 let fingerprintResult;
 try {
   fingerprintResult = getFingerprint(
@@ -124,64 +151,35 @@ try {
   process.exit(1);
 }
 
-const issuedAt = new Date().toISOString();
-const requestPayload = {
+const product = getArg("--product", process.env.LICENSE_PRODUCT || "quizzz");
+const expiresAt = getArg("--expires-at", process.env.LICENSE_EXPIRES_AT || "");
+const payload = {
   product,
   fingerprint: fingerprintResult.fingerprint,
   fingerprintKeys: fingerprintResult.keys,
   machineId: fingerprintResult.parts.machineId || undefined,
-  requestedAt: issuedAt,
   ...(expiresAt ? { expiresAt } : {}),
 };
 
-if (!requestOnly && serverUrl) {
-  try {
-    const license = await requestOnlineLicense({
-      serverUrl,
-      token,
-      payload: requestPayload,
-    });
-    ensureDir(licenseOut);
-    fs.writeFileSync(licenseOut, JSON.stringify(license, null, 2), "utf8");
-    console.log(`License written to ${licenseOut}`);
-    process.exit(0);
-  } catch (err) {
-    console.error(`[activate] ${String(err)}`);
-  }
-}
-
-if (!requestOnly && fs.existsSync(privateKeyPath)) {
-  const payload = buildPayload({
-    product,
-    fingerprint: requestPayload.fingerprint,
-    fingerprintKeys: requestPayload.fingerprintKeys,
-    machineId: requestPayload.machineId,
-    issuedAt,
-    expiresAt,
+const createUrl = joinUrl(apiBase, "/license/create");
+let license;
+try {
+  license = await requestJson(createUrl, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(payload),
   });
-  const privateKey = fs.readFileSync(privateKeyPath, "utf8");
-  const signature = crypto
-    .sign("sha256", Buffer.from(payload, "utf8"), privateKey)
-    .toString("base64");
-  const license = {
-    product,
-    fingerprint: requestPayload.fingerprint,
-    fingerprintKeys: requestPayload.fingerprintKeys,
-    machineId: requestPayload.machineId,
-    issuedAt,
-    ...(expiresAt ? { expiresAt } : {}),
-    signature,
-  };
-  ensureDir(licenseOut);
-  fs.writeFileSync(licenseOut, JSON.stringify(license, null, 2), "utf8");
-  console.log(`License written to ${licenseOut}`);
-  process.exit(0);
+} catch (err) {
+  console.error(`License create failed: ${String(err)}`);
+  process.exit(1);
 }
 
-ensureDir(requestOut);
-fs.writeFileSync(requestOut, JSON.stringify(requestPayload, null, 2), "utf8");
-console.log(`License request written to ${requestOut}`);
-if (!requestOnly) {
-  console.log(`Private key not found at ${privateKeyPath}.`);
-}
-console.log("Send license-request.json to admin to receive license.json.");
+const outPath = resolvePath(
+  getArg("--out", process.env.LICENSE_OUT || "license/license.json")
+);
+ensureDir(outPath);
+fs.writeFileSync(outPath, JSON.stringify(license, null, 2), "utf8");
+console.log(`License written to ${outPath}`);

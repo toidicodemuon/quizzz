@@ -502,6 +502,69 @@
 				],
 				"type": "object"
 			},
+			"LicenseResponse": {
+				"properties": {
+					"signature": {
+						"type": "string"
+					},
+					"expiresAt": {
+						"type": "string"
+					},
+					"issuedAt": {
+						"type": "string"
+					},
+					"machineId": {
+						"type": "string"
+					},
+					"fingerprintKeys": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"fingerprint": {
+						"type": "string"
+					},
+					"product": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"signature",
+					"issuedAt",
+					"fingerprintKeys",
+					"fingerprint",
+					"product"
+				],
+				"type": "object"
+			},
+			"LicenseCreateRequest": {
+				"properties": {
+					"expiresAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"product": {
+						"type": "string"
+					},
+					"machineId": {
+						"type": "string"
+					},
+					"fingerprintKeys": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"fingerprint": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"fingerprint"
+				],
+				"type": "object"
+			},
 			"ExamSummary": {
 				"properties": {
 					"updatedAt": {
@@ -3625,6 +3688,100 @@
 									}
 								},
 								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/license/create": {
+			"post": {
+				"operationId": "CreateLicense",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/LicenseResponse"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"403": {
+						"description": "Forbidden",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					},
+					"500": {
+						"description": "Server error",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "number",
+									"enum": [
+										null
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"License"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LicenseCreateRequest"
 							}
 						}
 					}
