@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import machineIdPackage from "node-machine-id";
+import * as nodeMachineId from "node-machine-id";
 import { DEFAULT_FINGERPRINT_KEYS, getFingerprint } from "./fingerprint";
 
 type LicensePayload = {
@@ -192,7 +192,6 @@ export function checkLicense(): LicenseStatus {
     };
   }
 
-  const { machineIdSync } = machineIdPackage;
   const fingerprintKeysEnv = normalizeKeys(
     process.env.LICENSE_FINGERPRINT_KEYS || ""
   );
@@ -233,7 +232,7 @@ export function checkLicense(): LicenseStatus {
   } else {
     let localMachineId: string;
     try {
-      localMachineId = machineIdSync();
+      localMachineId = nodeMachineId.machineIdSync();
     } catch (err) {
       return {
         ok: false,

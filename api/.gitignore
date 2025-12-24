@@ -3,7 +3,9 @@ node_modules
 .env
 license/private.pem
 license/license.json
+license/licenses.csv
 .license/
 dist/license/license.json
+dist/license/licenses.csv
 license/license-request.json
 dist/license/license-request.json

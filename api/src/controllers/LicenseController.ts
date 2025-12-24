@@ -16,6 +16,7 @@ type LicenseCreateRequest = {
   fingerprint: string;
   fingerprintKeys?: string[];
   machineId?: string;
+  fingerprintParts?: Record<string, string>;
   product?: string;
   expiresAt?: string | null;
 };
@@ -39,10 +40,27 @@ type LicensePayload = {
   expiresAt?: string;
 };
 
+type LicenseLogEntry = {
+  issuedAt: string;
+  product: string;
+  fingerprint: string;
+  fingerprintKeys: string[];
+  machineId?: string;
+  fingerprintParts?: Record<string, string>;
+  expiresAt?: string;
+};
+
 function resolvePath(rawPath: string): string {
   return path.isAbsolute(rawPath)
     ? rawPath
     : path.resolve(process.cwd(), rawPath);
+}
+
+function ensureDir(filePath: string): void {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
 }
 
 function normalizePem(pem: string): string {
@@ -85,6 +103,75 @@ function buildPayload(payload: LicensePayload): string {
   ].join("\n");
 }
 
+function ensureCsvHeader(filePath: string, headerLine: string): void {
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, `${headerLine}\n`, "utf8");
+    return;
+  }
+
+  const content = fs.readFileSync(filePath, "utf8");
+  const lines = content.split(/\r?\n/);
+  if (!lines.length || lines[0] === headerLine) return;
+
+  const startIndex = lines[0].startsWith("issuedAt,") ? 1 : 0;
+  const rest = lines.slice(startIndex).join("\n");
+  const normalized = rest ? `${headerLine}\n${rest}` : `${headerLine}\n`;
+  fs.writeFileSync(filePath, normalized.replace(/\n+$/g, "\n"), "utf8");
+}
+
+function getPart(
+  parts: Record<string, string> | undefined,
+  key: string
+): string {
+  return parts?.[key] ? String(parts[key]) : "";
+}
+
+function escapeCsvValue(value: string): string {
+  if (!value) return "";
+  if (/[",\r\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function appendLicenseLog(entry: LicenseLogEntry): void {
+  const logPath = resolvePath(
+    process.env.LICENSE_LOG_PATH || "license/licenses.csv"
+  );
+  ensureDir(logPath);
+  const header = [
+    "issuedAt",
+    "product",
+    "fingerprint",
+    "fingerprintKeys",
+    "machineId",
+    "baseboardSerial",
+    "biosUuid",
+    "cpuId",
+    "diskSerials",
+    "expiresAt",
+  ].join(",");
+  ensureCsvHeader(logPath, header);
+
+  const machineId =
+    entry.machineId || getPart(entry.fingerprintParts, "machineId");
+  const row = [
+    entry.issuedAt,
+    entry.product,
+    entry.fingerprint,
+    entry.fingerprintKeys.join("|"),
+    machineId,
+    getPart(entry.fingerprintParts, "baseboardSerial"),
+    getPart(entry.fingerprintParts, "biosUuid"),
+    getPart(entry.fingerprintParts, "cpuId"),
+    getPart(entry.fingerprintParts, "diskSerials"),
+    entry.expiresAt || "",
+  ]
+    .map((value) => escapeCsvValue(String(value ?? "")))
+    .join(",");
+  fs.appendFileSync(logPath, `${row}\n`, "utf8");
+}
+
 @Route("license")
 @Tags("License")
 export class LicenseController extends Controller {
@@ -118,7 +205,10 @@ export class LicenseController extends Controller {
     const expiresAtRaw =
       body?.expiresAt || process.env.LICENSE_EXPIRES_AT || "";
     const expiresAt = expiresAtRaw ? String(expiresAtRaw) : "";
-    const machineId = body?.machineId ? String(body.machineId) : "";
+    const fingerprintParts = body?.fingerprintParts || undefined;
+    const machineId = body?.machineId
+      ? String(body.machineId)
+      : getPart(fingerprintParts, "machineId");
     const issuedAt = new Date().toISOString();
 
     const payload: LicensePayload = {
@@ -135,9 +225,25 @@ export class LicenseController extends Controller {
       .sign("sha256", Buffer.from(buildPayload(payload), "utf8"), privateKey)
       .toString("base64");
 
-    return {
+    const license = {
       ...payload,
       signature,
     };
+
+    try {
+      appendLicenseLog({
+        issuedAt,
+        product,
+        fingerprint,
+        fingerprintKeys,
+        machineId: machineId || undefined,
+        fingerprintParts,
+        expiresAt: expiresAt || undefined,
+      });
+    } catch (err) {
+      console.warn(`[license] failed to log CSV: ${String(err)}`);
+    }
+
+    return license;
   }
 }

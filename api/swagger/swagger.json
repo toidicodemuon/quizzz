@@ -538,6 +538,14 @@
 				],
 				"type": "object"
 			},
+			"Record_string.string_": {
+				"properties": {},
+				"additionalProperties": {
+					"type": "string"
+				},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
 			"LicenseCreateRequest": {
 				"properties": {
 					"expiresAt": {
@@ -546,6 +554,9 @@
 					},
 					"product": {
 						"type": "string"
+					},
+					"fingerprintParts": {
+						"$ref": "#/components/schemas/Record_string.string_"
 					},
 					"machineId": {
 						"type": "string"
