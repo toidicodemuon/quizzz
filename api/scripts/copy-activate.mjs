@@ -11,10 +11,6 @@ const items = [
     src: path.join(__dirname, "license", "activate.mjs"),
     dest: path.join(__dirname, "..", "dist", "scripts", "license", "activate.mjs"),
   },
-  {
-    src: path.join(__dirname, "license", "fingerprint.mjs"),
-    dest: path.join(__dirname, "..", "dist", "scripts", "license", "fingerprint.mjs"),
-  },
 ];
 
 for (const item of items) {
