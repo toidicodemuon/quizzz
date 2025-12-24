@@ -16,12 +16,8 @@
     "watch:tsoa": "nodemon --config nodemon.json --exec \"npx tsoa spec-and-routes\"",
     "prisma:migrate:dev": "cross-env NODE_ENV=development npx prisma migrate dev --name init",
     "prisma:migrate:prod": "cross-env NODE_ENV=production npx prisma migrate deploy",
-    "license:machine-id": "node scripts/license/get-machine-id.mjs",
     "license:gen-keys": "node scripts/license/generate-keypair.mjs",
-    "license:issue": "node scripts/license/issue-license.mjs",
-    "license:activate": "node scripts/license/activate.mjs",
-    "license:request": "node scripts/license/activate.mjs --request-only",
-    "license:server": "node scripts/license/server.mjs"
+    "license:create": "node scripts/license/activate.mjs"
   },
   "prisma": {
     "seed": "ts-node prisma\\seed.ts"
