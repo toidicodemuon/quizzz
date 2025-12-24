@@ -42,7 +42,6 @@ const copyEnv = () => runScript("copy-env-file.mjs");
 const copyPackageJson = () => runScript("copy-package-json.mjs");
 const copyPrismaSchema = () => runScript("copy-prisma-schema.mjs");
 const copyActivate = () => runScript("copy-activate.mjs");
-const copyStartBat = () => runScript("copy-start-bat.mjs");
 const copyPublicKey = () => runScript("copy-public-key.mjs");
 const copyPublic = async () => {
   try {
@@ -69,7 +68,6 @@ const copy = parallel(
   copyPrismaSchema,
   copyPublic,
   copyActivate,
-  copyStartBat,
   copyPublicKey
 );
 const optimize = series(minifyJs, obfuscateJs);

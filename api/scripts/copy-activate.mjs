@@ -8,16 +8,12 @@ const __dirname = path.dirname(__filename);
 
 const items = [
   {
-    src: path.join(__dirname, "activate.bat"),
-    dest: path.join(__dirname, "..", "dist", "activate.bat"),
-  },
-  {
     src: path.join(__dirname, "license", "activate.mjs"),
-    dest: path.join(__dirname, "..", "dist", "activate.mjs"),
+    dest: path.join(__dirname, "..", "dist", "scripts", "license", "activate.mjs"),
   },
   {
     src: path.join(__dirname, "license", "fingerprint.mjs"),
-    dest: path.join(__dirname, "..", "dist", "fingerprint.mjs"),
+    dest: path.join(__dirname, "..", "dist", "scripts", "license", "fingerprint.mjs"),
   },
 ];
 

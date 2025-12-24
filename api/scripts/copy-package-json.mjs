@@ -26,8 +26,8 @@ const prodPackageJson = {
   },
   scripts: {
     start: "cross-env NODE_ENV=production node src/index.js",
-    "license:create": "node scripts/license/activate.mjs",
-    postinstall: "npx prisma generate && license:create",
+    lc: "node scripts/license/activate.mjs",
+    postinstall: "npx prisma generate && npm run lc",
   },
 };
 

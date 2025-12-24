@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import os from "os";
 import { execSync } from "child_process";
-import machineIdPackage from "node-machine-id";
+import * as nodeMachineId from "node-machine-id";
 
 export const DEFAULT_FINGERPRINT_KEYS = [
   "machineId",
@@ -115,10 +115,8 @@ function readMacs(): string[] {
 
 export function collectFingerprintParts(): FingerprintParts {
   const parts: FingerprintParts = {};
-  const { machineIdSync } = machineIdPackage;
-
   try {
-    const machineId = normalizeValue(machineIdSync());
+    const machineId = normalizeValue(nodeMachineId.machineIdSync());
     if (machineId) parts.machineId = machineId;
   } catch {
     // ignore machineId failures

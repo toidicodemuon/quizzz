@@ -158,6 +158,7 @@ const payload = {
   fingerprint: fingerprintResult.fingerprint,
   fingerprintKeys: fingerprintResult.keys,
   machineId: fingerprintResult.parts.machineId || undefined,
+  fingerprintParts: fingerprintResult.parts,
   ...(expiresAt ? { expiresAt } : {}),
 };
 
