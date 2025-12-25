@@ -7,8 +7,6 @@ import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
 import { refreshTokens } from "./services/authService";
 import { enforceLicenseOrExit } from "./utils/license";
-//import { authMiddleware } from "./middlewares/authMiddleware";
-//import { loginHandler } from "./handlers/auth";
 import path from "path";
 import fs from "fs";
 // Load environment variables
@@ -31,24 +29,7 @@ if (publicDir) {
   );
 }
 // CORS whitelist (supports dynamic env overrides)
-const staticOrigins = [
-  "http://192.168.1.3:5173",
-  "http://192.168.1.8:5173",
-  "http://192.168.1.7:5173",
-  "http://192.168.1.11:5173",
-  "http://192.168.1.15:5173",
-  "http://192.168.1.18:5173",
-  "http://192.168.1.19:5173",
-  "http://192.168.1.20:5173",
-  "http://192.168.1.21:5173",
-  "http://192.168.1.23:5173",
-  "http://192.168.1.24:5173",
-  "http://192.168.1.25:5173",
-  "http://192.168.1.30:5173",
-  "http://localhost:5173",
-  "https://miniweb.cloud",
-  "http://miniweb.cloud",
-];
+const staticOrigins = ["http://localhost:5173"];
 const envOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
   .map((o) => o.trim())
@@ -68,15 +49,6 @@ app.use(
   })
 );
 
-// Public auth route (không qua TSOA để có path /auth/login)
-// app.post("/auth/login", (req, res, next) => {
-//   loginHandler(req, res).catch(next);
-// });
-
-// Bảo vệ các route /api/quiz bằng JWT middleware
-//app.use("/api/quiz", authMiddleware);
-
-// Register TSOA routes (tạo ra /api/* theo cấu hình basePath)
 RegisterRoutes(app);
 
 // Lightweight refresh endpoint (bypass TSOA generation)
