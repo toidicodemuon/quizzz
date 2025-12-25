@@ -12,6 +12,7 @@ enum Role {
   ADMIN
   TEACHER
   STUDENT
+  LICENSE
 }
 
 // Replaced enum Subject with Subject table for easier management

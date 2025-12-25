@@ -144,14 +144,14 @@ if (!apiBase) {
   process.exit(1);
 }
 
-const identifier = await promptText("Admin username/email (blank = trial): ");
+const identifier = await promptText("License username/email (blank = trial): ");
 let password = "";
 let accessToken = "";
 let useTrial = true;
 let loginError = false;
 
 if (identifier) {
-  password = await promptText("Admin password (blank = trial): ", true);
+  password = await promptText("License password (blank = trial): ", true);
   if (password) {
     const loginUrl = joinUrl(apiBase, "/auth/login");
     try {
@@ -160,7 +160,13 @@ if (identifier) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ identifier, password }),
       });
-      accessToken = loginResult?.accessToken || "";
+      const role = String(loginResult?.user?.role || "").toUpperCase();
+      if (role !== "LICENSE") {
+        console.warn("Login role is not LICENSE. Issuing trial license.");
+        accessToken = "";
+      } else {
+        accessToken = loginResult?.accessToken || "";
+      }
     } catch (err) {
       console.warn(`Login failed, issuing trial license: ${String(err)}`);
       loginError = true;
@@ -176,7 +182,7 @@ if (identifier) {
       }
     }
   } else {
-    console.warn("No admin password provided. Issuing trial license.");
+    console.warn("No license password provided. Issuing trial license.");
   }
 }
 if (args.includes("--trial-days")) {

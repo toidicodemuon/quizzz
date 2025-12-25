@@ -310,10 +310,10 @@ npm -v
 ```
 ## License
 1. `npm run license:gen-keys` -> `license/private.pem` + `license/public.pem`
-2. Server: expose `/api/license/create` (ADMIN) and `/api/license/trial` + `/api/license/fingerprint` (public)
+2. Server: expose `/api/license/create` (LICENSE) and `/api/license/trial` + `/api/license/fingerprint` (public)
 3. Server: set `LICENSE_PRIVATE_KEY_PATH` if not using `license/private.pem`
 4. Server: set `LICENSE_FINGERPRINT_MODULE_PATH` if `scripts/license/fingerprint.mjs` is not present
 5. Client machine: set `LICENSE_URL` to API base (ex: `http://host:3000/api`)
 6. Trial days are controlled by server env `LICENSE_TRIAL_DAYS` (default 7)
-7. Run `npm run license:create`: login success -> unlimited license; login fails/blank -> trial license
+7. Run `npm run license:create`: login with LICENSE user (seed `lcer` / `Temp123$`) -> unlimited license; login fails/blank -> trial license
 

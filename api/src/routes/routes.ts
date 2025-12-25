@@ -45,7 +45,7 @@ const expressAuthenticationRecasted = expressAuthentication as (req: ExRequest, 
 const models: TsoaRoute.Models = {
     "_36_Enums.Role": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ADMIN"]},{"dataType":"enum","enums":["TEACHER"]},{"dataType":"enum","enums":["STUDENT"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["ADMIN"]},{"dataType":"enum","enums":["TEACHER"]},{"dataType":"enum","enums":["STUDENT"]},{"dataType":"enum","enums":["LICENSE"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Role": {
@@ -1206,7 +1206,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         app.post('/api/license/create',
-            authenticateMiddleware([{"bearerAuth":["ADMIN"]}]),
+            authenticateMiddleware([{"bearerAuth":["LICENSE"]}]),
             ...(fetchMiddlewares<RequestHandler>(LicenseController)),
             ...(fetchMiddlewares<RequestHandler>(LicenseController.prototype.createLicense)),
 

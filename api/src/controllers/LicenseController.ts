@@ -298,7 +298,7 @@ export class LicenseController extends Controller {
   @Response<null>(401, "Unauthorized")
   @Response<null>(403, "Forbidden")
   @Response<null>(500, "Server error")
-  @Security("bearerAuth", ["ADMIN"])
+  @Security("bearerAuth", ["LICENSE"])
   public async createLicense(
     @Body() body: LicenseCreateRequest
   ): Promise<LicenseResponse> {

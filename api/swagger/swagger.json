@@ -12,7 +12,8 @@
 				"enum": [
 					"ADMIN",
 					"TEACHER",
-					"STUDENT"
+					"STUDENT",
+					"LICENSE"
 				]
 			},
 			"Role": {
@@ -3887,7 +3888,7 @@
 				"security": [
 					{
 						"bearerAuth": [
-							"ADMIN"
+							"LICENSE"
 						]
 					}
 				],
