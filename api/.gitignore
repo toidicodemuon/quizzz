@@ -9,3 +9,4 @@ dist/license/license.json
 dist/license/licenses.csv
 license/license-request.json
 dist/license/license-request.json
+.env*
