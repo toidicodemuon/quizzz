@@ -28,19 +28,23 @@ const subjectsDestDir = path.join(
   "seeders",
   "subjects"
 );
+const subjectsDataSrcDir = path.join(subjectsSrcDir, "data");
+const subjectsDataDestDir = path.join(subjectsDestDir, "data");
 
-if (fs.existsSync(subjectsSrcDir)) {
-  fs.mkdirSync(subjectsDestDir, { recursive: true });
+if (fs.existsSync(subjectsDataSrcDir)) {
+  fs.mkdirSync(subjectsDataDestDir, { recursive: true });
   const jsonFiles = fs
-    .readdirSync(subjectsSrcDir)
+    .readdirSync(subjectsDataSrcDir)
     .filter((file) => file.endsWith(".json"));
   jsonFiles.forEach((file) => {
     fs.copyFileSync(
-      path.join(subjectsSrcDir, file),
-      path.join(subjectsDestDir, file)
+      path.join(subjectsDataSrcDir, file),
+      path.join(subjectsDataDestDir, file)
     );
   });
   if (jsonFiles.length > 0) {
-    console.log("prisma/seeders/subjects/*.json copied to dist/prisma/seeders/subjects");
+    console.log(
+      "prisma/seeders/subjects/data/*.json copied to dist/prisma/seeders/subjects/data"
+    );
   }
 }
