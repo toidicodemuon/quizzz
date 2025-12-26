@@ -2,34 +2,20 @@ import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import * as nodeMachineId from "node-machine-id";
-import { DEFAULT_FINGERPRINT_KEYS, getFingerprint } from "./fingerprint";
 
 type LicensePayload = {
   product: string;
-  licenseId: string;
-  hwid: string;
+  machineId: string;
+  issuedAt: string;
   expiresAt?: string | null;
 };
 
 type LicenseFile = {
   product: string;
   signature: string;
-  licenseId?: string;
-  hwid?: string;
-  trial?: boolean;
-  expiresAt?: string | null;
-  fingerprint?: string;
-  fingerprintKeys?: string[];
-  machineId?: string;
-  issuedAt?: string;
-};
-
-type LegacyPayload = {
-  product: string;
-  fingerprint?: string;
-  fingerprintKeys?: string[];
-  machineId?: string;
+  machineId: string;
   issuedAt: string;
+  trial?: boolean;
   expiresAt?: string | null;
 };
 
@@ -57,14 +43,6 @@ function parseBoolean(input?: string): boolean | null {
   if (["1", "true", "yes", "y", "on"].includes(normalized)) return true;
   if (["0", "false", "no", "n", "off"].includes(normalized)) return false;
   return null;
-}
-
-function normalizeKeys(raw?: string[] | string | null): string[] {
-  if (!raw) return [];
-  const list = Array.isArray(raw) ? raw : String(raw).split(",");
-  return Array.from(
-    new Set(list.map((key) => String(key).trim()).filter(Boolean))
-  ).sort();
 }
 
 function shouldEnforceLicense(): boolean {
@@ -99,35 +77,12 @@ function normalizePem(pem: string): string {
   return pem.replace(/\\n/g, "\n").trim();
 }
 
-function buildLegacyPayload(payload: LegacyPayload): string {
+function buildLegacyPayload(payload: LicensePayload): string {
   const expiresAt = payload.expiresAt ? String(payload.expiresAt) : "";
   return [
     `product=${payload.product}`,
     `machineId=${payload.machineId || ""}`,
     `issuedAt=${payload.issuedAt}`,
-    `expiresAt=${expiresAt}`,
-  ].join("\n");
-}
-
-function buildPayloadV2(payload: LegacyPayload, keys: string[]): string {
-  const expiresAt = payload.expiresAt ? String(payload.expiresAt) : "";
-  const fingerprintKeys = keys.join(",");
-  return [
-    `product=${payload.product}`,
-    `fingerprint=${payload.fingerprint || ""}`,
-    `fingerprintKeys=${fingerprintKeys}`,
-    `machineId=${payload.machineId || ""}`,
-    `issuedAt=${payload.issuedAt}`,
-    `expiresAt=${expiresAt}`,
-  ].join("\n");
-}
-
-function buildHwidPayload(payload: LicensePayload): string {
-  const expiresAt = payload.expiresAt ? String(payload.expiresAt) : "";
-  return [
-    `product=${payload.product}`,
-    `licenseId=${payload.licenseId}`,
-    `hwid=${payload.hwid}`,
     `expiresAt=${expiresAt}`,
   ].join("\n");
 }
@@ -186,22 +141,9 @@ function validateLicenseShape(license: LicenseFile): string | null {
     return "License is not an object";
   if (!license.signature) return "License signature missing";
   if (!license.product) return "License product missing";
-  if (license.licenseId || license.hwid) {
-    if (!license.licenseId) return "License licenseId missing";
-    if (!license.hwid) return "License hwid missing";
-    return null;
-  }
-  if (!license.fingerprint && !license.machineId) {
-    return "License fingerprint or machineId missing";
-  }
+  if (!license.machineId) return "License machineId missing";
   if (!license.issuedAt) return "License issuedAt missing";
   return null;
-}
-
-function isHwidLicense(
-  license: LicenseFile
-): license is LicenseFile & { licenseId: string; hwid: string } {
-  return Boolean(license.licenseId && license.hwid);
 }
 
 export function checkLicense(): LicenseStatus {
@@ -231,71 +173,22 @@ export function checkLicense(): LicenseStatus {
     };
   }
 
-  const fingerprintKeysEnv = normalizeKeys(
-    process.env.LICENSE_FINGERPRINT_KEYS || ""
-  );
-  const keysToUse = fingerprintKeysEnv.length
-    ? fingerprintKeysEnv
-    : DEFAULT_FINGERPRINT_KEYS;
-
-  if (isHwidLicense(license)) {
-    let localFingerprint;
-    try {
-      localFingerprint = getFingerprint(keysToUse);
-    } catch (err) {
-      return {
-        ok: false,
-        reason: "fingerprint_unavailable",
-        details: String(err),
-      };
-    }
-    if (license.hwid !== localFingerprint.fingerprint) {
-      return {
-        ok: false,
-        reason: "hwid_mismatch",
-      };
-    }
-  } else if (license.fingerprint) {
-    const expectedKeys = normalizeKeys(license.fingerprintKeys);
-    const legacyKeys = expectedKeys.length
-      ? expectedKeys
-      : fingerprintKeysEnv.length
-      ? fingerprintKeysEnv
-      : DEFAULT_FINGERPRINT_KEYS;
-    let localFingerprint;
-    try {
-      localFingerprint = getFingerprint(legacyKeys);
-    } catch (err) {
-      return {
-        ok: false,
-        reason: "fingerprint_unavailable",
-        details: String(err),
-      };
-    }
-    if (license.fingerprint !== localFingerprint.fingerprint) {
-      return {
-        ok: false,
-        reason: "fingerprint_mismatch",
-      };
-    }
-  } else {
-    let localMachineId: string;
-    try {
-      localMachineId = nodeMachineId.machineIdSync();
-    } catch (err) {
-      return {
-        ok: false,
-        reason: "machine_id_unavailable",
-        details: String(err),
-      };
-    }
-    if (license.machineId !== localMachineId) {
-      return {
-        ok: false,
-        reason: "machine_id_mismatch",
-        details: `Expected ${localMachineId}, got ${license.machineId}`,
-      };
-    }
+  let localMachineId: string;
+  try {
+    localMachineId = nodeMachineId.machineIdSync();
+  } catch (err) {
+    return {
+      ok: false,
+      reason: "machine_id_unavailable",
+      details: String(err),
+    };
+  }
+  if (license.machineId !== localMachineId) {
+    return {
+      ok: false,
+      reason: "machine_id_mismatch",
+      details: `Expected ${localMachineId}, got ${license.machineId}`,
+    };
   }
 
   if (license.expiresAt) {
@@ -312,30 +205,12 @@ export function checkLicense(): LicenseStatus {
     }
   }
 
-  const payload = isHwidLicense(license)
-    ? buildHwidPayload({
-        product: license.product,
-        licenseId: license.licenseId,
-        hwid: license.hwid,
-        expiresAt: license.expiresAt ?? null,
-      })
-    : license.fingerprint
-    ? buildPayloadV2(
-        {
-          product: license.product,
-          fingerprint: license.fingerprint,
-          fingerprintKeys: license.fingerprintKeys,
-          machineId: license.machineId,
-          issuedAt: license.issuedAt || new Date().toISOString(),
-          expiresAt: license.expiresAt ?? null,
-        },
-        normalizeKeys(license.fingerprintKeys).length
-          ? normalizeKeys(license.fingerprintKeys)
-          : fingerprintKeysEnv.length
-          ? fingerprintKeysEnv
-          : DEFAULT_FINGERPRINT_KEYS
-      )
-    : buildLegacyPayload(license as LegacyPayload);
+  const payload = buildLegacyPayload({
+    product: license.product,
+    machineId: license.machineId,
+    issuedAt: license.issuedAt,
+    expiresAt: license.expiresAt ?? null,
+  });
   try {
     const signature = Buffer.from(license.signature, "base64");
     const verified = crypto.verify(
