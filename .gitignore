@@ -35,3 +35,7 @@ api/license/private.pem
 api/license/licenses.csv
 
 api/license/license.json
+
+api/src/routes/routes.ts
+
+api/swagger/swagger.json
