@@ -68,7 +68,11 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // Error handling middleware (respect status set by handlers/middlewares)
 app.use(
   (
-    err: any,
+    err: Error & {
+      status?: number;
+      code?: string;
+      fields?: Record<string, unknown>;
+    },
     _req: express.Request,
     res: express.Response,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { PrismaClient } from "@prisma/client";
 import { ensureQuestionWithChoices, type QuestionSeed } from "../seedUtils";
-import questions from "./TH12L.seed.json";
+import questions from "./data/TH12L.seed.json";
 
 export async function seedTH12L(prisma: PrismaClient, subjectId: number, authorId: number): Promise<void> {
   for (const q of questions as QuestionSeed[]) {

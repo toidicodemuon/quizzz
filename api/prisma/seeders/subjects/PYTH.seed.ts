@@ -1,7 +1,7 @@
 /* eslint-disable */
 import { PrismaClient } from "@prisma/client";
 import { ensureQuestionWithChoices, type QuestionSeed } from "../seedUtils";
-import questions from "./PYTH.seed.json";
+import questions from "./data/PYTH.seed.json";
 
 export async function seedPYTH(prisma: PrismaClient, subjectId: number, authorId: number): Promise<void> {
   for (const q of questions as QuestionSeed[]) {
