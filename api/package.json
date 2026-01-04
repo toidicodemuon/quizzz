@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "gulp build",
+    "build:dev": "gulp buildDev",
     "build:clean": "gulp clean",
     "build:routes": "gulp routes",
     "build:compile": "gulp compile",

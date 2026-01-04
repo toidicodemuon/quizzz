@@ -64,6 +64,8 @@ const copyPublic = async () => {
 const minifyJs = () => runScript("minify.mjs");
 const obfuscateJs = () => runScript("obfuscate.mjs");
 
+const obfuscateWithFlag = () => run("node", [path.join(scriptsDir, "obfuscate.mjs"), "--obfuscate"]);
+
 const copy = parallel(
   copyEnv,
   copyPackageJson,
@@ -74,15 +76,21 @@ const copy = parallel(
   //copyActivate,
   //copyPublicKey
 );
-const optimize = series(minifyJs, obfuscateJs);
 
-const build = series(clean, routes, compile, compileSeed, copy, optimize);
+// Development build: Does everything EXCEPT obfuscation.
+const buildDev = series(clean, routes, compile, compileSeed, copy, minifyJs);
 
+// Production build: Runs the development build first, then obfuscates.
+const buildProd = series(buildDev, obfuscateWithFlag);
+
+
+// Export final commands
 exports.clean = clean;
 exports.routes = routes;
 exports.compile = compile;
 exports.compileSeed = compileSeed;
 exports.copy = copy;
-exports.optimize = optimize;
-exports.build = build;
-exports.default = build;
+exports.optimize = obfuscateWithFlag;
+exports.build = buildProd; // `gulp build` is now the production build
+exports.buildDev = buildDev; // `gulp buildDev` is the new development build
+exports.default = buildProd;
