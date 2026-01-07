@@ -1,4 +1,5 @@
 import { prisma } from "../utils/prisma";
+import { sanitizeRichText } from "../utils/richText";
 import { Body, Controller, Delete, Get, Path, Post, Put, Query, Request, Response, Route, Security, Tags } from "tsoa";
 import { Request as ExRequest } from "express";
 
@@ -91,10 +92,11 @@ export class ChoiceController extends Controller {
       throw err;
     }
 
+    const cleanContent = sanitizeRichText(body.content) ?? "";
     return prisma.choice.create({
       data: {
         questionId: body.questionId,
-        content: body.content,
+        content: cleanContent,
         order: typeof body.order === "number" ? body.order : 0,
         isCorrect: !!body.isCorrect,
       },
@@ -141,7 +143,8 @@ export class ChoiceController extends Controller {
     }
 
     const data: any = {};
-    if (typeof body.content !== "undefined") data.content = body.content;
+    if (typeof body.content !== "undefined")
+      data.content = sanitizeRichText(body.content) ?? "";
     if (typeof body.order !== "undefined") data.order = body.order;
     if (typeof body.isCorrect !== "undefined") data.isCorrect = body.isCorrect;
 

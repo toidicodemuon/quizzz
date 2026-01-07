@@ -25,20 +25,55 @@
             Không thể sửa đáp án và câu hỏi đang thuộc đề thi đã xuất bản và đã
             có lượt thi. Bạn vẫn có thể sửa nội dung và giải thích.
           </div>
+          <div class="d-flex justify-content-end mb-2">
+            <div
+              class="btn-group btn-group-sm"
+              role="group"
+              aria-label="Editor mode"
+            >
+              <button
+                type="button"
+                class="btn"
+                :class="showHtml ? 'btn-outline-primary' : 'btn-primary'"
+                @click="showHtml = false"
+              >
+                Preview
+              </button>
+              <button
+                type="button"
+                class="btn"
+                :class="showHtml ? 'btn-primary' : 'btn-outline-primary'"
+                @click="showHtml = true"
+              >
+                HTML
+              </button>
+            </div>
+          </div>
           <div class="mb-3">
             <label class="form-label">Nội dung</label>
+            <RichTextEditor v-if="!showHtml" v-model="editForm.text" />
             <textarea
-              v-model.trim="editForm.text"
-              class="form-control"
-              rows="3"
+              v-else
+              v-model="editForm.text"
+              class="form-control font-monospace"
+              rows="4"
+              spellcheck="false"
             ></textarea>
           </div>
           <div class="mb-3">
             <label class="form-label">Giải thích</label>
+            <RichTextEditor
+              v-if="!showHtml"
+              v-model="editForm.explanation"
+              :compact="true"
+              min-height="90px"
+            />
             <textarea
-              v-model.trim="editForm.explanation"
-              class="form-control"
-              rows="2"
+              v-else
+              v-model="editForm.explanation"
+              class="form-control form-control-sm font-monospace"
+              rows="3"
+              spellcheck="false"
             ></textarea>
           </div>
           <div class="mt-4">
@@ -59,13 +94,21 @@
                         @change="(e) => onToggleEditCorrect(idx, e)"
                       />
                     </div>
-                    <input
+                    <RichTextEditor
+                      v-if="!showHtml"
                       v-model="c.content"
-                      type="text"
-                      class="form-control flex-grow-1"
-                      placeholder="Nội dung đáp án"
-                      style="min-width: 220px"
+                      :compact="true"
+                      min-height="70px"
+                      :placeholder="`Đáp án #${idx + 1}`"
                     />
+                    <textarea
+                      v-else
+                      v-model="c.content"
+                      class="form-control form-control-sm font-monospace flex-grow-1"
+                      rows="3"
+                      spellcheck="false"
+                      :placeholder="`Đáp án #${idx + 1}`"
+                    ></textarea>
                     <div class="btn-group btn-group-sm">
                       <button
                         class="btn btn-outline-secondary"
@@ -103,14 +146,22 @@
                 <li
                   v-for="c in editChoices"
                   :key="c.id"
-                  class="list-group-item d-flex align-items-center"
+                  class="list-group-item d-flex align-items-center flex-wrap"
                 >
                   <i
                     v-if="c.isCorrect"
                     class="bi bi-check-circle-fill text-success me-2"
                   ></i>
                   <i v-else class="bi bi-circle me-2 text-muted"></i>
-                  <span>{{ c.content }}</span>
+                  <div v-if="!showHtml" class="rich-content" v-html="renderHtml(c.content)"></div>
+                  <textarea
+                    v-else
+                    class="form-control form-control-sm font-monospace w-100 mt-2"
+                    rows="3"
+                    readonly
+                    spellcheck="false"
+                    :value="c.content || ''"
+                  ></textarea>
                 </li>
               </ul>
             </template>
@@ -139,6 +190,8 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import api from "../../api";
+import { hasRichContent, sanitizeHtml } from "../../utils/richText";
+import RichTextEditor from "../common/RichTextEditor.vue";
 
 const props = defineProps<{
   show: boolean;
@@ -151,6 +204,7 @@ const emit = defineEmits<{
 }>();
 
 const saving = ref(false);
+const showHtml = ref(false);
 const editForm = reactive<{
   id: number;
   text: string;
@@ -166,6 +220,8 @@ type EditChoice = {
 };
 const editChoices = ref<Array<EditChoice>>([]);
 let originalChoices: Array<EditChoice> = [];
+
+const renderHtml = (value?: string | null) => sanitizeHtml(value || "");
 
 function onClose() {
   emit("close");
@@ -232,11 +288,11 @@ function onToggleEditCorrect(idx: number, e: Event) {
 }
 
 const canSubmitEdit = computed(() => {
-  const hasText = editForm.text.trim().length > 0;
+  const hasText = hasRichContent(editForm.text);
   if (!hasText) return false;
   if (editType.value === "TEXT") return true;
   if (editLocked.value) return true; // choices locked; allow saving text/explanation only
-  const nonEmpty = editChoices.value.some((c) => c.content && c.content.trim());
+  const nonEmpty = editChoices.value.some((c) => hasRichContent(c.content));
   const anyCorrect = editChoices.value.some((c) => !!c.isCorrect);
   return nonEmpty && anyCorrect;
 });
@@ -246,7 +302,9 @@ async function submitEdit() {
   try {
     await api.put(`/questions/${editForm.id}`, {
       text: editForm.text,
-      explanation: editForm.explanation,
+      explanation: hasRichContent(editForm.explanation)
+        ? editForm.explanation
+        : null,
     });
     if (!editLocked.value && editType.value !== "TEXT") {
       const current = editChoices.value.map((c, idx) => ({ ...c, order: idx }));
@@ -283,12 +341,12 @@ async function submitEdit() {
         }
       }
       const toCreate = current.filter(
-        (c) => typeof c.id !== "number" && c.content && c.content.trim()
+        (c) => typeof c.id !== "number" && hasRichContent(c.content)
       );
       for (const c of toCreate) {
         await api.post(`/choices`, {
           questionId: editForm.id,
-          content: c.content.trim(),
+          content: c.content,
           isCorrect: !!c.isCorrect,
           order: c.order ?? 0,
         });

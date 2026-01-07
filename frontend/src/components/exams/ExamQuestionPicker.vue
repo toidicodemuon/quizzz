@@ -43,9 +43,9 @@
               </td>
               <td class="d-none d-sm-table-cell fw-semibold">#{{ q.id }}</td>
               <td>
-                <div class="fw-semibold">{{ q.text }}</div>
-                <div class="text-muted small" v-if="q.explanation">
-                  {{ q.explanation }}
+                <div class="fw-semibold">{{ plainText(q.text) }}</div>
+                <div class="text-muted small" v-if="plainText(q.explanation)">
+                  {{ plainText(q.explanation) }}
                 </div>
               </td>
             </tr>
@@ -132,9 +132,9 @@
               </td>
               <td class="d-none d-sm-table-cell fw-semibold">#{{ q.id }}</td>
               <td>
-                <div class="fw-semibold">{{ q.text }}</div>
-                <div class="text-muted small" v-if="q.explanation">
-                  {{ q.explanation }}
+                <div class="fw-semibold">{{ plainText(q.text) }}</div>
+                <div class="text-muted small" v-if="plainText(q.explanation)">
+                  {{ plainText(q.explanation) }}
                 </div>
               </td>
             </tr>
@@ -192,6 +192,7 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import Pagination from "../common/Pagination.vue";
 import api, { type Paginated } from "../../api";
 import { useQuestionBankStore } from "../../stores/questionBank";
+import { stripHtml } from "../../utils/richText";
 
 type Subject = { id: number; name: string };
 
@@ -207,6 +208,8 @@ const props = defineProps<{
 }>();
 
 const loading = ref(false);
+
+const plainText = (value?: string | null) => stripHtml(value || "");
 
 // questions in exam
 const examQuestions = ref<QuestionLite[]>([]);

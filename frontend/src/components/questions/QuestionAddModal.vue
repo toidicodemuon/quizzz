@@ -22,6 +22,30 @@
         </div>
         <div class="modal-body">
           <form @submit.prevent>
+            <div class="d-flex justify-content-end mb-2">
+              <div
+                class="btn-group btn-group-sm"
+                role="group"
+                aria-label="Editor mode"
+              >
+                <button
+                  type="button"
+                  class="btn"
+                  :class="showHtml ? 'btn-outline-primary' : 'btn-primary'"
+                  @click="showHtml = false"
+                >
+                  Preview
+                </button>
+                <button
+                  type="button"
+                  class="btn"
+                  :class="showHtml ? 'btn-primary' : 'btn-outline-primary'"
+                  @click="showHtml = true"
+                >
+                  HTML
+                </button>
+              </div>
+            </div>
             <div class="row g-3">
               <div class="col-12 col-md-6">
                 <label class="form-label">Gắn vào đề thi (tùy chọn)</label>
@@ -43,18 +67,29 @@
               </div>
               <div class="col-12">
                 <label class="form-label">Nội dung câu hỏi</label>
+                <RichTextEditor v-if="!showHtml" v-model="addForm.text" />
                 <textarea
-                  v-model.trim="addForm.text"
-                  rows="3"
-                  class="form-control"
+                  v-else
+                  v-model="addForm.text"
+                  class="form-control font-monospace"
+                  rows="4"
+                  spellcheck="false"
                 ></textarea>
               </div>
               <div class="col-12">
                 <label class="form-label">Giải thích (tùy chọn)</label>
+                <RichTextEditor
+                  v-if="!showHtml"
+                  v-model="addForm.explanation"
+                  :compact="true"
+                  min-height="90px"
+                />
                 <textarea
-                  v-model.trim="addForm.explanation"
-                  rows="2"
-                  class="form-control"
+                  v-else
+                  v-model="addForm.explanation"
+                  class="form-control form-control-sm font-monospace"
+                  rows="3"
+                  spellcheck="false"
                 ></textarea>
               </div>
             </div>
@@ -93,12 +128,21 @@
                 >
                   <div class="row g-2 align-items-center">
                     <div class="col-12 col-md-8">
-                      <input
-                        v-model.trim="c.content"
-                        type="text"
-                        class="form-control"
+                      <RichTextEditor
+                        v-if="!showHtml"
+                        v-model="c.content"
+                        :compact="true"
+                        min-height="70px"
                         :placeholder="`Đáp án #${idx + 1}`"
                       />
+                      <textarea
+                        v-else
+                        v-model="c.content"
+                        class="form-control form-control-sm font-monospace"
+                        rows="3"
+                        spellcheck="false"
+                        :placeholder="`Đáp án #${idx + 1}`"
+                      ></textarea>
                     </div>
                     <div class="col-8 col-md-3">
                       <div class="form-check">
@@ -159,6 +203,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import api, { type Paginated } from "../../api";
 import { getUser } from "../../utils/auth";
+import { hasRichContent } from "../../utils/richText";
+import RichTextEditor from "../common/RichTextEditor.vue";
 
 type ExamSummary = { id: number; title: string };
 
@@ -173,6 +219,7 @@ const emit = defineEmits<{
 }>();
 
 const saving = ref(false);
+const showHtml = ref(false);
 const exams = ref<ExamSummary[]>([]);
 const addForm = reactive<{
   examId: number;
@@ -220,10 +267,10 @@ function onToggleCorrect(idx: number, e: Event) {
 
 const canSubmitAdd = computed(
   () =>
-    addForm.text.trim().length > 0 &&
+    hasRichContent(addForm.text) &&
     addForm.subjectId > 0 &&
     addForm.choices.length > 0 &&
-    addForm.choices.some((c) => c.content.trim()) &&
+    addForm.choices.some((c) => hasRichContent(c.content)) &&
     addForm.choices.some((c) => c.isCorrect)
 );
 
@@ -252,13 +299,15 @@ async function submitAdd() {
   try {
     const payload: any = {
       text: addForm.text,
-      explanation: addForm.explanation,
+      explanation: hasRichContent(addForm.explanation)
+        ? addForm.explanation
+        : null,
       subjectId: addForm.subjectId,
       type: addForm.type,
       choices: addForm.choices
-        .filter((c) => c.content.trim())
+        .filter((c) => hasRichContent(c.content))
         .map((c, idx) => ({
-          content: c.content.trim(),
+          content: c.content,
           isCorrect: !!c.isCorrect,
           order: idx,
         })),

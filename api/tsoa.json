@@ -23,6 +23,7 @@
     "routes": {
         "basePath": "/api",
         "routesDir": "src/routes",
+        "middleware": "express",
         "authenticationModule": "./src/authentication.ts"
     }
 }

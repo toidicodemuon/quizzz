@@ -71,9 +71,9 @@
           :key="q.questionId"
           class="mb-3 question-block"
         >
-          <div class="fw-semibold mb-1">
-            Câu {{ idx + 1 }}: {{ q.questionText }}
-          </div>
+          <div class="fw-semibold mb-1">Câu {{ idx + 1 }}:</div>
+
+          <div class="rich-content ms-2 ms-sm-3 mb-1" v-html="renderHtml(q.questionText)"></div>
           <div class="ms-2 ms-sm-3 choices-wrap">
             <div v-for="ch in q.choices" :key="ch.id" class="form-check">
               <input
@@ -88,7 +88,7 @@
                 class="form-check-label"
                 :for="'q-' + q.questionId + '-c-' + ch.id"
               >
-                {{ ch.content }}
+                <div class="rich-content" v-html="renderHtml(ch.content)"></div>
               </label>
             </div>
           </div>
@@ -219,6 +219,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../api";
+import { sanitizeHtml } from "../../utils/richText";
 import { getUser } from "../../utils/auth";
 import {
   getAttemptShuffleSeed,
@@ -236,6 +237,8 @@ const roomId = Number(route.params.roomId);
 const examId = ref<number | null>(null);
 const examTitle = ref<string | null>(null);
 const durationSec = ref<number | null>(null);
+
+const renderHtml = (value?: string | null) => sanitizeHtml(value || "");
 
 type QuestionView = {
   questionId: number;

@@ -1513,6 +1513,80 @@
 				]
 			}
 		},
+		"/uploads/images": {
+			"post": {
+				"operationId": "UploadImage",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"mime": {
+											"type": "string"
+										},
+										"size": {
+											"type": "number",
+											"format": "double"
+										},
+										"url": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"mime",
+										"size",
+										"url"
+									],
+									"type": "object"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Bad Request"
+					},
+					"401": {
+						"description": "Unauthorized"
+					},
+					"413": {
+						"description": "File too large"
+					}
+				},
+				"tags": [
+					"Uploads"
+				],
+				"security": [
+					{
+						"bearerAuth": [
+							"TEACHER",
+							"ADMIN"
+						]
+					}
+				],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"multipart/form-data": {
+							"schema": {
+								"type": "object",
+								"properties": {
+									"file": {
+										"type": "string",
+										"format": "binary"
+									}
+								},
+								"required": [
+									"file"
+								]
+							}
+						}
+					}
+				}
+			}
+		},
 		"/teacher/students": {
 			"get": {
 				"operationId": "GetStudents",
