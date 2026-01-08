@@ -817,7 +817,6 @@
 				},
 				"required": [
 					"user",
-					"refreshToken",
 					"accessToken"
 				],
 				"type": "object"
@@ -5309,7 +5308,7 @@
 				"security": [],
 				"parameters": [],
 				"requestBody": {
-					"required": true,
+					"required": false,
 					"content": {
 						"application/json": {
 							"schema": {
@@ -5318,14 +5317,41 @@
 										"type": "string"
 									}
 								},
-								"required": [
-									"refreshToken"
-								],
 								"type": "object"
 							}
 						}
 					}
 				}
+			}
+		},
+		"/auth/logout": {
+			"post": {
+				"operationId": "Logout",
+				"responses": {
+					"200": {
+						"description": "Logged out",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Auth"
+				],
+				"security": [],
+				"parameters": []
 			}
 		},
 		"/attempts": {

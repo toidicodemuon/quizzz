@@ -1,10 +1,10 @@
 import axios from "axios";
-import { getToken, getRefreshToken, saveAuth, logout } from "./utils/auth";
+import { getToken, saveAuth, logout } from "./utils/auth";
 
 const baseURL =
   (import.meta.env.VITE_API_BASE_URL || "http://localhost:3000") + "/api";
 
-export const api = axios.create({ baseURL });
+export const api = axios.create({ baseURL, withCredentials: true });
 
 api.interceptors.request.use((config) => {
   const token = getToken();
@@ -27,22 +27,14 @@ api.interceptors.response.use(
     const isAuthRoute =
       url.includes("/auth/login") || url.includes("/auth/refresh");
     if (status === 401 && !isAuthRoute && !config.__isRetryRequest) {
-      const rt = getRefreshToken();
-      if (!rt) {
-        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-        logout();
-        window.location.hash = "#/login";
-        return Promise.reject(error);
-      }
       try {
         if (!refreshPromise) {
           refreshPromise = axios
-            .post(baseURL + "/auth/refresh", { refreshToken: rt })
+            .post(baseURL + "/auth/refresh", {}, { withCredentials: true })
             .then((res) => {
               const data = res.data || {};
               saveAuth({
                 accessToken: data.accessToken,
-                refreshToken: data.refreshToken,
                 user: data.user,
               });
               refreshPromise = null;

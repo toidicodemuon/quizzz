@@ -2,10 +2,10 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
-import { refreshTokens } from "./services/authService";
 import { multerMiddleware } from "./middleware";
 import {
   getPublicImageUrl,
@@ -30,6 +30,7 @@ const allowedOrigins = new Set([...staticOrigins, ...envOrigins]);
 
 // Middleware
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -56,17 +57,6 @@ app.post("/api/uploads/images", multerMiddleware, (req, res) => {
     size: file.size,
     mime: file.mimetype,
   });
-});
-
-// Lightweight refresh endpoint (bypass TSOA generation)
-app.post("/api/auth/refresh", async (req, res) => {
-  try {
-    const result = await refreshTokens(req?.body?.refreshToken);
-    res.json(result);
-  } catch (e: any) {
-    const status = typeof e?.status === "number" ? e.status : 401;
-    res.status(status).json({ message: e?.message || "Invalid refresh token" });
-  }
 });
 
 // Swagger UI setup

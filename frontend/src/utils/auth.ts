@@ -2,10 +2,6 @@ export function getToken(): string {
   return localStorage.getItem("accessToken") || "";
 }
 
-export function getRefreshToken(): string {
-  return localStorage.getItem("refreshToken") || "";
-}
-
 export type AuthUser = {
   id?: number;
   username?: string;
@@ -36,15 +32,12 @@ export function isAuthenticated(): boolean {
 
 export function saveAuth({
   accessToken,
-  refreshToken,
   user,
 }: {
   accessToken?: string;
-  refreshToken?: string;
   user?: AuthUser;
 }): void {
   if (accessToken) localStorage.setItem("accessToken", accessToken);
-  if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
   if (user) localStorage.setItem("user", JSON.stringify(user));
 }
 

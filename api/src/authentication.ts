@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
+import { prisma } from "./utils/prisma";
 
 interface RequestWithOriginalUrl extends Request {
   originalUrl: string;
@@ -14,6 +15,24 @@ export type AuthUser = {
   username:string;
   role: string;
 };
+
+const SESSION_TOUCH_MS = Number(process.env.SESSION_TOUCH_MS || 60_000);
+const lastSeenCache = new Map<number, number>();
+
+async function touchSession(sessionId: number): Promise<void> {
+  const now = Date.now();
+  const last = lastSeenCache.get(sessionId) || 0;
+  if (now - last < SESSION_TOUCH_MS) return;
+  lastSeenCache.set(sessionId, now);
+  try {
+    await prisma.userSession.updateMany({
+      where: { id: sessionId, revokedAt: null, logoutAt: null },
+      data: { lastSeenAt: new Date(now) },
+    });
+  } catch {
+    // ignore session update errors
+  }
+}
 
 /**
  * TSOA authentication hook for Express.
@@ -77,6 +96,7 @@ export async function expressAuthentication(
     const id = Number(payload.sub);
     const username = String(payload.username ?? payload.email ?? "");
     const role = String(payload.role ?? "");
+    const sessionId = Number((payload as any).sid);
 
     if (!Number.isFinite(id)) {
       const err = new Error("Invalid token subject") as AuthError;
@@ -101,6 +121,10 @@ export async function expressAuthentication(
         err.status = 403;
         throw err;
       }
+    }
+
+    if (Number.isFinite(sessionId)) {
+      void touchSession(sessionId);
     }
 
     return user;
