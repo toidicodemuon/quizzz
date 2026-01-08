@@ -8,7 +8,7 @@
     style="display: block"
   >
     <div
-      class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down"
+      class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-sm-down"
     >
       <div class="modal-content">
         <div class="modal-header">
@@ -56,7 +56,7 @@
                   </option>
                 </select>
               </div>
-              <div class="col-12 col-md-6">
+              <div class="col-12 col-md-4">
                 <label class="form-label">Môn học</label>
                 <select v-model.number="addForm.subjectId" class="form-select">
                   <option :value="0" disabled>-- Chọn môn --</option>
@@ -64,6 +64,16 @@
                     {{ s.name }}
                   </option>
                 </select>
+              </div>
+              <div class="col-12 col-md-2">
+                <label class="form-label">Điểm</label>
+                <input
+                  v-model.number="addForm.points"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  class="form-control"
+                />
               </div>
               <div class="col-12">
                 <label class="form-label">Nội dung câu hỏi</label>
@@ -93,20 +103,6 @@
                 ></textarea>
               </div>
             </div>
-
-            <div class="row g-3 mt-1">
-              <div class="col-12 col-md-12">
-                <label class="form-label">Điểm</label>
-                <input
-                  v-model.number="addForm.points"
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  class="form-control"
-                />
-              </div>
-            </div>
-
             <div class="mt-4">
               <div
                 class="d-flex align-items-center justify-content-between mb-2"
