@@ -59,9 +59,9 @@ model Question {
   subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   subjectId   Int
   type        QuestionType
-  text        String // nội dung câu hỏi
-  explanation String? // giải thích sau khi nộp
-  correctText String? // dùng khi type=TEXT (so khớp chính xác/ gần đúng do app xử)
+  text        String  @db.LongText // nội dung câu hỏi
+  explanation String? @db.LongText // giải thích sau khi nộp
+  correctText String? @db.LongText // dùng khi type=TEXT (so khớp chính xác/ gần đúng do app xử)
   author      User?        @relation("QuestionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   authorId    Int?
   isActive    Boolean      @default(true)
@@ -78,7 +78,7 @@ model Choice {
   id                   Int                   @id @default(autoincrement())
   question             Question              @relation(fields: [questionId], references: [id], onDelete: Cascade)
   questionId           Int
-  content              String
+  content              String @db.LongText
   isCorrect            Boolean               @default(false) // dùng cho SC/MC
   order                Int                   @default(0)
   attemptAnswerChoices AttemptAnswerChoice[]

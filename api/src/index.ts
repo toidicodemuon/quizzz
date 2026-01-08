@@ -6,9 +6,11 @@ import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
 import { refreshTokens } from "./services/authService";
-//import { enforceLicenseOrExit } from "./utils/license";
-import path from "path";
-import fs from "fs";
+import { multerMiddleware } from "./middleware";
+import {
+  getPublicImageUrl,
+  resolvePublicDir,
+} from "./utils/uploads";
 // Load environment variables
 const env = process.env.NODE_ENV || "development";
 dotenv.config({ path: `.env.${env}` });
@@ -16,18 +18,8 @@ dotenv.config({ path: `.env.${env}` });
 
 const app = express();
 const baseDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
-const publicCandidates = [
-  path.join(baseDir, "public"), // dist/src/public when built or api/public in dev
-  path.join(baseDir, "..", "public"), // fallback to repo-level public
-];
-const publicDir = publicCandidates.find((dir) => fs.existsSync(dir));
-if (publicDir) {
-  app.use(express.static(publicDir));
-} else {
-  console.warn(
-    "Static assets folder not found. Skipping express.static setup."
-  );
-}
+const publicDir = resolvePublicDir(baseDir);
+app.use(express.static(publicDir));
 // CORS whitelist (supports dynamic env overrides)
 const staticOrigins = ["https://miniweb.cloud", "http://miniweb.cloud"];
 const envOrigins = (process.env.CORS_ORIGINS || "")
@@ -51,6 +43,20 @@ app.use(
 
 // Register TSOA routes (tạo ra /api/* theo cấu hình basePath)
 RegisterRoutes(app);
+
+// Upload endpoint handled outside TSOA to avoid SSR/ESM require issues.
+app.post("/api/uploads/images", multerMiddleware, (req, res) => {
+  const file = (req as any).file as Express.Multer.File | undefined;
+  if (!file) {
+    res.status(400).json({ message: "Missing file" });
+    return;
+  }
+  res.status(200).json({
+    url: getPublicImageUrl(file.filename),
+    size: file.size,
+    mime: file.mimetype,
+  });
+});
 
 // Lightweight refresh endpoint (bypass TSOA generation)
 app.post("/api/auth/refresh", async (req, res) => {

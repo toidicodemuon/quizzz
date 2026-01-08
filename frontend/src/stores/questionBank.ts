@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
 import api, { type Paginated } from "../api";
+import { stripHtml } from "../utils/richText";
 
 export type QuestionLite = {
   id: number;
@@ -78,7 +79,9 @@ export const useQuestionBankStore = defineStore("questionBank", () => {
     const q = search.value.trim().toLowerCase();
     if (!q) return items.value;
     return items.value.filter(
-      (it) => it.text.toLowerCase().includes(q) || String(it.id).includes(q)
+      (it) =>
+        stripHtml(it.text).toLowerCase().includes(q) ||
+        String(it.id).includes(q)
     );
   });
 

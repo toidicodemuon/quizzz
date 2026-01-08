@@ -24,11 +24,11 @@
           <div v-else>
             <div class="mb-3">
               <div class="fw-semibold mb-1">Nội dung</div>
-              <div>{{ viewQuestion.text }}</div>
+              <div class="rich-content" v-html="renderHtml(viewQuestion.text)"></div>
             </div>
             <div class="mb-3" v-if="viewQuestion.explanation">
               <div class="fw-semibold mb-1">Giải thích</div>
-              <div>{{ viewQuestion.explanation }}</div>
+              <div class="rich-content" v-html="renderHtml(viewQuestion.explanation)"></div>
             </div>
             <div class="mb-3" v-if="viewQuestion.choices?.length">
               <div class="fw-semibold mb-2">Đáp án</div>
@@ -43,7 +43,7 @@
                     class="bi bi-check-circle-fill text-success me-2"
                   ></i>
                   <i v-else class="bi bi-circle me-2 text-muted"></i>
-                  <span>{{ c.content }}</span>
+                  <div class="rich-content" v-html="renderHtml(c.content)"></div>
                 </li>
               </ul>
             </div>
@@ -79,6 +79,8 @@ const viewQuestion = ref<null | {
   locked?: boolean;
   choices?: Array<{ id: number; content: string; isCorrect: boolean }>;
 }>(null);
+
+const renderHtml = (value?: string | null) => value || "";
 
 function onClose() {
   emit("close");

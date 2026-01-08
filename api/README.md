@@ -220,8 +220,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 - Questions
   - GET `/questions?examId&page&pageSize`
   - GET `/questions/{id}` includes choices
-  - POST `/questions` (TEACHER/ADMIN) `{ examId, text, explanation?, type?, subject?, choices: [{content,isCorrect,order?}], points? }`
-  - PUT `/questions/{id}` (TEACHER owner/ADMIN) `{ text?, explanation?, type? }`
+  - POST `/questions` (TEACHER/ADMIN) `{ examId, text, explanation?, type?, subject?, choices: [{content,isCorrect,order?}], points? }` (text/explanation/content are HTML)
+  - PUT `/questions/{id}` (TEACHER owner/ADMIN) `{ text?, explanation?, type? }` (HTML supported)
   - DELETE `/questions/{id}` (TEACHER owner/ADMIN)
 - Choices
   - GET `/choices?questionId&page&pageSize` (STUDENT will not see `isCorrect`)
@@ -229,6 +229,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   - POST `/choices` (TEACHER/ADMIN) `{ questionId, content, isCorrect?, order? }`
   - PUT `/choices/{id}` (TEACHER owner/ADMIN)
   - DELETE `/choices/{id}` (TEACHER owner/ADMIN)
+- Uploads
+  - POST `/uploads/images` (TEACHER/ADMIN) multipart `{ file }` -> `{ url, size, mime }` (PNG/JPG/WEBP/GIF, 2MB max)
 - Rooms
   - GET `/rooms?examId&page&pageSize`
   - GET `/rooms/{id}`

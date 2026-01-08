@@ -1,4 +1,4 @@
-import type { Request } from "express";
+import type { Request, Response, NextFunction } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 
 interface RequestWithOriginalUrl extends Request {
@@ -11,7 +11,7 @@ interface AuthError extends Error {
 
 export type AuthUser = {
   id: number;
-  username: string;
+  username:string;
   role: string;
 };
 
@@ -111,6 +111,23 @@ export async function expressAuthentication(
       error.status = 401;
     }
     throw error;
+  }
+}
+
+export async function requireTeacher(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  try {
+    const user = await expressAuthentication(req, "bearerAuth", [
+      "TEACHER",
+      "ADMIN",
+    ]);
+    (req as any).user = user;
+    next();
+  } catch (err) {
+    next(err);
   }
 }
 
