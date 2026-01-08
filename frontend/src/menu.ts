@@ -78,6 +78,12 @@ export const MENU: Record<string, Array<AppMenuItem>> = {
       icon: "bi-people-fill",
       newTab: true,
     },
+    {
+      label: "Audit Logs",
+      to: "/admin/logs",
+      icon: "bi-activity",
+      newTab: true,
+    },
   ],
 };
 

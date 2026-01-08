@@ -97,6 +97,12 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import("../views/admin/Users.vue"),
         meta: { pageTitle: "QUẢN LÝ NGƯỜI DÙNG" },
       },
+      {
+        path: "admin/logs",
+        name: "admin-logs",
+        component: () => import("../views/admin/Logs.vue"),
+        meta: { pageTitle: "AUDIT LOGS" },
+      },
       // common
       {
         path: "profile",

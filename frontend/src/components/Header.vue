@@ -61,6 +61,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
+import api from "../api";
 import { getRole, logout, getUser } from "../utils/auth";
 import ProfileModal from "./ProfileModal.vue";
 
@@ -82,7 +83,12 @@ const announceText =
   import.meta.env.VITE_APP_ANNOUNCE || "Chào mừng đến với TIN HỌC ANH THƯ!";
 const collapsed = computed(() => !!props.collapsed);
 
-function onLogout() {
+async function onLogout() {
+  try {
+    await api.post("/auth/logout");
+  } catch {
+    // ignore logout errors
+  }
   logout();
   router.push({ name: "login" });
 }
