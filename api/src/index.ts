@@ -6,7 +6,9 @@ import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
 import { refreshTokens } from "./services/authService";
+import { multerMiddleware } from "./middleware";
 import {
+  getPublicImageUrl,
   resolvePublicDir,
 } from "./utils/uploads";
 // Load environment variables
@@ -41,6 +43,20 @@ app.use(
 
 // Register TSOA routes (tạo ra /api/* theo cấu hình basePath)
 RegisterRoutes(app);
+
+// Upload endpoint handled outside TSOA to avoid SSR/ESM require issues.
+app.post("/api/uploads/images", multerMiddleware, (req, res) => {
+  const file = (req as any).file as Express.Multer.File | undefined;
+  if (!file) {
+    res.status(400).json({ message: "Missing file" });
+    return;
+  }
+  res.status(200).json({
+    url: getPublicImageUrl(file.filename),
+    size: file.size,
+    mime: file.mimetype,
+  });
+});
 
 // Lightweight refresh endpoint (bypass TSOA generation)
 app.post("/api/auth/refresh", async (req, res) => {

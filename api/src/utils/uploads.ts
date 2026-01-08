@@ -15,7 +15,21 @@ export const ALLOWED_IMAGE_MIME: Record<string, string> = {
   "image/gif": "gif",
 };
 
-export function resolvePublicDir(baseDir: string = __dirname): string {
+function resolveDefaultBaseDir(): string {
+  const cwd = process.cwd();
+  const candidates = [cwd, path.join(cwd, "api")];
+  if (typeof __dirname === "string") {
+    candidates.push(__dirname);
+  }
+  for (const dir of candidates) {
+    if (fs.existsSync(path.join(dir, "public"))) return dir;
+  }
+  return typeof __dirname === "string" ? __dirname : cwd;
+}
+
+const DEFAULT_BASE_DIR = resolveDefaultBaseDir();
+
+export function resolvePublicDir(baseDir: string = DEFAULT_BASE_DIR): string {
   const candidates = [
     path.join(baseDir, "public"),
     path.join(baseDir, "..", "public"),
@@ -29,7 +43,7 @@ export function resolvePublicDir(baseDir: string = __dirname): string {
   return fallback;
 }
 
-export function ensureUploadDir(baseDir: string = __dirname): string {
+export function ensureUploadDir(baseDir: string = DEFAULT_BASE_DIR): string {
   const publicDir = resolvePublicDir(baseDir);
   const uploadDir = path.join(publicDir, UPLOAD_SUBDIR);
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -85,22 +99,53 @@ export function resolveLocalUploadPath(
 
 export async function removeLocalImages(
   htmlBlocks: Array<string | null | undefined>,
-  baseDir: string = __dirname
+  baseDir: string = DEFAULT_BASE_DIR
 ): Promise<void> {
-  const publicDir = resolvePublicDir(baseDir);
-  const paths = new Set<string>();
+  const sources = new Set<string>();
   for (const html of htmlBlocks) {
     for (const src of extractImageSources(html)) {
-      const full = resolveLocalUploadPath(src, publicDir);
-      if (full) paths.add(full);
+      sources.add(src);
     }
+  }
+  if (!sources.size) {
+    console.info("[uploads] No image sources found for cleanup.");
+    return;
+  }
+  console.info(
+    `[uploads] Cleanup requested for ${sources.size} image(s): ${Array.from(
+      sources
+    ).join(", ")}`
+  );
+  await removeLocalImageSources(Array.from(sources), baseDir);
+}
+
+export async function removeLocalImageSources(
+  sources: string[],
+  baseDir: string = DEFAULT_BASE_DIR
+): Promise<void> {
+  if (!sources.length) {
+    console.info("[uploads] No image sources to delete.");
+    return;
+  }
+  const publicDir = resolvePublicDir(baseDir);
+  console.info(`[uploads] Resolved public dir: ${publicDir}`);
+  const paths = new Set<string>();
+  for (const src of sources) {
+    const full = resolveLocalUploadPath(src, publicDir);
+    if (full) paths.add(full);
+  }
+  if (!paths.size) {
+    console.warn("[uploads] No local upload paths resolved from sources.");
+    return;
   }
   await Promise.all(
     Array.from(paths).map(async (filePath) => {
       try {
         await fs.promises.unlink(filePath);
+        console.info(`[uploads] Deleted image: ${filePath}`);
       } catch {
         // ignore missing files
+        console.warn(`[uploads] Failed to delete image: ${filePath}`);
       }
     })
   );

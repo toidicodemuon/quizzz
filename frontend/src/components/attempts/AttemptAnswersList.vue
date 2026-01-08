@@ -68,10 +68,9 @@
 </template>
 
 <script setup lang="ts">
-import { sanitizeHtml } from "../../utils/richText";
 defineOptions({ name: "AttemptAnswersList" });
 
-const renderHtml = (value?: string | null) => sanitizeHtml(value || "");
+const renderHtml = (value?: string | null) => value || "";
 
 export type AttemptAnswerView = {
   questionId: number;

@@ -12,7 +12,35 @@ function isAllowedImageSrc(src: string): boolean {
 }
 
 function isAllowedLinkHref(href: string): boolean {
-  return /^https?:\/\//i.test(href) || /^mailto:/i.test(href) || href.startsWith("/uploads/");
+  return (
+    /^https?:\/\//i.test(href) ||
+    /^mailto:/i.test(href) ||
+    href.startsWith("/uploads/")
+  );
+}
+
+function decodeHtmlEntities(input: string): string {
+  return input
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&amp;/gi, "&");
+}
+
+function extractImageSourcesFromHtml(html: string): string[] {
+  const results = new Set<string>();
+  const tagRe = /<img\b[^>]*>/gi;
+  const srcRe = /\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i;
+  let match: RegExpExecArray | null = null;
+  while ((match = tagRe.exec(html)) !== null) {
+    const tag = match[0];
+    const srcMatch = srcRe.exec(tag);
+    const src = (srcMatch?.[1] || srcMatch?.[2] || srcMatch?.[3])?.trim();
+    if (src) results.add(src);
+  }
+  return Array.from(results);
 }
 
 export function sanitizeRichText(input?: string | null): string | null {
@@ -48,12 +76,21 @@ export function sanitizeRichText(input?: string | null): string | null {
 
 export function extractImageSources(input?: string | null): string[] {
   if (!input) return [];
-  const results = new Set<string>();
-  const re = /<img[^>]+src\\s*=\\s*["']([^"']+)["'][^>]*>/gi;
-  let match: RegExpExecArray | null = null;
-  while ((match = re.exec(input)) !== null) {
-    const src = match[1]?.trim();
-    if (src) results.add(src);
+  let results = extractImageSourcesFromHtml(input);
+  if (!results.length && /&lt;img\\b/i.test(input)) {
+    results = extractImageSourcesFromHtml(decodeHtmlEntities(input));
   }
-  return Array.from(results);
+  return results;
+}
+
+export function collectImageSources(
+  htmlBlocks: Array<string | null | undefined>
+): Set<string> {
+  const results = new Set<string>();
+  for (const html of htmlBlocks) {
+    for (const src of extractImageSources(html)) {
+      results.add(src);
+    }
+  }
+  return results;
 }

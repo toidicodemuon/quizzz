@@ -61,7 +61,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import api from "../../api";
-import { sanitizeHtml } from "../../utils/richText";
 
 const props = defineProps<{
   show: boolean;
@@ -81,7 +80,7 @@ const viewQuestion = ref<null | {
   choices?: Array<{ id: number; content: string; isCorrect: boolean }>;
 }>(null);
 
-const renderHtml = (value?: string | null) => sanitizeHtml(value || "");
+const renderHtml = (value?: string | null) => value || "";
 
 function onClose() {
   emit("close");

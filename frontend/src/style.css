@@ -14,8 +14,11 @@ body {
   height: 90vh;
 }
 
-.rich-content img {
+.rich-content img:not([width]) {
   max-width: 100%;
+}
+
+.rich-content img:not([height]) {
   height: auto;
 }
 

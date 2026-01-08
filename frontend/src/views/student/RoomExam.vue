@@ -219,7 +219,6 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "../../api";
-import { sanitizeHtml } from "../../utils/richText";
 import { getUser } from "../../utils/auth";
 import {
   getAttemptShuffleSeed,
@@ -238,7 +237,7 @@ const examId = ref<number | null>(null);
 const examTitle = ref<string | null>(null);
 const durationSec = ref<number | null>(null);
 
-const renderHtml = (value?: string | null) => sanitizeHtml(value || "");
+const renderHtml = (value?: string | null) => value || "";
 
 type QuestionView = {
   questionId: number;

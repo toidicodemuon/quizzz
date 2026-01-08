@@ -152,7 +152,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import api, { type Paginated } from "../../api";
-import { sanitizeHtml } from "../../utils/richText";
 
 type QuestionLite = { id: number; text: string; explanation: string | null };
 
@@ -172,7 +171,7 @@ const choices = ref<
   Record<number, { id: number; content: string; isCorrect: boolean }[]>
 >({});
 
-const renderHtml = (value?: string | null) => sanitizeHtml(value || "");
+const renderHtml = (value?: string | null) => value || "";
 
 async function loadData() {
   if (!props.show || !props.examId) return;

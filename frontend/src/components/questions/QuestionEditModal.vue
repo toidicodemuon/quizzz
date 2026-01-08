@@ -190,7 +190,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue";
 import api from "../../api";
-import { hasRichContent, sanitizeHtml } from "../../utils/richText";
+import { hasRichContent } from "../../utils/richText";
 import RichTextEditor from "../common/RichTextEditor.vue";
 
 const props = defineProps<{
@@ -221,7 +221,7 @@ type EditChoice = {
 const editChoices = ref<Array<EditChoice>>([]);
 let originalChoices: Array<EditChoice> = [];
 
-const renderHtml = (value?: string | null) => sanitizeHtml(value || "");
+const renderHtml = (value?: string | null) => value || "";
 
 function onClose() {
   emit("close");
