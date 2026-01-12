@@ -262,6 +262,7 @@ type RoomMeta = {
   isProtected?: boolean;
   shuffleQuestions?: boolean;
   shuffleChoices?: boolean;
+  maxAttempts?: number | null;
 };
 const roomMeta = ref<RoomMeta | null>(null);
 const roomPassword = ref<string>("");
@@ -280,6 +281,7 @@ const detail = ref<{
 } | null>(null);
 
 const timeLeft = ref(0);
+const attemptsUsed = ref(0);
 const started = ref(false);
 const startingExam = ref(false);
 const autoSubmitting = ref(false);
@@ -334,6 +336,7 @@ const pass = computed(() => {
 });
 
 const ATTEMPT_SUBMITTED_CODE = "ATTEMPT_ALREADY_SUBMITTED";
+const ATTEMPT_LIMIT_CODE = "ATTEMPT_LIMIT_REACHED";
 
 function parseApiError(err: any): { message: string; code?: string } {
   const message = err?.response?.data?.message || err?.message || "";
@@ -369,15 +372,18 @@ async function ensureAttemptCanBegin(opts?: {
     const alreadySubmitted =
       code === ATTEMPT_SUBMITTED_CODE ||
       normalized.includes("attempt already submitted");
-    const friendly = alreadySubmitted
+    const limitReached = code === ATTEMPT_LIMIT_CODE;
+    const friendly = limitReached
+      ? message || "Bạn đã dùng hết lượt làm bài cho phòng này."
+      : alreadySubmitted
       ? "Bạn đã làm bài thi này rồi, không thể vào phòng làm tiếp."
       : message || "Không thể vào phòng thi.";
     alert(friendly);
     if (e?.response?.status === 403) {
       roomPassword.value = "";
     }
-    if (alreadySubmitted) {
-      router.replace({ name: "student-exams" });
+    if (alreadySubmitted || limitReached) {
+      router.replace({ name: "student-rooms" });
     }
     return null;
   }
@@ -391,6 +397,8 @@ async function loadRoom() {
       typeof room.shuffleQuestions === "boolean" ? room.shuffleQuestions : true,
     shuffleChoices:
       typeof room.shuffleChoices === "boolean" ? room.shuffleChoices : true,
+    maxAttempts:
+      typeof room.maxAttempts === "number" ? Number(room.maxAttempts) : null,
   };
   examId.value = room.examId;
   examTitle.value =
@@ -414,26 +422,37 @@ async function ensureExamTitle() {
   }
 }
 
-async function fetchAttemptMeta(): Promise<AttemptMeta | null> {
+async function fetchAttemptMeta(): Promise<{
+  attempt: AttemptMeta | null;
+  total: number;
+}> {
   try {
     const { data } = await api.get<any>("/attempts", {
-      params: { roomId, page: 1, pageSize: 1 },
+      params: { roomId, page: 1, pageSize: 5 },
     });
-    const first = Array.isArray(data?.items) ? data.items[0] : null;
-    if (!first) return null;
+    const items = Array.isArray(data?.items) ? data.items : [];
+    const total = Number(data?.total ?? items.length ?? 0);
+    const inProgress = items.find(
+      (i: any) => String(i?.status || "").toUpperCase() === "IN_PROGRESS"
+    );
+    const pick = inProgress || items[0] || null;
+    if (!pick) return { attempt: null, total };
     return {
-      id: first.id,
-      roomId: first.roomId,
-      examId: first.examId,
-      status: first.status,
-      startedAt: first.startedAt ?? null,
-      timeTakenSec:
-        typeof first.timeTakenSec === "number"
-          ? Number(first.timeTakenSec)
-          : null,
+      attempt: {
+        id: pick.id,
+        roomId: pick.roomId,
+        examId: pick.examId,
+        status: pick.status,
+        startedAt: pick.startedAt ?? null,
+        timeTakenSec:
+          typeof pick.timeTakenSec === "number"
+            ? Number(pick.timeTakenSec)
+            : null,
+      },
+      total,
     };
   } catch {
-    return null;
+    return { attempt: null, total: 0 };
   }
 }
 
@@ -660,27 +679,35 @@ onMounted(async () => {
   }
   try {
     await loadRoom();
-    let attempt = await fetchAttemptMeta();
-    // if (!attempt) {
-    //   attempt = await ensureAttemptCanBegin();
-    // }
+    const { attempt, total } = await fetchAttemptMeta();
+    attemptsUsed.value = total;
     attemptMeta.value = attempt;
-    loaded.value = true;
-    if (attempt) {
-      const status = String(attempt.status || "").toUpperCase();
-      if (status === "SUBMITTED" || status === "GRADED") {
-        submitted.value = true;
-        alert("Bạn đã làm bài thi này rồi.");
-        router.replace({ name: "student-exams" });
+
+    const maxAttempts = roomMeta.value?.maxAttempts;
+    const status = attempt ? String(attempt.status || "").toUpperCase() : "";
+
+    if (!attempt || status !== "IN_PROGRESS") {
+      if (
+        typeof maxAttempts === "number" &&
+        maxAttempts > 0 &&
+        total >= maxAttempts
+      ) {
+        alert(
+          `Bạn đã dùng hết ${maxAttempts} lượt làm bài cho phòng này.`
+        );
+        router.replace({ name: "student-rooms" });
         return;
       }
-      if (status === "IN_PROGRESS" && attempt.timeTakenSec !== null) {
-        started.value = true;
-        if (questions.value.length === 0) {
-          await loadQuestions();
-        }
-        startTimerFromAttempt(attempt.startedAt ?? null);
+    }
+
+    loaded.value = true;
+
+    if (attempt && status === "IN_PROGRESS" && attempt.timeTakenSec !== null) {
+      started.value = true;
+      if (questions.value.length === 0) {
+        await loadQuestions();
       }
+      startTimerFromAttempt(attempt.startedAt ?? null);
     }
   } catch (e: any) {
     const { message } = parseApiError(e);

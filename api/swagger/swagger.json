@@ -3155,6 +3155,10 @@
 						"application/json": {
 							"schema": {
 								"properties": {
+									"maxAttempts": {
+										"type": "number",
+										"format": "double"
+									},
 									"shuffleChoices": {
 										"type": "boolean"
 									},

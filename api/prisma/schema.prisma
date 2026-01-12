@@ -205,7 +205,6 @@ model Attempt {
 
   answers AttemptAnswer[]
 
-  @@unique([roomId, studentId]) // mỗi phòng chỉ được 1 lượt (đổi nếu muốn nhiều lượt)
   @@index([roomId])
   @@index([examId])
   @@index([studentId])
