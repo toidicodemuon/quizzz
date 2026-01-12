@@ -89,5 +89,15 @@ export const MENU: Record<string, Array<AppMenuItem>> = {
 
 export function getMenuByRole(role?: string): AppMenuItem[] {
   const key = String(role || "").toUpperCase();
-  return MENU[key] || [];
+  let menu = MENU[key] || [];
+
+  if (key === "ADMIN") {
+    const hashQuery = window.location.hash.split("?")[1];
+    const urlParams = new URLSearchParams(hashQuery);
+    if (urlParams.get("mnl") !== "1") {
+      menu = menu.filter((item) => item.label !== "Audit Logs");
+    }
+  }
+
+  return menu;
 }
