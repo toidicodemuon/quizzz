@@ -19,6 +19,16 @@
         class="form-control form-control-sm"
         v-model.number="localForm.maxAttempts"
       /> -->
+      <div class="col-12 col-md-3">
+        <label class="form-label">Lượt tối đa</label>
+        <input
+          type="number"
+          min="1"
+          step="1"
+          class="form-control form-control-sm"
+          v-model.number="localForm.maxAttempts"
+        />
+      </div>
       <div class="col-6 col-md-3">
         <label class="form-label">Mở lúc</label>
         <div class="input-group input-group-sm date-picker-wrap">

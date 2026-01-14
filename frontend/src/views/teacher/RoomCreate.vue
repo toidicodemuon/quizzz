@@ -158,8 +158,8 @@
                         <div class="text-muted small">
                           {{ durationText(r) }}
 
-                          <!--| tối đa
-                          {{ r.maxAttempts }} lượt-->
+                          | tối đa
+                          {{ r.maxAttempts }} lượt
                         </div>
                       </td>
                       <td class="small">
@@ -233,8 +233,10 @@
                             type="button"
                             class="btn btn-outline-secondary"
                             @click="openRoomDetail(r.id)"
+                            :disabled="selectedRoomId === r.id"
+                            title="Xem danh sách bài thi"
                           >
-                            Xem
+                            <i class="bi bi-box-arrow-up-right ms-1"></i>
                           </button>
                           <button
                             type="button"

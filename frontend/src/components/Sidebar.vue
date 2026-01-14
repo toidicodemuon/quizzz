@@ -90,6 +90,7 @@
 
 <script setup lang="ts">
 import { computed, reactive } from "vue";
+import { useRoute } from "vue-router";
 import { getRole } from "../utils/auth";
 import { getMenuByRole } from "../menu";
 
@@ -107,7 +108,12 @@ const props = withDefaults(
   defineProps<{ open?: boolean; collapsed?: boolean }>(),
   { open: true, collapsed: false }
 );
-const items = computed<MenuItem[]>(() => getMenuByRole(getRole()));
+const route = useRoute();
+const items = computed<MenuItem[]>(() => {
+  // depend on fullpath to re-evaluate on changes
+  const _ = route.fullPath;
+  return getMenuByRole(getRole());
+});
 const openGroups = reactive(new Set<number>());
 function toggleGroup(index: number) {
   if (openGroups.has(index)) openGroups.delete(index);

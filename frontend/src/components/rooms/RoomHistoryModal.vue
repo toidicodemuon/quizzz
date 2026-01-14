@@ -263,6 +263,17 @@
               Trộn đáp án
             </label>
           </div>
+          <div class="mb-3">
+            <label class="form-label">Lượt tối đa</label>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              class="form-control"
+              v-model.number="editMaxAttempts"
+            />
+          </div>
+
           <div class="mb-2">
             <label class="form-label">Mật khẩu mới</label>
             <input
@@ -346,6 +357,7 @@ const editPassword = ref("");
 const editClose = ref(false);
 const editShuffleQuestions = ref(false);
 const editShuffleChoices = ref(false);
+const editMaxAttempts = ref(1);
 const selectedIds = reactive(new Set<number>());
 
 const filters = reactive({
@@ -483,6 +495,8 @@ function openEdit(room: RoomRow) {
   editClose.value = !isRoomLive(room);
   editShuffleQuestions.value = !!room.shuffleQuestions;
   editShuffleChoices.value = !!room.shuffleChoices;
+  editMaxAttempts.value =
+    typeof room.maxAttempts === "number" ? room.maxAttempts : 1;
   showEdit.value = true;
 }
 
@@ -552,12 +566,14 @@ async function saveEdit() {
   }
   deleting.value = true;
   try {
+    const maxAttempts = Number(editMaxAttempts.value);
     await api.post(`/rooms/${editingId.value}/protection`, {
       isProtected: editProtected.value,
       password: editProtected.value ? editPassword.value.trim() : undefined,
       close: editClose.value ? true : undefined,
       shuffleQuestions: editShuffleQuestions.value,
       shuffleChoices: editShuffleChoices.value,
+      maxAttempts: Number.isFinite(maxAttempts) ? maxAttempts : undefined,
     });
     await reload();
     showEdit.value = false;

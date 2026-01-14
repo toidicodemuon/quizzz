@@ -889,7 +889,7 @@ export function RegisterRoutes(app: Router) {
         const argsRoomsController_updateProtection: Record<string, TsoaRoute.ParameterSchema> = {
                 req: {"in":"request","name":"req","required":true,"dataType":"object"},
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
-                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"shuffleChoices":{"dataType":"boolean"},"shuffleQuestions":{"dataType":"boolean"},"close":{"dataType":"boolean"},"password":{"dataType":"string"},"isProtected":{"dataType":"boolean"}}},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"maxAttempts":{"dataType":"double"},"shuffleChoices":{"dataType":"boolean"},"shuffleQuestions":{"dataType":"boolean"},"close":{"dataType":"boolean"},"password":{"dataType":"string"},"isProtected":{"dataType":"boolean"}}},
         };
         app.post('/api/rooms/:id/protection',
             authenticateMiddleware([{"bearerAuth":["TEACHER","ADMIN"]}]),
