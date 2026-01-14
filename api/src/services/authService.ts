@@ -2,7 +2,7 @@ import { prisma } from "../utils/prisma";
 import type { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 import type { Request } from "express";
 
 export type LoginSuccessResponse = {
@@ -22,8 +22,8 @@ export class AuthError extends Error {
   }
 }
 
-const ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL || "1h";
-const REFRESH_TOKEN_TTL = process.env.REFRESH_TOKEN_TTL || "7d";
+const ACCESS_TOKEN_TTL = (process.env.ACCESS_TOKEN_TTL || "1h") as SignOptions["expiresIn"];
+const REFRESH_TOKEN_TTL = (process.env.REFRESH_TOKEN_TTL || "7d") as SignOptions["expiresIn"];
 
 type TokenPayload = {
   sub: number;
