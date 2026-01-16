@@ -2,13 +2,13 @@ import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
-import { refreshTokens } from "./services/authService";
-import { enforceLicenseOrExit } from "./utils/license";
-import path from "path";
-import fs from "fs";
+import { enforceLicenseOrExit } from "./utils/lc";
+import { multerMiddleware } from "./middleware";
+import { getPublicImageUrl, resolvePublicDir } from "./utils/uploads";
 // Load environment variables
 const env = process.env.NODE_ENV || "development";
 dotenv.config({ path: `.env.${env}` });
@@ -16,18 +16,8 @@ enforceLicenseOrExit();
 
 const app = express();
 const baseDir = typeof __dirname !== "undefined" ? __dirname : process.cwd();
-const publicCandidates = [
-  path.join(baseDir, "public"), // dist/src/public when built or api/public in dev
-  path.join(baseDir, "..", "public"), // fallback to repo-level public
-];
-const publicDir = publicCandidates.find((dir) => fs.existsSync(dir));
-if (publicDir) {
-  app.use(express.static(publicDir));
-} else {
-  console.warn(
-    "Static assets folder not found. Skipping express.static setup."
-  );
-}
+const publicDir = resolvePublicDir(baseDir);
+app.use(express.static(publicDir));
 // CORS whitelist (supports dynamic env overrides)
 const staticOrigins = ["http://localhost:5173"];
 const envOrigins = (process.env.CORS_ORIGINS || "")
@@ -38,6 +28,7 @@ const allowedOrigins = new Set([...staticOrigins, ...envOrigins]);
 
 // Middleware
 app.use(bodyParser.json());
+app.use(cookieParser());
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -51,15 +42,18 @@ app.use(
 
 RegisterRoutes(app);
 
-// Lightweight refresh endpoint (bypass TSOA generation)
-app.post("/api/auth/refresh", async (req, res) => {
-  try {
-    const result = await refreshTokens(req?.body?.refreshToken);
-    res.json(result);
-  } catch (e: any) {
-    const status = typeof e?.status === "number" ? e.status : 401;
-    res.status(status).json({ message: e?.message || "Invalid refresh token" });
+// Upload endpoint handled outside TSOA to avoid SSR/ESM require issues.
+app.post("/api/uploads/images", multerMiddleware, (req, res) => {
+  const file = (req as any).file as Express.Multer.File | undefined;
+  if (!file) {
+    res.status(400).json({ message: "Missing file" });
+    return;
   }
+  res.status(200).json({
+    url: getPublicImageUrl(file.filename),
+    size: file.size,
+    mime: file.mimetype,
+  });
 });
 
 // Swagger UI setup

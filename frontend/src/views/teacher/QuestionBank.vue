@@ -86,9 +86,9 @@
           <span class="fw-semibold d-none d-sm-inline">#{{ value }}</span>
         </template>
         <template #cell-text="{ row }">
-          <div class="fw-semibold">{{ row.text }}</div>
-          <div class="text-muted small" v-if="row.explanation">
-            {{ row.explanation }}
+          <div class="fw-semibold">{{ plainText(row.text) }}</div>
+          <div class="text-muted small" v-if="plainText(row.explanation)">
+            {{ plainText(row.explanation) }}
           </div>
         </template>
         <template #row-actions="{ row }">
@@ -161,10 +161,13 @@ import QuestionAddModal from "../../components/questions/QuestionAddModal.vue";
 import QuestionEditModal from "../../components/questions/QuestionEditModal.vue";
 import QuestionViewModal from "../../components/questions/QuestionViewModal.vue";
 import { useQuestionBankStore } from "../../stores/questionBank";
+import { stripHtml } from "../../utils/richText";
 
 const pageSizeOptions = [10, 15, 20, 25, 30, 40, 50];
 const subjects = ref<Array<{ id: number; name: string }>>([]);
 const selectedIds = reactive(new Set<number>());
+
+const plainText = (value?: string | null) => stripHtml(value || "");
 
 // Shared store for question bank
 const qb = useQuestionBankStore();

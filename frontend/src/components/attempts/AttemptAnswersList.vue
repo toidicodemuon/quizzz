@@ -6,7 +6,7 @@
           {{ ans.isCorrect ? "Đúng" : "Sai" }}
         </span>
         <strong class="me-2">Câu {{ idx + 1 }}:</strong>
-        <span>{{ ans.questionText }}</span>
+        <span class="rich-content" v-html="renderHtml(ans.questionText)"></span>
       </div>
       <ul class="list-group list-group-flush ms-4 mt-2">
         <li
@@ -38,7 +38,7 @@
               ch.selected ? (ch.isCorrect ? 'text-success' : 'text-danger') : ''
             "
           >
-            {{ ch.content }}
+            <span class="rich-content" v-html="renderHtml(ch.content)"></span>
           </span>
         </li>
         <li
@@ -61,7 +61,7 @@
         class="small ms-4 mt-1 text-muted"
       >
         <strong>Giải thích:</strong>
-        <span class="ms-1">{{ ans.explanation }}</span>
+        <span class="ms-1"><span class="rich-content" v-html="renderHtml(ans.explanation)"></span></span>
       </div>
     </div>
   </div>
@@ -69,6 +69,8 @@
 
 <script setup lang="ts">
 defineOptions({ name: "AttemptAnswersList" });
+
+const renderHtml = (value?: string | null) => value || "";
 
 export type AttemptAnswerView = {
   questionId: number;

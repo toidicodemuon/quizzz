@@ -245,6 +245,7 @@ export class RoomsController extends Controller {
       close?: boolean;
       shuffleQuestions?: boolean;
       shuffleChoices?: boolean;
+      maxAttempts?: number;
     }
   ): Promise<RoomSummary> {
     const user = (req as any).user as { id: number; role: string };
@@ -287,6 +288,9 @@ export class RoomsController extends Controller {
     }
     if (typeof body.shuffleChoices === "boolean") {
       data.shuffleChoices = body.shuffleChoices;
+    }
+    if (typeof body.maxAttempts === "number") {
+      data.maxAttempts = body.maxAttempts;
     }
 
     const updated = await prisma.room.update({

@@ -15,24 +15,36 @@ async function* walk(dir) {
 }
 
 const options = {
-  compact: true,
+  // --- NHÓM TỐI ƯU HIỆU NĂNG (QUAN TRỌNG) ---
+  compact: true, // Gộp code thành 1 dòng (giảm dung lượng).
   target: "node",
-  controlFlowFlattening: true,
-  controlFlowFlatteningThreshold: 0.75,
-  deadCodeInjection: false,
-  stringArray: true,
+  controlFlowFlattening: false, // TẮT: Đây là thủ phạm chính làm chậm code. Tắt nó đi code chạy vèo vèo.
+  deadCodeInjection: false, // TẮT: Không chèn mã rác.
+  numbersToExpressions: false, // TẮT: Giữ nguyên số (ví dụ 100) thay vì tính toán (10*10).
+  simplify: true, // BẬT: Đơn giản hóa code gốc trước khi obfuscate.
+
+  // --- NHÓM BẢO MẬT VỪA PHẢI ---
+  // Đổi tên biến thành dạng ngắn gọn (a, b, c,...) giúp file siêu nhẹ và parse nhanh.
+  // Nếu muốn nhìn "nguy hiểm" hơn thì đổi thành "hexadecimal".
+  identifierNamesGenerator: "mangled",
+
+  renameGlobals: false, // An toàn cho Node.js
+  renameProperties: false, // An toàn cho Object/JSON
+  selfDefending: false, // Tắt để tránh crash không mong muốn.
+
+  // --- XỬ LÝ CHUỖI (STRING) ---
+  stringArray: true, // Vẫn gom string lại để giấu nội dung text.
   stringArrayRotate: true,
   stringArrayShuffle: true,
-  stringArrayThreshold: 0.75,
-  stringArrayEncoding: ["base64"],
-  simplify: true,
-  numbersToExpressions: true,
-  identifierNamesGenerator: "hexadecimal",
-  renameGlobals: false,
-  renameProperties: false,
-  selfDefending: false,
-  transformObjectKeys: false,
-  unicodeEscapeSequence: false,
+
+  // MẤU CHỐT TỐC ĐỘ Ở ĐÂY:
+  // Để mảng rỗng [] hoặc false. Code sẽ KHÔNG tốn CPU để giải mã (base64/rc4) mỗi khi gọi string.
+  // Tuy nhiên string vẫn bị tách ra khỏi code logic nên vẫn khó đọc.
+  stringArrayEncoding: [],
+
+  stringArrayThreshold: 0.75, // 75% chuỗi sẽ bị giấu đi.
+  transformObjectKeys: false, // Tắt để truy xuất object nhanh nhất.
+  unicodeEscapeSequence: false, // Tắt để file nhẹ.
   sourceMap: false,
 };
 
@@ -53,6 +65,11 @@ async function obfuscateFile(file) {
 }
 
 async function run() {
+  if (!process.argv.includes("--obfuscate")) {
+    console.log("[obfuscate] Skipping obfuscation (no --obfuscate flag).");
+    return;
+  }
+
   const dist = join(process.cwd(), "dist");
   try {
     const s = await stat(dist);

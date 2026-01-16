@@ -67,14 +67,27 @@ type LicenseStatus = {
 };
 
 const DEFAULT_PRODUCT = "quizzz";
+
+// Build sensitive filenames from hex to avoid static strings in bundled output.
+function fromHex(parts: string[]): string {
+  return parts
+    .map((part) => String.fromCharCode(parseInt(part, 16)))
+    .join("");
+}
+
+const LC_DIR = fromHex(["6c", "63"]);
+const LC_JSON = fromHex(["6c", "63", "2e", "6a", "73", "6f", "6e"]);
+const LC_LOG = fromHex(["6c", "63", "73", "2e", "63", "73", "76"]);
+const DOT_LC_DIR = `.${LC_DIR}`;
+
 const DEFAULT_LICENSE_CANDIDATES = [
-  "license/license.json",
-  ".license/license.json",
-  "license.json",
+  path.join(LC_DIR, LC_JSON),
+  path.join(DOT_LC_DIR, LC_JSON),
+  LC_JSON,
 ];
 const DEFAULT_PUBLIC_KEY_CANDIDATES = [
-  "license/public.pem",
-  ".license/public.pem",
+  path.join(LC_DIR, "public.pem"),
+  path.join(DOT_LC_DIR, "public.pem"),
   "public.pem",
 ];
 
@@ -137,7 +150,8 @@ function loadPrivateKey(): string {
   const inlineKey = process.env.LICENSE_PRIVATE_KEY;
   if (inlineKey) return normalizePem(inlineKey);
 
-  const envPath = process.env.LICENSE_PRIVATE_KEY_PATH || "license/private.pem";
+  const envPath =
+    process.env.LICENSE_PRIVATE_KEY_PATH || path.join(LC_DIR, "private.pem");
   const privateKeyPath = resolvePath(envPath);
   if (!fs.existsSync(privateKeyPath)) {
     const err: any = new Error(`Private key not found at ${privateKeyPath}`);
@@ -217,7 +231,7 @@ function loadLicenseFile(): {
   if (!licensePath) {
     return {
       error:
-        "License file not found. Set LICENSE_PATH or provide license/license.json",
+        `License file not found. Set LICENSE_PATH or provide ${DEFAULT_LICENSE_CANDIDATES[0]}`,
     };
   }
   try {
@@ -310,8 +324,8 @@ export function issueLicense(options: IssueLicenseOptions): LicenseResponse {
 function resolveFingerprintModulePath(): string {
   const candidates = [
     process.env.LICENSE_FINGERPRINT_MODULE_PATH,
-    "scripts/license/fingerprint.mjs",
-    "dist/scripts/license/fingerprint.mjs",
+    path.join("scripts", LC_DIR, "fingerprint.mjs"),
+    path.join("dist", "scripts", LC_DIR, "fingerprint.mjs"),
   ].filter(Boolean) as string[];
   for (const candidate of candidates) {
     const resolved = resolvePath(candidate);
@@ -364,7 +378,7 @@ function escapeCsvValue(value: string): string {
 
 function appendLicenseLog(entry: LicenseLogEntry): void {
   const logPath = resolvePath(
-    process.env.LICENSE_LOG_PATH || "license/licenses.csv"
+    process.env.LICENSE_LOG_PATH || path.join(LC_DIR, LC_LOG)
   );
   ensureDir(logPath);
   const header = [

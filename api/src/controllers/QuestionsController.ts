@@ -14,8 +14,10 @@ import {
   Tags,
   Query,
 } from "tsoa";
-import { QuestionType } from "@prisma/client";
+import { QuestionType, Prisma } from "@prisma/client";
 import { Request as ExRequest } from "express";
+import { sanitizeRichText } from "../utils/richText";
+import { removeLocalImages } from "../utils/uploads";
 
 @Route("questions")
 @Tags("Question")
@@ -225,17 +227,22 @@ export class QuestionController extends Controller {
       throw new Error("choices must be a non-empty array");
     }
 
+    const cleanText = sanitizeRichText(body.text) ?? "";
+    const cleanExplanation =
+      typeof body.explanation === "undefined"
+        ? null
+        : sanitizeRichText(body.explanation);
+
     const created = await prisma.question.create({
       data: {
         subjectId: body.subjectId,
         type: body.type ?? QuestionType.SC,
-        text: body.text,
-        explanation:
-          typeof body.explanation === "undefined" ? null : body.explanation,
+        text: cleanText,
+        explanation: cleanExplanation,
         authorId: user.id,
         choices: {
           create: body.choices.map((c, idx) => ({
-            content: c.content,
+            content: sanitizeRichText(c.content) ?? "",
             isCorrect: c.isCorrect,
             order: typeof c.order === "number" ? c.order : idx,
           })),
@@ -271,7 +278,13 @@ export class QuestionController extends Controller {
     const user = (req as any).user as { id: number; role: string };
     const existing = await prisma.question.findUnique({
       where: { id },
-      select: { id: true, authorId: true },
+      select: {
+        id: true,
+        authorId: true,
+        text: true,
+        explanation: true,
+        choices: { select: { content: true } },
+      },
     });
     if (!existing) {
       this.setStatus(404);
@@ -303,9 +316,10 @@ export class QuestionController extends Controller {
     }
 
     const data: any = {};
-    if (typeof body.text !== "undefined") data.text = body.text;
+    if (typeof body.text !== "undefined")
+      data.text = sanitizeRichText(body.text) ?? "";
     if (typeof body.explanation !== "undefined")
-      data.explanation = body.explanation;
+      data.explanation = sanitizeRichText(body.explanation);
     if (typeof body.type !== "undefined") data.type = body.type;
 
     return prisma.question.update({
@@ -325,9 +339,19 @@ export class QuestionController extends Controller {
     @Path() id: number
   ): Promise<{ message: string; id: number } | null> {
     const user = (req as any).user as { id: number; role: string };
-    const existing = await prisma.question.findUnique({
+    const cleanupSelect = {
+      id: true,
+      authorId: true,
+      text: true,
+      explanation: true,
+      choices: { select: { content: true } },
+    } as const satisfies Prisma.QuestionSelect;
+    type CleanupQuestion = Prisma.QuestionGetPayload<{
+      select: typeof cleanupSelect;
+    }>;
+    const existing: CleanupQuestion | null = await prisma.question.findUnique({
       where: { id },
-      select: { id: true, authorId: true },
+      select: cleanupSelect,
     });
     if (!existing) {
       this.setStatus(404);
@@ -355,6 +379,16 @@ export class QuestionController extends Controller {
       );
       err.status = 409;
       throw err;
+    }
+
+    try {
+      await removeLocalImages([
+        existing.text,
+        existing.explanation,
+        ...existing.choices.map((c) => c.content),
+      ]);
+    } catch (err) {
+      console.warn("Failed to cleanup question images:", err);
     }
     await prisma.examQuestion.deleteMany({ where: { questionId: id } });
     await prisma.choice.deleteMany({ where: { questionId: id } });

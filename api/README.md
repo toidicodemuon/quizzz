@@ -220,8 +220,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 - Questions
   - GET `/questions?examId&page&pageSize`
   - GET `/questions/{id}` includes choices
-  - POST `/questions` (TEACHER/ADMIN) `{ examId, text, explanation?, type?, subject?, choices: [{content,isCorrect,order?}], points? }`
-  - PUT `/questions/{id}` (TEACHER owner/ADMIN) `{ text?, explanation?, type? }`
+  - POST `/questions` (TEACHER/ADMIN) `{ examId, text, explanation?, type?, subject?, choices: [{content,isCorrect,order?}], points? }` (text/explanation/content are HTML)
+  - PUT `/questions/{id}` (TEACHER owner/ADMIN) `{ text?, explanation?, type? }` (HTML supported)
   - DELETE `/questions/{id}` (TEACHER owner/ADMIN)
 - Choices
   - GET `/choices?questionId&page&pageSize` (STUDENT will not see `isCorrect`)
@@ -229,6 +229,8 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   - POST `/choices` (TEACHER/ADMIN) `{ questionId, content, isCorrect?, order? }`
   - PUT `/choices/{id}` (TEACHER owner/ADMIN)
   - DELETE `/choices/{id}` (TEACHER owner/ADMIN)
+- Uploads
+  - POST `/uploads/images` (TEACHER/ADMIN) multipart `{ file }` -> `{ url, size, mime }` (PNG/JPG/WEBP/GIF, 2MB max)
 - Rooms
   - GET `/rooms?examId&page&pageSize`
   - GET `/rooms/{id}`
@@ -309,10 +311,10 @@ which npm
 npm -v
 ```
 ## License
-1. `npm run license:gen-keys` -> `license/private.pem` + `license/public.pem`
+1. `npm run license:gen-keys` -> `lc/private.pem` + `lc/public.pem`
 2. Server: expose `/api/license/create` (ADMIN) and `/api/license/trial` + `/api/license/fingerprint` (public)
-3. Server: set `LICENSE_PRIVATE_KEY_PATH` if not using `license/private.pem`
-4. Server: set `LICENSE_FINGERPRINT_MODULE_PATH` if `scripts/license/fingerprint.mjs` is not present
+3. Server: set `LICENSE_PRIVATE_KEY_PATH` if not using `lc/private.pem`
+4. Server: set `LICENSE_FINGERPRINT_MODULE_PATH` if `scripts/lc/fingerprint.mjs` is not present
 5. Client machine: set `LICENSE_URL` to API base (ex: `http://host:3000/api`)
 6. Trial days are controlled by server env `LICENSE_TRIAL_DAYS` (default 7)
 7. Run `npm run license:create`: login success -> unlimited license; login fails/blank -> trial license

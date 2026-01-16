@@ -8,6 +8,15 @@ dotenv.config();
 
 const args = process.argv.slice(2);
 
+function fromHex(parts) {
+  return parts
+    .map((part) => String.fromCharCode(parseInt(part, 16)))
+    .join("");
+}
+
+const LC_DIR = fromHex(["6c", "63"]);
+const LC_JSON = fromHex(["6c", "63", "2e", "6a", "73", "6f", "6e"]);
+
 function getArg(flag, fallback) {
   const index = args.indexOf(flag);
   if (index >= 0 && args[index + 1]) return args[index + 1];
@@ -75,7 +84,7 @@ async function downloadFingerprintModule(apiBase, token) {
     throw new Error(`Fingerprint download failed: ${response.status} ${text}`);
   }
   const source = await response.text();
-  const targetDir = path.resolve(process.cwd(), "scripts", "license");
+  const targetDir = path.resolve(process.cwd(), "scripts", LC_DIR);
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }
@@ -236,7 +245,7 @@ try {
 }
 
 const outPath = resolvePath(
-  getArg("--out", process.env.LICENSE_OUT || "license/license.json")
+  getArg("--out", process.env.LICENSE_OUT || path.join(LC_DIR, LC_JSON))
 );
 ensureDir(outPath);
 fs.writeFileSync(outPath, JSON.stringify(license, null, 2), "utf8");

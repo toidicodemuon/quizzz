@@ -14,3 +14,19 @@ body {
   height: 90vh;
 }
 
+.rich-content img:not([width]) {
+  max-width: 100%;
+}
+
+.rich-content img:not([height]) {
+  height: auto;
+}
+
+.rich-content p {
+  margin: 0 0 0.5rem;
+}
+
+.rich-content p:last-child {
+  margin-bottom: 0;
+}
+

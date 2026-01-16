@@ -1,12 +1,12 @@
 node_modules
 # Keep environment variables out of version control
 .env
-license/private.pem
-license/license.json
-license/licenses.csv
-.license/
-dist/license/license.json
-dist/license/licenses.csv
-license/license-request.json
-dist/license/license-request.json
+lc/private.pem
+lc/lc.json
+lc/lcs.csv
+.lc/
+dist/lc/lc.json
+dist/lc/lcs.csv
+lc/lc-request.json
+dist/lc/lc-request.json
 .env*
