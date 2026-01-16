@@ -45,6 +45,15 @@ const attemptAlreadySubmittedError = () => {
   return err;
 };
 
+const attemptLimitReachedError = (maxAttempts: number) => {
+  const err: any = new Error(
+    `Bạn đã dùng hết ${maxAttempts} lượt làm bài cho phòng này`
+  );
+  err.status = 400;
+  err.code = "ATTEMPT_LIMIT_REACHED";
+  return err;
+};
+
 @Route("attempts")
 @Tags("Attempt")
 export class AttemptController extends Controller {
@@ -570,7 +579,13 @@ export class AttemptController extends Controller {
 
     const room = await prisma.room.findUnique({
       where: { id: body.roomId },
-      select: { id: true, examId: true, isProtected: true, password: true },
+      select: {
+        id: true,
+        examId: true,
+        isProtected: true,
+        password: true,
+        maxAttempts: true,
+      },
     });
     if (!room) {
       this.setStatus(400);
@@ -585,24 +600,36 @@ export class AttemptController extends Controller {
       }
     }
 
-    // Reuse existing attempt if still in progress, otherwise create a new one
-    let attempt = await prisma.attempt.findUnique({
-      where: { roomId_studentId: { roomId: room.id, studentId: user.id } },
-      select: {
-        id: true,
-        score: true,
-        startedAt: true,
-        submittedAt: true,
-        timeTakenSec: true,
-        studentId: true,
-        examId: true,
-        roomId: true,
-        status: true,
-      },
-    });
+    const [inProgressAttempt, attemptsCount] = await Promise.all([
+      prisma.attempt.findFirst({
+        where: {
+          roomId: room.id,
+          studentId: user.id,
+          status: AttemptStatus.IN_PROGRESS,
+        },
+        select: {
+          id: true,
+          score: true,
+          startedAt: true,
+          submittedAt: true,
+          timeTakenSec: true,
+          studentId: true,
+          examId: true,
+          roomId: true,
+          status: true,
+        },
+        orderBy: { startedAt: "desc" },
+      }),
+      prisma.attempt.count({
+        where: { roomId: room.id, studentId: user.id },
+      }),
+    ]);
 
-    if (attempt && attempt.status !== AttemptStatus.IN_PROGRESS) {
-      throw attemptAlreadySubmittedError();
+    // Reuse existing attempt if still in progress, otherwise create a new one (respecting limit)
+    let attempt = inProgressAttempt;
+
+    if (!attempt && room.maxAttempts && attemptsCount >= room.maxAttempts) {
+      throw attemptLimitReachedError(room.maxAttempts);
     }
 
     if (!attempt) {
@@ -625,6 +652,10 @@ export class AttemptController extends Controller {
           status: true,
         },
       });
+    }
+
+    if (attempt && attempt.status !== AttemptStatus.IN_PROGRESS) {
+      throw attemptAlreadySubmittedError();
     }
 
     if (body.activate === true && attempt.timeTakenSec === null) {
@@ -675,7 +706,7 @@ export class AttemptController extends Controller {
 
     const room = await prisma.room.findUnique({
       where: { id: body.roomId },
-      select: { id: true, examId: true, durationSec: true },
+      select: { id: true, examId: true, durationSec: true, maxAttempts: true },
     });
     if (!room) {
       this.setStatus(400);
@@ -719,13 +750,25 @@ export class AttemptController extends Controller {
     });
     for (const p of points) perQuestion.set(p.questionId, Number(p.points));
 
-    let attempt = await prisma.attempt.findUnique({
-      where: { roomId_studentId: { roomId: room.id, studentId: user.id } },
-      select: { id: true, status: true, startedAt: true },
-    });
+    const [inProgressAttempt, attemptsCount] = await Promise.all([
+      prisma.attempt.findFirst({
+        where: {
+          roomId: room.id,
+          studentId: user.id,
+          status: AttemptStatus.IN_PROGRESS,
+        },
+        select: { id: true, status: true, startedAt: true },
+        orderBy: { startedAt: "desc" },
+      }),
+      prisma.attempt.count({
+        where: { roomId: room.id, studentId: user.id },
+      }),
+    ]);
 
-    if (attempt && attempt.status !== AttemptStatus.IN_PROGRESS) {
-      throw attemptAlreadySubmittedError();
+    let attempt = inProgressAttempt;
+
+    if (!attempt && room.maxAttempts && attemptsCount >= room.maxAttempts) {
+      throw attemptLimitReachedError(room.maxAttempts);
     }
 
     if (!attempt) {

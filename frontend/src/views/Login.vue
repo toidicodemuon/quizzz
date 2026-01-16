@@ -91,6 +91,7 @@ async function onSubmit() {
     const res = await fetch(`${apiBase.value}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({
         identifier: userCode.value,
         password: password.value,

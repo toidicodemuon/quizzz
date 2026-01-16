@@ -99,7 +99,10 @@
                       #{{ q.id }}
                     </td>
                     <td>
-                      <div class="fw-semibold mb-1">{{ q.text }}</div>
+                      <div
+                        class="fw-semibold mb-1 rich-content"
+                        v-html="renderHtml(q.text)"
+                      ></div>
                       <ul class="mb-1 ms-3">
                         <li
                           v-for="ch in choices[q.id] || []"
@@ -108,7 +111,10 @@
                             ch.isCorrect ? 'text-success fw-semibold' : ''
                           "
                         >
-                          {{ ch.content }}
+                          <span
+                            class="rich-content"
+                            v-html="renderHtml(ch.content)"
+                          ></span>
                           <span
                             v-if="ch.isCorrect"
                             class="badge bg-success ms-1"
@@ -117,9 +123,11 @@
                           </span>
                         </li>
                       </ul>
-                      <div class="text-muted small" v-if="q.explanation">
-                        {{ q.explanation }}
-                      </div>
+                      <div
+                        class="text-muted small rich-content"
+                        v-if="q.explanation"
+                        v-html="renderHtml(q.explanation)"
+                      ></div>
                     </td>
                   </tr>
                   <tr v-if="questions.length === 0">
@@ -162,6 +170,8 @@ const questions = ref<QuestionLite[]>([]);
 const choices = ref<
   Record<number, { id: number; content: string; isCorrect: boolean }[]>
 >({});
+
+const renderHtml = (value?: string | null) => value || "";
 
 async function loadData() {
   if (!props.show || !props.examId) return;

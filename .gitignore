@@ -39,3 +39,5 @@ api/license/license.json
 api/src/routes/routes.ts
 
 api/swagger/swagger.json
+
+frontend/.env.production

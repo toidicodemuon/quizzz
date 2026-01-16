@@ -12,7 +12,13 @@
   "dependencies": {
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
+    "dompurify": "^3.2.4",
     "pinia": "^2.1.7",
+    "@tiptap/extension-image": "^2.10.4",
+    "@tiptap/extension-link": "^2.10.4",
+    "@tiptap/extension-placeholder": "^2.10.4",
+    "@tiptap/starter-kit": "^2.10.4",
+    "@tiptap/vue-3": "^2.10.4",
     "vue": "^3.4.38",
     "vue-router": "^4.4.5"
   },

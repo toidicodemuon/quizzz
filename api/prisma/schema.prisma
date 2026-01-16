@@ -51,6 +51,8 @@ model User {
   roomsCreated      Room[]     @relation("RoomCreator")
   attempts          Attempt[]
   exams             Exam[]     @relation("ExamAuthor")
+  sessions          UserSession[]
+  auditLogs         AuditLog[]
 }
 
 model Question {
@@ -58,9 +60,9 @@ model Question {
   subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   subjectId   Int
   type        QuestionType
-  text        String // nội dung câu hỏi
-  explanation String? // giải thích sau khi nộp
-  correctText String? // dùng khi type=TEXT (so khớp chính xác/ gần đúng do app xử)
+  text        String  @db.LongText // nội dung câu hỏi
+  explanation String? @db.LongText // giải thích sau khi nộp
+  correctText String? @db.LongText // dùng khi type=TEXT (so khớp chính xác/ gần đúng do app xử)
   author      User?        @relation("QuestionAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   authorId    Int?
   isActive    Boolean      @default(true)
@@ -77,7 +79,7 @@ model Choice {
   id                   Int                   @id @default(autoincrement())
   question             Question              @relation(fields: [questionId], references: [id], onDelete: Cascade)
   questionId           Int
-  content              String
+  content              String @db.LongText
   isCorrect            Boolean               @default(false) // dùng cho SC/MC
   order                Int                   @default(0)
   attemptAnswerChoices AttemptAnswerChoice[]
@@ -202,7 +204,6 @@ model Attempt {
 
   answers AttemptAnswer[]
 
-  @@unique([roomId, studentId]) // mỗi phòng chỉ được 1 lượt (đổi nếu muốn nhiều lượt)
   @@index([roomId])
   @@index([examId])
   @@index([studentId])
@@ -236,4 +237,33 @@ model AttemptAnswerChoice {
 
   @@id([attemptAnswerId, choiceId])
   @@index([choiceId])
+}
+
+model UserSession {
+  id               Int      @id @default(autoincrement())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           Int
+  refreshTokenHash String
+  ip               String?
+  userAgent        String?
+  createdAt        DateTime @default(now())
+  lastSeenAt       DateTime @default(now())
+  logoutAt         DateTime?
+  revokedAt        DateTime?
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId    Int?
+  action    String
+  ip        String?
+  userAgent String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
 }
