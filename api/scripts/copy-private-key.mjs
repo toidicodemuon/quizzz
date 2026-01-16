@@ -6,8 +6,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const srcPath = path.join(__dirname, "..", "license", "private.pem");
-const destDir = path.join(__dirname, "..", "dist", "license");
+const srcPath = path.join(__dirname, "..", "lc", "private.pem");
+const destDir = path.join(__dirname, "..", "dist", "lc");
 const destPath = path.join(destDir, "private.pem");
 
 if (!fs.existsSync(srcPath)) {
@@ -20,4 +20,4 @@ if (!fs.existsSync(destDir)) {
 }
 
 fs.copyFileSync(srcPath, destPath);
-console.log("[copy] private.pem copied to dist/license");
+console.log("[copy] private.pem copied to dist/lc");

@@ -8,8 +8,8 @@ const __dirname = path.dirname(__filename);
 
 const items = [
   {
-    src: path.join(__dirname, "license", "activate.mjs"),
-    dest: path.join(__dirname, "..", "dist", "scripts", "license", "activate.mjs"),
+    src: path.join(__dirname, "lc", "activate.mjs"),
+    dest: path.join(__dirname, "..", "dist", "scripts", "lc", "activate.mjs"),
   },
 ];
 

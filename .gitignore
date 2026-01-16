@@ -30,11 +30,11 @@ api/public/
 
 api/.env.production.tino
 
-api/license/private.pem
+api/lc/private.pem
 
-api/license/licenses.csv
+api/lc/lcs.csv
 
-api/license/license.json
+api/lc/lc.json
 
 api/src/routes/routes.ts
 

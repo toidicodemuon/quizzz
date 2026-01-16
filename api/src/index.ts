@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "../swagger/swagger.json";
 import { RegisterRoutes } from "./routes/routes";
-import { enforceLicenseOrExit } from "./utils/license";
+import { enforceLicenseOrExit } from "./utils/lc";
 import { multerMiddleware } from "./middleware";
 import { getPublicImageUrl, resolvePublicDir } from "./utils/uploads";
 // Load environment variables
